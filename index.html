@@ -26,8 +26,7 @@
             </div>
 
             <div id="auth-buttons" class="flex gap-3">
-                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600">РЕГИСТРАЦИЯ</button>
-                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold hover:bg-orange-500 hover:text-black">ВОЙТИ</button>
+                <button onclick="showLoginModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600">ВОЙТИ / ЗАРЕГИСТРИРОВАТЬСЯ</button>
             </div>
 
             <div id="user-section" class="hidden items-center gap-4">
@@ -38,6 +37,25 @@
         </div>
     </nav>
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 p-10 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход / Регистрация</h2>
+            
+            <input id="email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            
+            <button onclick="login()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl mb-4">
+                Войти
+            </button>
+            <button onclick="register()" class="w-full bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">
+                Зарегистрироваться
+            </button>
+            
+            <button onclick="hideLoginModal()" class="mt-6 text-gray-400 w-full">Отмена</button>
+        </div>
+    </div>
+
     <div class="h-[65vh] flex items-center justify-center text-center" 
          style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
         <div>
@@ -47,20 +65,13 @@
     </div>
 
     <div class="max-w-6xl mx-auto px-8 py-8">
-        <!-- Поиск -->
-        <div class="mb-8">
-            <input id="search-input" 
-                   onkeyup="filterGames()"
-                   placeholder="Поиск игр..." 
-                   class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg focus:outline-none focus:border-orange-500">
-        </div>
+        <input id="search-input" onkeyup="filterGames()" placeholder="Поиск игр..." 
+               class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-8 focus:outline-none focus:border-orange-500">
 
-        <!-- Игры от FuckHub -->
         <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
         <div id="fuckhub-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"></div>
 
-        <!-- Все игры -->
-        <h2 class="text-3xl font-bold mb-6 text-orange-400">Все опубликованные игры</h2>
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">Все игры</h2>
         <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </div>
 
@@ -82,8 +93,51 @@
                 document.getElementById('user-section').classList.remove('hidden');
                 document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
             }
-
             loadAllGames();
+        }
+
+        function showLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+        }
+
+        function hideLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) return alert("Заполни все поля");
+
+            try {
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                if (error) throw error;
+                alert("✅ Успешный вход!");
+                hideLoginModal();
+                location.reload();
+            } catch (e) {
+                alert("Ошибка: " + e.message);
+            }
+        }
+
+        async function register() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if (!email || !password) return alert("Заполни все поля");
+
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                if (error) throw error;
+                alert("✅ Регистрация прошла! Проверь почту для подтверждения.");
+                hideLoginModal();
+            } catch (e) {
+                alert("Ошибка: " + e.message);
+            }
+        }
+
+        function logout() {
+            supabaseClient.auth.signOut();
+            location.reload();
         }
 
         function loadAllGames() {
@@ -92,49 +146,38 @@
         }
 
         function renderGames(games) {
-            // Игры от FuckHub
             const fuckhubContainer = document.getElementById('fuckhub-games');
-            const fuckhubGames = games.filter(g => g.author && g.author.includes("FuckHub") || g.author === "FuckFaz");
-            
-            fuckhubContainer.innerHTML = fuckhubGames.length ? fuckhubGames.map(g => createGameCard(g)).join('') 
-                : `<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>`;
-
-            // Все игры
             const allContainer = document.getElementById('all-games');
-            allContainer.innerHTML = games.length ? games.map(g => createGameCard(g)).join('') 
-                : `<p class="col-span-3 text-center py-10 text-gray-400">Пока нет игр</p>`;
+
+            const fuckhubGames = games.filter(g => g.author && (g.author.includes("FuckHub") || g.author.includes("FuckFaz")));
+
+            fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр</p>';
+            allContainer.innerHTML = games.map(g => createCard(g)).join('') || '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет игр</p>';
         }
 
-        function createGameCard(g) {
+        function createCard(g) {
             return `
                 <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
                     <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
                     <div class="p-6">
                         <h3 class="text-2xl font-bold">${g.title}</h3>
                         <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
-                        <p class="text-gray-400 mt-3 line-clamp-3">${g.desc || ''}</p>
-                        <a href="${g.download}" target="_blank" 
-                           class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
-                            Скачать
-                        </a>
+                        <p class="text-gray-400 mt-2 line-clamp-3">${g.desc || ''}</p>
+                        <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
                     </div>
                 </div>
             `;
         }
 
         function filterGames() {
-            const query = document.getElementById('search-input').value.toLowerCase();
-            const filtered = allGames.filter(game => 
-                game.title.toLowerCase().includes(query) || 
-                (game.desc && game.desc.toLowerCase().includes(query)) ||
-                (game.author && game.author.toLowerCase().includes(query))
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allGames.filter(g => 
+                g.title.toLowerCase().includes(q) || 
+                (g.desc && g.desc.toLowerCase().includes(q)) ||
+                (g.author && g.author.toLowerCase().includes(q))
             );
             renderGames(filtered);
         }
-
-        function logout() { if(confirm("Выйти?")) location.reload(); }
-        function showRegisterModal() { alert("Регистрация работает через кнопку 'ВОЙТИ'"); }
-        function showLoginModal() { alert("Нажми 'ВОЙТИ' и введи данные"); }
 
         window.onload = init;
     </script>
