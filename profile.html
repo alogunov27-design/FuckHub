@@ -39,16 +39,17 @@
         </div>
     </div>
 
-    <!-- Modal публикации -->
+    <!-- Modal публикации / редактирования -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
-            <h2 class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
+            <h2 id="modal-title" class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
+            
+            <input id="game-id" type="hidden">
             
             <input id="game-title" placeholder="Название игры" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
             <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <textarea id="game-desc" placeholder="Короткое описание" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
+            <textarea id="game-desc" placeholder="Короткое описание игры" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
             
-            <!-- Платформы -->
             <div class="mb-6">
                 <p class="mb-3 text-lg">Платформы:</p>
                 <div class="flex gap-3 flex-wrap">
@@ -58,15 +59,11 @@
                 </div>
             </div>
             
-            <input id="game-download" placeholder="Прямая ссылка на скачивание (Google Drive, GitHub и т.д.)" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
+            <input id="game-download" placeholder="Прямая ссылка на скачивание игры" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
             
             <div class="flex gap-4">
-                <button onclick="publishGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl text-xl">
-                    ОПУБЛИКОВАТЬ
-                </button>
-                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl text-xl">
-                    Отмена
-                </button>
+                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl text-xl">Сохранить изменения</button>
+                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl text-xl">Отмена</button>
             </div>
         </div>
     </div>
@@ -78,13 +75,14 @@
         let supabaseClient;
         let currentUser = null;
         let selectedPlatforms = [];
+        let editingGameId = null;
 
         async function init() {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
-                alert("Вы не авторизованы!");
+                alert("Вы не авторизованы! Перейдите на главную и войдите.");
                 window.location.href = "index.html";
                 return;
             }
@@ -106,38 +104,77 @@
             }
         }
 
-        function showPublishModal() {
+        function showPublishModal(game = null) {
             document.getElementById('publish-modal').classList.remove('hidden');
-            selectedPlatforms = [];
-            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+            editingGameId = game ? game.id : null;
+            document.getElementById('modal-title').textContent = game ? "Редактировать игру" : "Новая игра";
+
+            if (game) {
+                document.getElementById('game-title').value = game.title || '';
+                document.getElementById('game-cover').value = game.cover || '';
+                document.getElementById('game-desc').value = game.description || '';
+                document.getElementById('game-download').value = game.download || '';
+                selectedPlatforms = game.platforms ? game.platforms.split(', ') : [];
+            } else {
+                document.getElementById('game-title').value = '';
+                document.getElementById('game-cover').value = '';
+                document.getElementById('game-desc').value = '';
+                document.getElementById('game-download').value = '';
+                selectedPlatforms = [];
+            }
+            document.querySelectorAll('.platform-btn').forEach(btn => {
+                btn.classList.toggle('active', selectedPlatforms.includes(btn.dataset.platform));
+            });
         }
 
         function hidePublishModal() {
             document.getElementById('publish-modal').classList.add('hidden');
         }
 
-        async function publishGame() {
+        async function saveGame() {
             const title = document.getElementById('game-title').value.trim();
-            if (!title) return alert("Название обязательно!");
+            if (!title) return alert("Название игры обязательно!");
+
+            const gameData = {
+                title: title,
+                cover: document.getElementById('game-cover').value || null,
+                description: document.getElementById('game-desc').value || null,
+                platforms: selectedPlatforms.join(', '),
+                download: document.getElementById('game-download').value,
+                author: 'FuckHub',
+                user_id: currentUser.id
+            };
 
             try {
-                const { error } = await supabaseClient.from('games').insert({
-                    title: title,
-                    cover: document.getElementById('game-cover').value || null,
-                    description: document.getElementById('game-desc').value || null,
-                    platforms: selectedPlatforms.join(', '),
-                    download: document.getElementById('game-download').value,
-                    author: 'FuckHub',
-                    user_id: currentUser.id
-                });
-
-                if (error) throw error;
-
-                alert("✅ Игра успешно опубликована!");
+                if (editingGameId) {
+                    const { error } = await supabaseClient
+                        .from('games')
+                        .update(gameData)
+                        .eq('id', editingGameId);
+                    if (error) throw error;
+                    alert("Игра успешно обновлена!");
+                } else {
+                    const { error } = await supabaseClient.from('games').insert(gameData);
+                    if (error) throw error;
+                    alert("Игра успешно опубликована!");
+                }
                 hidePublishModal();
                 loadMyGames();
             } catch (e) {
                 alert("Ошибка: " + e.message);
+            }
+        }
+
+        async function deleteGame(id) {
+            if (!confirm("Вы уверены, что хотите удалить эту игру?")) return;
+
+            try {
+                const { error } = await supabaseClient.from('games').delete().eq('id', id);
+                if (error) throw error;
+                alert("Игра удалена!");
+                loadMyGames();
+            } catch (e) {
+                alert("Ошибка удаления: " + e.message);
             }
         }
 
@@ -163,9 +200,11 @@
                             <p class="text-orange-400 text-sm">Автор: FuckHub</p>
                             <p class="text-gray-400 mt-3">${g.description || 'Без описания'}</p>
                             <p class="text-xs text-gray-500 mt-4">Платформы: ${g.platforms || 'Не указано'}</p>
-                            <a href="${g.download}" target="_blank" class="mt-6 block w-full text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
-                                Скачать игру
-                            </a>
+                            <div class="mt-6 flex gap-4">
+                                <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Редактировать</button>
+                                <button onclick="deleteGame('${g.id}')" class="flex-1 bg-red-600 hover:bg-red-700 py-3 rounded-2xl text-white">Удалить</button>
+                                <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl">Скачать</a>
+                            </div>
                         </div>
                     </div>
                 </div>
