@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FuckHub - FuckFaz</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
+        .game-card { transition: all 0.3s; }
+        .game-card:hover { transform: translateY(-10px); }
+    </style>
+</head>
+<body>
+
+    <nav class="bg-black border-b-4 border-orange-500 p-5 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <span class="text-4xl font-black text-white">FUCK</span>
+                <span class="text-4xl font-black text-orange-500">HUB</span>
+            </div>
+            
+            <div class="flex gap-8 text-lg">
+                <a href="#" class="hover:text-orange-400">Магазин</a>
+                <a href="#" onclick="showMyGames()" class="hover:text-orange-400">Мои Игры</a>
+            </div>
+
+            <div id="auth-buttons" class="flex gap-3">
+                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600">РЕГИСТРАЦИЯ</button>
+                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold hover:bg-orange-500 hover:text-black">ВОЙТИ</button>
+            </div>
+
+            <div id="user-section" class="hidden items-center gap-4">
+                <span id="username-display" class="text-orange-400 font-bold"></span>
+                <a href="profile.html" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-2 rounded">Профиль</a>
+                <button onclick="logout()" class="text-red-400 hover:text-red-500">Выйти</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="hero-bg h-[65vh] flex items-center justify-center text-center" 
+         style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
+        <div>
+            <h1 class="text-7xl font-black text-white mb-4">FUCKHUB</h1>
+            <p class="text-3xl text-orange-400">От команды FuckFaz</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-8 py-12">
+        <h2 class="text-4xl font-bold mb-10 text-orange-400">Опубликованные игры</h2>
+        <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+
+    <script>
+        let supabaseClient;
+        let currentUser = null;
+
+        async function init() {
+            supabaseClient = window.supabase.createClient(
+                'https://nuyeqiiopptdykxvurrk.supabase.co', 
+                'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY'
+            );
+            
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('auth-buttons').classList.add('hidden');
+                document.getElementById('user-section').classList.remove('hidden');
+                document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+            }
+
+            loadAllGames();
+        }
+
+        function loadAllGames() {
+            const container = document.getElementById('all-games');
+            let games = JSON.parse(localStorage.getItem('myGames') || '[]');
+            
+            if (games.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center col-span-3 py-20 text-xl">Пока нет опубликованных игр.<br>Зайди в Профиль и добавь первую!</p>`;
+                return;
+            }
+
+            let html = '';
+            games.forEach(game => {
+                html += `
+                    <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-700">
+                        <img src="${game.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-2xl font-bold mb-1">${game.title}</h3>
+                            <p class="text-orange-400 text-sm mb-4">Автор: ${game.author || 'Неизвестно'}</p>
+                            <p class="text-gray-400 line-clamp-3 mb-6">${game.desc || 'Без описания'}</p>
+                            
+                            <div class="flex flex-wrap gap-2 mb-6">
+                                ${game.platforms ? game.platforms.map(p => 
+                                    `<span class="text-xs bg-zinc-700 px-3 py-1 rounded-full">${p}</span>`
+                                ).join('') : ''}
+                            </div>
+                            
+                            <a href="${game.download}" target="_blank" 
+                               class="block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
+                                Скачать игру
+                            </a>
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function showRegisterModal() { alert("Регистрация работает! Зайди в Профиль после входа."); }
+        function showLoginModal() { alert("Вы уже вошли в аккаунт."); }
+        function showMyGames() { window.location.href = "profile.html"; }
+        function logout() { 
+            if (confirm("Выйти из аккаунта?")) location.reload(); 
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>

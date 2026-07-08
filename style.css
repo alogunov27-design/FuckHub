@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+    background: #0a0a0a;
+    color: #ddd;
+    font-family: system-ui, sans-serif;
+}
+
+.hero-bg {
+    background-image: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.85)), 
+                      url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg');
+    background-size: cover;
+    background-position: center;
+}
+
+.input-field {
+    width: 100%;
+    padding: 16px;
+    margin-bottom: 16px;
+    background: #18181b;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: white;
+    font-size: 1.1rem;
+}
+
+.input-field:focus {
+    border-color: #f97316;
+    outline: none;
+}
+
+.submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: #f97316;
+    color: black;
+    font-weight: 900;
+    font-size: 1.3rem;
+    border-radius: 8px;
+    margin-top: 10px;
+    transition: all 0.2s;
+}
+
+.submit-btn:hover {
+    background: #fb923c;
+    transform: scale(1.03);
+}

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Профиль - FuckHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
+        .platform-btn { transition: all 0.2s; }
+        .platform-btn.active { background-color: #f97316; color: black; font-weight: bold; }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <nav class="bg-black border-b-4 border-orange-500 p-5">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-black">← FuckHub</a>
+            <span class="text-orange-400 font-bold">Профиль</span>
+        </div>
+    </nav>
+
+    <div class="max-w-4xl mx-auto p-10">
+        <div class="bg-zinc-900 rounded-3xl p-10">
+            <h1 class="text-5xl font-bold text-orange-400 mb-8">Профиль</h1>
+            
+            <div class="mb-12 p-6 bg-zinc-800 rounded-2xl">
+                <p class="text-xl"><strong>Никнейм:</strong> <span id="profile-username"></span></p>
+                <p class="text-xl"><strong>Email:</strong> <span id="profile-email"></span></p>
+            </div>
+
+            <button onclick="showPublishModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-2xl py-6 rounded-2xl mb-12">
+                + Опубликовать новую игру
+            </button>
+
+            <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои игры</h2>
+            <div id="my-games-list" class="space-y-8"></div>
+        </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
+            <h2 id="modal-title" class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
+            
+            <input id="game-id" type="hidden">
+            <input id="game-title" placeholder="Название игры" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
+            <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
+            <textarea id="game-desc" placeholder="Описание" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
+            
+            <div class="mb-6">
+                <p class="mb-3">Платформы:</p>
+                <div class="flex gap-3">
+                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🖥️ PC</button>
+                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">📱 Android</button>
+                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🍎 iOS</button>
+                </div>
+            </div>
+            
+            <input id="game-download" placeholder="Ссылка на скачивание" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
+            
+            <div class="flex gap-4">
+                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl">Сохранить</button>
+                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let supabaseClient, currentUser;
+        let selectedPlatforms = [];
+        let editingGameIndex = -1;
+
+        async function initProfile() {
+            supabaseClient = window.supabase.createClient('https://nuyeqiiopptdykxvurrk.supabase.co', 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY');
+            
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (!session) return window.location.href = "index.html";
+
+            currentUser = session.user;
+            document.getElementById('profile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
+            document.getElementById('profile-email').textContent = currentUser.email;
+
+            loadMyGames();
+        }
+
+        function togglePlatform(btn) {
+            btn.classList.toggle('active');
+            const p = btn.dataset.platform;
+            selectedPlatforms.includes(p) ? selectedPlatforms = selectedPlatforms.filter(x => x !== p) : selectedPlatforms.push(p);
+        }
+
+        function showPublishModal(editIndex = -1) {
+            document.getElementById('publish-modal').classList.remove('hidden');
+            editingGameIndex = editIndex;
+            document.getElementById('modal-title').textContent = editIndex >= 0 ? "Редактировать игру" : "Новая игра";
+
+            if (editIndex >= 0) {
+                const games = JSON.parse(localStorage.getItem('myGames') || '[]');
+                const g = games[editIndex];
+                document.getElementById('game-title').value = g.title;
+                document.getElementById('game-cover').value = g.cover || '';
+                document.getElementById('game-desc').value = g.desc || '';
+                document.getElementById('game-download').value = g.download || '';
+                selectedPlatforms = g.platforms || [];
+                document.querySelectorAll('.platform-btn').forEach(btn => {
+                    btn.classList.toggle('active', selectedPlatforms.includes(btn.dataset.platform));
+                });
+            } else {
+                document.getElementById('game-title').value = '';
+                document.getElementById('game-cover').value = '';
+                document.getElementById('game-desc').value = '';
+                document.getElementById('game-download').value = '';
+                selectedPlatforms = [];
+                document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
+            }
+        }
+
+        function hidePublishModal() {
+            document.getElementById('publish-modal').classList.add('hidden');
+        }
+
+        function saveGame() {
+            const title = document.getElementById('game-title').value.trim();
+            if (!title) return alert("Название обязательно");
+
+            let games = JSON.parse(localStorage.getItem('myGames') || '[]');
+
+            const gameData = {
+                title,
+                cover: document.getElementById('game-cover').value || 'https://picsum.photos/400/300',
+                desc: document.getElementById('game-desc').value || '',
+                platforms: selectedPlatforms,
+                download: document.getElementById('game-download').value,
+                author: currentUser.user_metadata?.username || currentUser.email,
+                date: new Date().toLocaleDateString('ru-RU')
+            };
+
+            if (editingGameIndex >= 0) {
+                games[editingGameIndex] = gameData;
+            } else {
+                games.push(gameData);
+            }
+
+            localStorage.setItem('myGames', JSON.stringify(games));
+            alert(editingGameIndex >= 0 ? "Игра обновлена!" : "Игра опубликована!");
+            hidePublishModal();
+            loadMyGames();
+        }
+
+        function loadMyGames() {
+            const container = document.getElementById('my-games-list');
+            const games = JSON.parse(localStorage.getItem('myGames') || '[]');
+            
+            if (games.length === 0) {
+                container.innerHTML = `<p class="text-gray-400">У вас пока нет игр</p>`;
+                return;
+            }
+
+            container.innerHTML = games.map((g, i) => `
+                <div class="bg-zinc-800 rounded-3xl p-6">
+                    <div class="flex gap-6">
+                        <img src="${g.cover}" class="w-32 h-32 object-cover rounded-2xl">
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold">${g.title}</h3>
+                            <p class="text-orange-400 text-sm">Автор: ${g.author}</p>
+                            <p class="text-gray-400 mt-2">${g.desc}</p>
+                            <div class="flex gap-2 mt-3">
+                                ${g.platforms?.map(p => `<span class="bg-zinc-700 px-3 py-1 rounded">${p}</span>`).join('') || ''}
+                            </div>
+                            <div class="mt-6 flex gap-3">
+                                <button onclick="showPublishModal(${i})" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Редактировать</button>
+                                <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl">Скачать</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.onload = initProfile;
+    </script>
+</body>
+</html>
