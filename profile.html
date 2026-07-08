@@ -8,13 +8,15 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
+        .platform-btn { transition: all 0.2s; }
+        .platform-btn.active { background-color: #f97316; color: black; font-weight: bold; }
     </style>
 </head>
 <body class="min-h-screen">
 
     <nav class="bg-black border-b-4 border-orange-500 p-5">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-black">← FuckHub</a>
+            <a href="index.html" class="text-2xl font-black flex items-center gap-2">← FuckHub</a>
             <span class="text-orange-400 font-bold">Профиль</span>
         </div>
     </nav>
@@ -32,34 +34,39 @@
                 + Опубликовать новую игру
             </button>
 
-            <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои игры</h2>
-            <div id="my-games-list" class="space-y-6"></div>
+            <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои опубликованные игры</h2>
+            <div id="my-games-list" class="space-y-8"></div>
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal публикации -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
             <h2 class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
             
             <input id="game-title" placeholder="Название игры" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
             <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <textarea id="game-desc" placeholder="Описание" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
+            <textarea id="game-desc" placeholder="Короткое описание" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
             
+            <!-- Платформы -->
             <div class="mb-6">
-                <p class="mb-3">Платформы:</p>
-                <div class="flex gap-3">
-                    <button onclick="togglePlatform(this)" data-platform="PC" class="px-6 py-3 bg-zinc-800 rounded-xl">PC</button>
-                    <button onclick="togglePlatform(this)" data-platform="Android" class="px-6 py-3 bg-zinc-800 rounded-xl">Android</button>
-                    <button onclick="togglePlatform(this)" data-platform="iOS" class="px-6 py-3 bg-zinc-800 rounded-xl">iOS</button>
+                <p class="mb-3 text-lg">Платформы:</p>
+                <div class="flex gap-3 flex-wrap">
+                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🖥️ PC</button>
+                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">📱 Android</button>
+                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🍎 iPhone / iPad</button>
                 </div>
             </div>
             
-            <input id="game-download" placeholder="Ссылка на скачивание" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
+            <input id="game-download" placeholder="Прямая ссылка на скачивание (Google Drive, GitHub и т.д.)" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
             
             <div class="flex gap-4">
-                <button onclick="publishGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl">Опубликовать</button>
-                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl">Отмена</button>
+                <button onclick="publishGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl text-xl">
+                    ОПУБЛИКОВАТЬ
+                </button>
+                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl text-xl">
+                    Отмена
+                </button>
             </div>
         </div>
     </div>
@@ -76,7 +83,11 @@
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) return window.location.href = "index.html";
+            if (!session) {
+                alert("Вы не авторизованы!");
+                window.location.href = "index.html";
+                return;
+            }
 
             currentUser = session.user;
             document.getElementById('profile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
@@ -87,13 +98,18 @@
 
         function togglePlatform(btn) {
             btn.classList.toggle('active');
-            const p = btn.dataset.platform;
-            selectedPlatforms.includes(p) ? selectedPlatforms = selectedPlatforms.filter(x => x !== p) : selectedPlatforms.push(p);
+            const platform = btn.getAttribute('data-platform');
+            if (selectedPlatforms.includes(platform)) {
+                selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
+            } else {
+                selectedPlatforms.push(platform);
+            }
         }
 
         function showPublishModal() {
             document.getElementById('publish-modal').classList.remove('hidden');
             selectedPlatforms = [];
+            document.querySelectorAll('.platform-btn').forEach(b => b.classList.remove('active'));
         }
 
         function hidePublishModal() {
@@ -102,13 +118,13 @@
 
         async function publishGame() {
             const title = document.getElementById('game-title').value.trim();
-            if (!title) return alert("Название обязательно");
+            if (!title) return alert("Название обязательно!");
 
             try {
                 const { error } = await supabaseClient.from('games').insert({
                     title: title,
-                    cover: document.getElementById('game-cover').value,
-                    description: document.getElementById('game-desc').value,
+                    cover: document.getElementById('game-cover').value || null,
+                    description: document.getElementById('game-desc').value || null,
                     platforms: selectedPlatforms.join(', '),
                     download: document.getElementById('game-download').value,
                     author: 'FuckHub',
@@ -117,7 +133,7 @@
 
                 if (error) throw error;
 
-                alert("✅ Игра опубликована!");
+                alert("✅ Игра успешно опубликована!");
                 hidePublishModal();
                 loadMyGames();
             } catch (e) {
@@ -129,19 +145,29 @@
             const { data, error } = await supabaseClient
                 .from('games')
                 .select('*')
-                .eq('user_id', currentUser.id);
+                .eq('user_id', currentUser.id)
+                .order('created_at', { ascending: false });
 
             const container = document.getElementById('my-games-list');
-            if (!data || data.length === 0) {
-                container.innerHTML = `<p class="text-gray-400">Пока нет игр</p>`;
+            if (error || !data || data.length === 0) {
+                container.innerHTML = `<p class="text-gray-400 text-center py-10">У вас пока нет опубликованных игр</p>`;
                 return;
             }
 
             container.innerHTML = data.map(g => `
                 <div class="bg-zinc-800 rounded-3xl p-6">
-                    <h3 class="text-2xl font-bold">${g.title}</h3>
-                    <p class="text-orange-400">Автор: FuckHub</p>
-                    <a href="${g.download}" target="_blank" class="block mt-6 bg-orange-500 text-black font-bold py-4 text-center rounded-2xl">Скачать</a>
+                    <div class="flex gap-6">
+                        <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-40 h-40 object-cover rounded-2xl">
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold">${g.title}</h3>
+                            <p class="text-orange-400 text-sm">Автор: FuckHub</p>
+                            <p class="text-gray-400 mt-3">${g.description || 'Без описания'}</p>
+                            <p class="text-xs text-gray-500 mt-4">Платформы: ${g.platforms || 'Не указано'}</p>
+                            <a href="${g.download}" target="_blank" class="mt-6 block w-full text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
+                                Скачать игру
+                            </a>
+                        </div>
+                    </div>
                 </div>
             `).join('');
         }
