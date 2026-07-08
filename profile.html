@@ -16,8 +16,8 @@
 
     <nav class="bg-black border-b-4 border-orange-500 p-5">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-black">← FuckHub</a>
-            <span class="text-orange-400 font-bold">Профиль</span>
+            <a href="index.html" class="text-2xl font-black flex items-center gap-2">← FuckHub</a>
+            <span class="text-orange-400 font-bold text-xl">Мой Профиль</span>
         </div>
     </nav>
 
@@ -30,53 +30,66 @@
                 <p class="text-xl"><strong>Email:</strong> <span id="profile-email"></span></p>
             </div>
 
-            <button onclick="showPublishModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-2xl py-6 rounded-2xl mb-12">
+            <button onclick="showPublishModal()" 
+                    class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-2xl py-6 rounded-2xl mb-12">
                 + Опубликовать новую игру
             </button>
 
-            <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои игры</h2>
+            <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои опубликованные игры</h2>
             <div id="my-games-list" class="space-y-8"></div>
         </div>
     </div>
 
-    <!-- MODAL -->
+    <!-- Modal публикации -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
             <h2 id="modal-title" class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
             
-            <input id="game-id" type="hidden">
             <input id="game-title" placeholder="Название игры" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <textarea id="game-desc" placeholder="Описание" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
+            <input id="game-cover" placeholder="Ссылка на обложку (рекомендуется 300x400)" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
+            <textarea id="game-desc" placeholder="Короткое описание" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
             
             <div class="mb-6">
-                <p class="mb-3">Платформы:</p>
-                <div class="flex gap-3">
+                <p class="mb-3 text-lg">Платформы:</p>
+                <div class="flex gap-3 flex-wrap">
                     <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🖥️ PC</button>
                     <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">📱 Android</button>
-                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🍎 iOS</button>
+                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🍎 iPhone / iPad</button>
                 </div>
             </div>
             
-            <input id="game-download" placeholder="Ссылка на скачивание" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
+            <input id="game-download" placeholder="Прямая ссылка на скачивание (Google Drive, GitHub и т.д.)" 
+                   class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
             
             <div class="flex gap-4">
-                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl">Сохранить</button>
-                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl">Отмена</button>
+                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl text-xl">
+                    ОПУБЛИКОВАТЬ / ОБНОВИТЬ
+                </button>
+                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl text-xl">
+                    Отмена
+                </button>
             </div>
         </div>
     </div>
 
     <script>
-        let supabaseClient, currentUser;
+        const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
+        
+        let supabaseClient;
+        let currentUser = null;
         let selectedPlatforms = [];
-        let editingGameIndex = -1;
+        let editingIndex = -1;
 
-        async function initProfile() {
-            supabaseClient = window.supabase.createClient('https://nuyeqiiopptdykxvurrk.supabase.co', 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY');
+        async function init() {
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) return window.location.href = "index.html";
+            if (!session) {
+                alert("Вы не авторизованы! Перейдите на главную и войдите.");
+                window.location.href = "index.html";
+                return;
+            }
 
             currentUser = session.user;
             document.getElementById('profile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
@@ -87,19 +100,20 @@
 
         function togglePlatform(btn) {
             btn.classList.toggle('active');
-            const p = btn.dataset.platform;
-            selectedPlatforms.includes(p) ? selectedPlatforms = selectedPlatforms.filter(x => x !== p) : selectedPlatforms.push(p);
+            const platform = btn.getAttribute('data-platform');
+            selectedPlatforms.includes(platform) 
+                ? selectedPlatforms = selectedPlatforms.filter(p => p !== platform) 
+                : selectedPlatforms.push(platform);
         }
 
-        function showPublishModal(editIndex = -1) {
+        function showPublishModal(index = -1) {
             document.getElementById('publish-modal').classList.remove('hidden');
-            editingGameIndex = editIndex;
-            document.getElementById('modal-title').textContent = editIndex >= 0 ? "Редактировать игру" : "Новая игра";
-
-            if (editIndex >= 0) {
+            editingIndex = index;
+            
+            if (index >= 0) {
                 const games = JSON.parse(localStorage.getItem('myGames') || '[]');
-                const g = games[editIndex];
-                document.getElementById('game-title').value = g.title;
+                const g = games[index];
+                document.getElementById('game-title').value = g.title || '';
                 document.getElementById('game-cover').value = g.cover || '';
                 document.getElementById('game-desc').value = g.desc || '';
                 document.getElementById('game-download').value = g.download || '';
@@ -123,12 +137,12 @@
 
         function saveGame() {
             const title = document.getElementById('game-title').value.trim();
-            if (!title) return alert("Название обязательно");
+            if (!title) return alert("Название обязательно!");
 
             let games = JSON.parse(localStorage.getItem('myGames') || '[]');
-
+            
             const gameData = {
-                title,
+                title: title,
                 cover: document.getElementById('game-cover').value || 'https://picsum.photos/400/300',
                 desc: document.getElementById('game-desc').value || '',
                 platforms: selectedPlatforms,
@@ -137,39 +151,39 @@
                 date: new Date().toLocaleDateString('ru-RU')
             };
 
-            if (editingGameIndex >= 0) {
-                games[editingGameIndex] = gameData;
+            if (editingIndex >= 0) {
+                games[editingIndex] = gameData;
             } else {
                 games.push(gameData);
             }
 
             localStorage.setItem('myGames', JSON.stringify(games));
-            alert(editingGameIndex >= 0 ? "Игра обновлена!" : "Игра опубликована!");
+            alert(editingIndex >= 0 ? "Игра обновлена!" : "Игра опубликована!");
             hidePublishModal();
             loadMyGames();
         }
 
         function loadMyGames() {
             const container = document.getElementById('my-games-list');
-            const games = JSON.parse(localStorage.getItem('myGames') || '[]');
+            let games = JSON.parse(localStorage.getItem('myGames') || '[]');
             
             if (games.length === 0) {
-                container.innerHTML = `<p class="text-gray-400">У вас пока нет игр</p>`;
+                container.innerHTML = `<p class="text-gray-400 text-center py-10">У вас пока нет опубликованных игр</p>`;
                 return;
             }
 
             container.innerHTML = games.map((g, i) => `
                 <div class="bg-zinc-800 rounded-3xl p-6">
                     <div class="flex gap-6">
-                        <img src="${g.cover}" class="w-32 h-32 object-cover rounded-2xl">
+                        <img src="${g.cover}" class="w-40 h-40 object-cover rounded-2xl">
                         <div class="flex-1">
                             <h3 class="text-2xl font-bold">${g.title}</h3>
-                            <p class="text-orange-400 text-sm">Автор: ${g.author}</p>
+                            <p class="text-orange-400">Автор: ${g.author}</p>
                             <p class="text-gray-400 mt-2">${g.desc}</p>
-                            <div class="flex gap-2 mt-3">
-                                ${g.platforms?.map(p => `<span class="bg-zinc-700 px-3 py-1 rounded">${p}</span>`).join('') || ''}
+                            <div class="flex gap-2 mt-4">
+                                ${g.platforms ? g.platforms.map(p => `<span class="bg-zinc-700 px-3 py-1 rounded">${p}</span>`).join('') : ''}
                             </div>
-                            <div class="mt-6 flex gap-3">
+                            <div class="mt-6 flex gap-4">
                                 <button onclick="showPublishModal(${i})" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Редактировать</button>
                                 <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl">Скачать</a>
                             </div>
@@ -179,7 +193,7 @@
             `).join('');
         }
 
-        window.onload = initProfile;
+        window.onload = init;
     </script>
 </body>
 </html>
