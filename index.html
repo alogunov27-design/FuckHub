@@ -8,9 +8,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
+        .game-card { transition: all 0.3s; }
+        .game-card:hover { transform: translateY(-10px); }
     </style>
 </head>
 <body>
+
     <nav class="bg-black border-b-4 border-orange-500 p-5 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-4">
@@ -43,46 +46,95 @@
         </div>
     </div>
 
+    <div class="max-w-6xl mx-auto px-8 py-8">
+        <!-- Поиск -->
+        <div class="mb-8">
+            <input id="search-input" 
+                   onkeyup="filterGames()"
+                   placeholder="Поиск игр..." 
+                   class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg focus:outline-none focus:border-orange-500">
+        </div>
+
+        <!-- Игры от FuckHub -->
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
+        <div id="fuckhub-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"></div>
+
+        <!-- Все игры -->
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">Все опубликованные игры</h2>
+        <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
         let supabaseClient;
+        let currentUser = null;
+        let allGames = [];
 
         async function init() {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+            
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
+                currentUser = session.user;
                 document.getElementById('auth-buttons').classList.add('hidden');
                 document.getElementById('user-section').classList.remove('hidden');
-                document.getElementById('username-display').textContent = session.user.user_metadata?.username || session.user.email;
+                document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
             }
+
+            loadAllGames();
         }
 
-        function showRegisterModal() {
-            alert("Регистрация:\n\n1. Нажми 'ВОЙТИ'\n2. Если аккаунта нет — Supabase предложит зарегистрироваться");
+        function loadAllGames() {
+            allGames = JSON.parse(localStorage.getItem('myGames') || '[]');
+            renderGames(allGames);
         }
 
-        async function showLoginModal() {
-            const email = prompt("Введи email:");
-            const password = prompt("Введи пароль:");
-            if (!email || !password) return;
+        function renderGames(games) {
+            // Игры от FuckHub
+            const fuckhubContainer = document.getElementById('fuckhub-games');
+            const fuckhubGames = games.filter(g => g.author && g.author.includes("FuckHub") || g.author === "FuckFaz");
+            
+            fuckhubContainer.innerHTML = fuckhubGames.length ? fuckhubGames.map(g => createGameCard(g)).join('') 
+                : `<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>`;
 
-            try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-                if (error) throw error;
-                alert("✅ Успешный вход!");
-                location.reload();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
-            }
+            // Все игры
+            const allContainer = document.getElementById('all-games');
+            allContainer.innerHTML = games.length ? games.map(g => createGameCard(g)).join('') 
+                : `<p class="col-span-3 text-center py-10 text-gray-400">Пока нет игр</p>`;
         }
 
-        function logout() {
-            supabaseClient.auth.signOut();
-            location.reload();
+        function createGameCard(g) {
+            return `
+                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
+                    <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
+                        <p class="text-gray-400 mt-3 line-clamp-3">${g.desc || ''}</p>
+                        <a href="${g.download}" target="_blank" 
+                           class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
+                            Скачать
+                        </a>
+                    </div>
+                </div>
+            `;
         }
+
+        function filterGames() {
+            const query = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allGames.filter(game => 
+                game.title.toLowerCase().includes(query) || 
+                (game.desc && game.desc.toLowerCase().includes(query)) ||
+                (game.author && game.author.toLowerCase().includes(query))
+            );
+            renderGames(filtered);
+        }
+
+        function logout() { if(confirm("Выйти?")) location.reload(); }
+        function showRegisterModal() { alert("Регистрация работает через кнопку 'ВОЙТИ'"); }
+        function showLoginModal() { alert("Нажми 'ВОЙТИ' и введи данные"); }
 
         window.onload = init;
     </script>
