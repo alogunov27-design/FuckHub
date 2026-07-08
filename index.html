@@ -26,7 +26,7 @@
             </div>
 
             <div id="auth-buttons" class="flex gap-3">
-                <button onclick="showLoginModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600">ВОЙТИ / ЗАРЕГИСТРИРОВАТЬСЯ</button>
+                <button onclick="showAuthModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600">ВОЙТИ / РЕГИСТРАЦИЯ</button>
             </div>
 
             <div id="user-section" class="hidden items-center gap-4">
@@ -37,22 +37,23 @@
         </div>
     </nav>
 
-    <!-- Login Modal -->
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
+    <!-- Auth Modal -->
+    <div id="auth-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
         <div class="bg-zinc-900 p-10 rounded-3xl w-full max-w-md">
-            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход / Регистрация</h2>
+            <h2 id="modal-title" class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
             
+            <input id="username" type="text" placeholder="Никнейм (уникальный)" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
             <input id="email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <input id="password" type="password" placeholder="Пароль (минимум 6 символов)" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
             
-            <button onclick="login()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl mb-4">
-                Войти
-            </button>
-            <button onclick="register()" class="w-full bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">
+            <button onclick="registerUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl mb-3" id="reg-btn">
                 Зарегистрироваться
             </button>
+            <button onclick="loginUser()" class="w-full bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl" id="login-btn">
+                Войти
+            </button>
             
-            <button onclick="hideLoginModal()" class="mt-6 text-gray-400 w-full">Отмена</button>
+            <button onclick="hideAuthModal()" class="mt-6 text-gray-400 w-full">Отмена</button>
         </div>
     </div>
 
@@ -65,8 +66,7 @@
     </div>
 
     <div class="max-w-6xl mx-auto px-8 py-8">
-        <input id="search-input" onkeyup="filterGames()" placeholder="Поиск игр..." 
-               class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-8 focus:outline-none focus:border-orange-500">
+        <input id="search-input" onkeyup="filterGames()" placeholder="Поиск игр..." class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-8 focus:outline-none focus:border-orange-500">
 
         <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
         <div id="fuckhub-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"></div>
@@ -89,49 +89,62 @@
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 currentUser = session.user;
-                document.getElementById('auth-buttons').classList.add('hidden');
-                document.getElementById('user-section').classList.remove('hidden');
-                document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+                updateUI();
             }
             loadAllGames();
         }
 
-        function showLoginModal() {
-            document.getElementById('login-modal').classList.remove('hidden');
+        function updateUI() {
+            document.getElementById('auth-buttons').classList.add('hidden');
+            document.getElementById('user-section').classList.remove('hidden');
+            document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
         }
 
-        function hideLoginModal() {
-            document.getElementById('login-modal').classList.add('hidden');
+        function showAuthModal() {
+            document.getElementById('auth-modal').classList.remove('hidden');
+            document.getElementById('modal-title').textContent = "Регистрация";
         }
 
-        async function login() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            if (!email || !password) return alert("Заполни все поля");
+        function hideAuthModal() {
+            document.getElementById('auth-modal').classList.add('hidden');
+        }
+
+        async function registerUser() {
+            const username = document.getElementById('username').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!username || !email || !password) return alert("Все поля обязательны");
 
             try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email,
+                    password,
+                    options: { data: { username } }
+                });
                 if (error) throw error;
-                alert("✅ Успешный вход!");
-                hideLoginModal();
-                location.reload();
+                alert("✅ Регистрация прошла! Проверь почту.");
+                hideAuthModal();
             } catch (e) {
                 alert("Ошибка: " + e.message);
             }
         }
 
-        async function register() {
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            if (!email || !password) return alert("Заполни все поля");
+        async function loginUser() {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (!email || !password) return alert("Заполни email и пароль");
 
             try {
-                const { data, error } = await supabaseClient.auth.signUp({ email, password });
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-                alert("✅ Регистрация прошла! Проверь почту для подтверждения.");
-                hideLoginModal();
+                currentUser = data.user;
+                alert("✅ Успешный вход!");
+                hideAuthModal();
+                updateUI();
             } catch (e) {
-                alert("Ошибка: " + e.message);
+                alert("Ошибка входа: " + e.message + "\n\nВозможно, нужно подтвердить email.");
             }
         }
 
