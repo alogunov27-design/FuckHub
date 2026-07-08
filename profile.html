@@ -160,8 +160,12 @@
             if (!confirm("Вы уверены, что хотите удалить эту игру?")) return;
 
             try {
+                console.log("Удаляем игру с id:", id);
                 const { error } = await supabaseClient.from('games').delete().eq('id', id);
-                if (error) throw error;
+                if (error) {
+                    console.error(error);
+                    throw error;
+                }
                 alert("Игра удалена!");
                 loadMyGames();
             } catch (e) {
@@ -170,13 +174,18 @@
         }
 
         async function loadMyGames() {
-            const { data } = await supabaseClient
+            const { data, error } = await supabaseClient
                 .from('games')
                 .select('*')
                 .eq('user_id', currentUser.id)
                 .order('created_at', { ascending: false });
 
             const container = document.getElementById('my-games-list');
+            if (error) {
+                console.error(error);
+                container.innerHTML = `<p class="text-red-400">Ошибка загрузки: ${error.message}</p>`;
+                return;
+            }
             if (!data || data.length === 0) {
                 container.innerHTML = `<p class="text-gray-400 text-center py-10">У вас пока нет опубликованных игр</p>`;
                 return;
