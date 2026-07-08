@@ -9,7 +9,7 @@
     <style>
         body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
         .game-card { transition: all 0.3s; }
-        .game-card:hover { transform: translateY(-8px); }
+        .game-card:hover { transform: translateY(-10px); }
     </style>
 </head>
 <body>
@@ -26,19 +26,39 @@
             </div>
 
             <div id="auth-buttons" class="flex gap-3">
-                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600 rounded-xl">Регистрация</button>
-                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold hover:bg-orange-500 hover:text-black rounded-xl">Войти</button>
+                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 font-bold hover:bg-orange-600">Регистрация</button>
+                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold hover:bg-orange-500 hover:text-black">Войти</button>
             </div>
 
             <div id="user-section" class="hidden items-center gap-4">
                 <span id="username-display" class="text-orange-400 font-bold"></span>
-                <a href="profile.html" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-2 rounded-xl">Профиль</a>
+                <a href="profile.html" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-2 rounded">Профиль</a>
                 <button onclick="logout()" class="text-red-400 hover:text-red-500">Выйти</button>
             </div>
         </div>
     </nav>
 
-    <!-- Register Modal -->
+    <div class="h-[65vh] flex items-center justify-center text-center" 
+         style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
+        <div>
+            <h1 class="text-7xl font-black text-white mb-4">FUCKHUB</h1>
+            <p class="text-3xl text-orange-400">От команды FuckFaz</p>
+        </div>
+    </div>
+
+    <div class="max-w-6xl mx-auto px-8 py-8">
+        <input id="search-input" onkeyup="filterGames()" placeholder="🔍 Поиск игр..." class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-10 focus:outline-none focus:border-orange-500">
+
+        <!-- Игры от FuckHub -->
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
+        <div id="fuckhub-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"></div>
+
+        <!-- Все игры -->
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">Все опубликованные игры</h2>
+        <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
+    </div>
+
+    <!-- Modals (Register & Login) -->
     <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
             <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
@@ -50,7 +70,6 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
     <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
             <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
@@ -61,23 +80,17 @@
         </div>
     </div>
 
-    <div class="h-[65vh] flex items-center justify-center text-center" 
-         style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
-        <div>
-            <h1 class="text-6xl md:text-7xl font-black text-white">FUCKHUB</h1>
-            <p class="text-2xl md:text-3xl text-orange-400">От команды FuckFaz</p>
-        </div>
-    </div>
-
     <script>
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
         let supabaseClient;
         let currentUser = null;
+        let allGames = [];
 
         async function init() {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
                 currentUser = session.user;
@@ -85,6 +98,7 @@
                 document.getElementById('user-section').classList.remove('hidden');
                 document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
             }
+            loadAllGames();
         }
 
         function showRegisterModal() {
@@ -114,7 +128,7 @@
                     options: { data: { username } }
                 });
                 if (error) throw error;
-                alert("✅ Регистрация прошла! Проверь почту для подтверждения.");
+                alert("✅ Регистрация прошла!");
                 hideRegisterModal();
             } catch (e) {
                 alert("Ошибка: " + e.message);
@@ -135,13 +149,55 @@
                 hideLoginModal();
                 location.reload();
             } catch (e) {
-                alert("Ошибка входа: " + e.message);
+                alert("Ошибка: " + e.message);
             }
         }
 
         function logout() {
             supabaseClient.auth.signOut();
             location.reload();
+        }
+
+        function loadAllGames() {
+            allGames = JSON.parse(localStorage.getItem('myGames') || '[]');
+            renderGames(allGames);
+        }
+
+        function renderGames(games) {
+            const fuckhubContainer = document.getElementById('fuckhub-games');
+            const allContainer = document.getElementById('all-games');
+
+            // Игры от FuckHub (твои игры)
+            const fuckhubGames = games.filter(g => g.author && g.author.toLowerCase().includes(currentUser ? currentUser.email : ''));
+            fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g, true)).join('') || 
+                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет твоих игр. Опубликуй в профиле!</p>';
+
+            // Все игры
+            allContainer.innerHTML = games.map(g => createCard(g, false)).join('') || 
+                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет игр</p>';
+        }
+
+        function createCard(g, isFuckhub) {
+            return `
+                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
+                    <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <p class="text-orange-400 text-sm">Автор: ${isFuckhub ? 'FuckHub' : (g.author || 'Неизвестно')}</p>
+                        <p class="text-gray-400 mt-3 line-clamp-3">${g.desc || ''}</p>
+                        <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        function filterGames() {
+            const q = document.getElementById('search-input').value.toLowerCase();
+            const filtered = allGames.filter(g => 
+                g.title.toLowerCase().includes(q) || 
+                (g.desc && g.desc.toLowerCase().includes(q))
+            );
+            renderGames(filtered);
         }
 
         window.onload = init;
