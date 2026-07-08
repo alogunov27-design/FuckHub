@@ -20,10 +20,9 @@
                 <span class="text-4xl font-black text-white">FUCK</span>
                 <span class="text-4xl font-black text-orange-500">HUB</span>
             </div>
-            
             <div class="flex gap-8 text-lg">
                 <a href="#" class="hover:text-orange-400">Магазин</a>
-                <a href="#" onclick="showMyGames()" class="hover:text-orange-400">Мои Игры</a>
+                <a href="profile.html" class="hover:text-orange-400">Мои Игры</a>
             </div>
 
             <div id="auth-buttons" class="flex gap-3">
@@ -39,7 +38,7 @@
         </div>
     </nav>
 
-    <div class="hero-bg h-[65vh] flex items-center justify-center text-center" 
+    <div class="h-[65vh] flex items-center justify-center text-center" 
          style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
         <div>
             <h1 class="text-7xl font-black text-white mb-4">FUCKHUB</h1>
@@ -53,14 +52,14 @@
     </div>
 
     <script>
+        const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
+        
         let supabaseClient;
         let currentUser = null;
 
         async function init() {
-            supabaseClient = window.supabase.createClient(
-                'https://nuyeqiiopptdykxvurrk.supabase.co', 
-                'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY'
-            );
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
@@ -69,52 +68,34 @@
                 document.getElementById('user-section').classList.remove('hidden');
                 document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
             }
-
             loadAllGames();
         }
 
         function loadAllGames() {
             const container = document.getElementById('all-games');
             let games = JSON.parse(localStorage.getItem('myGames') || '[]');
-            
             if (games.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center col-span-3 py-20 text-xl">Пока нет опубликованных игр.<br>Зайди в Профиль и добавь первую!</p>`;
+                container.innerHTML = `<p class="text-gray-400 col-span-3 text-center py-20">Пока нет игр. Опубликуй первую в Профиле!</p>`;
                 return;
             }
-
-            let html = '';
-            games.forEach(game => {
-                html += `
-                    <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-700">
-                        <img src="${game.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
-                        <div class="p-6">
-                            <h3 class="text-2xl font-bold mb-1">${game.title}</h3>
-                            <p class="text-orange-400 text-sm mb-4">Автор: ${game.author || 'Неизвестно'}</p>
-                            <p class="text-gray-400 line-clamp-3 mb-6">${game.desc || 'Без описания'}</p>
-                            
-                            <div class="flex flex-wrap gap-2 mb-6">
-                                ${game.platforms ? game.platforms.map(p => 
-                                    `<span class="text-xs bg-zinc-700 px-3 py-1 rounded-full">${p}</span>`
-                                ).join('') : ''}
-                            </div>
-                            
-                            <a href="${game.download}" target="_blank" 
-                               class="block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
-                                Скачать игру
-                            </a>
-                        </div>
+            container.innerHTML = games.map(g => `
+                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
+                    <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
+                        <p class="text-gray-400 mt-3 line-clamp-3">${g.desc || ''}</p>
+                        <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">
+                            Скачать
+                        </a>
                     </div>
-                `;
-            });
-            container.innerHTML = html;
+                </div>
+            `).join('');
         }
 
-        function showRegisterModal() { alert("Регистрация работает! Зайди в Профиль после входа."); }
-        function showLoginModal() { alert("Вы уже вошли в аккаунт."); }
-        function showMyGames() { window.location.href = "profile.html"; }
-        function logout() { 
-            if (confirm("Выйти из аккаунта?")) location.reload(); 
-        }
+        function logout() { if(confirm("Выйти?")) location.reload(); }
+        function showRegisterModal() { alert("Регистрация работает!"); }
+        function showLoginModal() { alert("Нажми кнопку Профиль после входа"); }
 
         window.onload = init;
     </script>
