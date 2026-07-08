@@ -49,11 +49,9 @@
     <div class="max-w-6xl mx-auto px-8 py-8">
         <input id="search-input" onkeyup="filterGames()" placeholder="🔍 Поиск игр..." class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-10 focus:outline-none focus:border-orange-500">
 
-        <!-- Игры от FuckHub -->
         <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
         <div id="fuckhub-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"></div>
 
-        <!-- Все игры -->
         <h2 class="text-3xl font-bold mb-6 text-orange-400">Все опубликованные игры</h2>
         <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </div>
@@ -110,12 +108,10 @@
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
 
-            // Игры от твоего аккаунта (alogunov27@gmail.com) идут в FuckHub
             const fuckhubGames = games.filter(g => g.author === 'alogunov27@gmail.com');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g, true)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
 
-            // Остальные игры
             const otherGames = games.filter(g => g.author !== 'alogunov27@gmail.com');
             allContainer.innerHTML = otherGames.map(g => createCard(g, false)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
