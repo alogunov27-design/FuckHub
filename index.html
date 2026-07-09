@@ -76,25 +76,26 @@
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
 
-            // Только игры с автором "FuckHub"
+            // Только игры с автором "FuckHub" в первую секцию
             const fuckhubGames = games.filter(g => g.author === 'FuckHub');
-            fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g, true)).join('') || 
+            fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
 
-            // Все остальные игры (от других аккаунтов)
+            // Остальные игры
             const otherGames = games.filter(g => g.author !== 'FuckHub');
-            allContainer.innerHTML = otherGames.map(g => createCard(g, false)).join('') || 
+            allContainer.innerHTML = otherGames.map(g => createCard(g)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
         }
 
-        function createCard(g, isFuckhub) {
+        function createCard(g) {
             return `
                 <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
                     <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
                     <div class="p-6">
                         <h3 class="text-2xl font-bold">${g.title}</h3>
-                        <p class="text-orange-400 text-sm">Автор: ${isFuckhub ? 'FuckHub' : (g.author || 'Неизвестно')}</p>
+                        <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
                         <p class="text-gray-400 mt-3 line-clamp-3">${g.description || ''}</p>
+                        ${g.platforms ? `<p class="text-xs text-gray-500 mt-2">Платформы: ${g.platforms}</p>` : ''}
                         <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
                     </div>
                 </div>
