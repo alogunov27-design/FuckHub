@@ -56,14 +56,46 @@
         <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </div>
 
+    <!-- Register Modal -->
+    <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
+            <input id="reg-username" type="text" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <button onclick="registerUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Зарегистрироваться</button>
+            <button onclick="hideRegisterModal()" class="mt-4 text-gray-400 w-full">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
+            <input id="login-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <button onclick="loginUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Войти</button>
+            <button onclick="hideLoginModal()" class="mt-4 text-gray-400 w-full">Отмена</button>
+        </div>
+    </div>
+
     <script>
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
         let supabaseClient;
+        let currentUser = null;
 
         async function init() {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('auth-buttons').classList.add('hidden');
+                document.getElementById('user-section').classList.remove('hidden');
+                document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+            }
             loadGames();
         }
 
@@ -76,12 +108,10 @@
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
 
-            // Только игры с автором "FuckHub" в первую секцию
             const fuckhubGames = games.filter(g => g.author === 'FuckHub');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
 
-            // Остальные игры
             const otherGames = games.filter(g => g.author !== 'FuckHub');
             allContainer.innerHTML = otherGames.map(g => createCard(g)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
@@ -95,7 +125,6 @@
                         <h3 class="text-2xl font-bold">${g.title}</h3>
                         <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
                         <p class="text-gray-400 mt-3 line-clamp-3">${g.description || ''}</p>
-                        ${g.platforms ? `<p class="text-xs text-gray-500 mt-2">Платформы: ${g.platforms}</p>` : ''}
                         <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
                     </div>
                 </div>
