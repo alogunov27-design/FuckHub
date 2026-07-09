@@ -83,25 +83,64 @@
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
-        let supabaseClient;
+        // Инициализируем клиент глобально
+        let supabaseClient = null;
         let currentUser = null;
 
+        // Ждем загрузки Supabase
+        function initSupabase() {
+            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                return true;
+            }
+            return false;
+        }
+
         async function init() {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            // Пробуем инициализировать Supabase с повторными попытками
+            let attempts = 0;
+            while (!initSupabase() && attempts < 10) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                attempts++;
+            }
             
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                currentUser = session.user;
+            if (!supabaseClient) {
+                console.error('Supabase не загрузился');
+                return;
+            }
+            
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) {
+                    currentUser = session.user;
+                    updateUI();
+                }
+                loadGames();
+            } catch (error) {
+                console.error('Ошибка инициализации:', error);
+            }
+        }
+
+        function updateUI() {
+            if (currentUser) {
                 document.getElementById('auth-buttons').classList.add('hidden');
                 document.getElementById('user-section').classList.remove('hidden');
                 document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+            } else {
+                document.getElementById('auth-buttons').classList.remove('hidden');
+                document.getElementById('user-section').classList.add('hidden');
             }
-            loadGames();
         }
 
         async function loadGames() {
-            const { data } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
-            renderGames(data || []);
+            if (!supabaseClient) return;
+            try {
+                const { data, error } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                renderGames(data || []);
+            } catch (error) {
+                console.error('Ошибка загрузки игр:', error);
+            }
         }
 
         function renderGames(games) {
@@ -150,48 +189,109 @@
         }
 
         async function registerUser() {
+            if (!supabaseClient) {
+                alert('Ошибка соединения с сервером. Попробуйте перезагрузить страницу.');
+                return;
+            }
+
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
 
-            if (!username || !email || !password) return alert("Заполните все поля");
+            if (!username || !email || !password) {
+                alert("Заполните все поля");
+                return;
+            }
+
+            if (password.length < 6) {
+                alert("Пароль должен быть минимум 6 символов");
+                return;
+            }
 
             try {
-                const { error } = await supabaseClient.auth.signUp({
-                    email, password,
-                    options: { data: { username } }
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email, 
+                    password,
+                    options: { 
+                        data: { username },
+                        emailRedirectTo: window.location.origin
+                    }
                 });
+                
                 if (error) throw error;
-                alert("✅ Регистрация прошла! Проверь почту.");
+                
+                alert("✅ Регистрация прошла! Проверьте почту для подтверждения.");
                 hideRegisterModal();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
+                
+                // Очищаем поля
+                document.getElementById('reg-username').value = '';
+                document.getElementById('reg-email').value = '';
+                document.getElementById('reg-password').value = '';
+                
+            } catch (error) {
+                alert("Ошибка регистрации: " + error.message);
+                console.error('Register error:', error);
             }
         }
 
         async function loginUser() {
+            if (!supabaseClient) {
+                alert('Ошибка соединения с сервером. Попробуйте перезагрузить страницу.');
+                return;
+            }
+
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
 
-            if (!email || !password) return alert("Заполните email и пароль");
+            if (!email || !password) {
+                alert("Заполните email и пароль");
+                return;
+            }
 
             try {
-                const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabaseClient.auth.signInWithPassword({ 
+                    email, 
+                    password 
+                });
+                
                 if (error) throw error;
+                
                 alert("✅ Успешный вход!");
                 hideLoginModal();
-                location.reload();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
+                
+                // Обновляем состояние
+                currentUser = data.user;
+                updateUI();
+                loadGames();
+                
+                // Очищаем поля
+                document.getElementById('login-email').value = '';
+                document.getElementById('login-password').value = '';
+                
+            } catch (error) {
+                alert("Ошибка входа: " + error.message);
+                console.error('Login error:', error);
             }
         }
 
-        function logout() {
-            supabaseClient.auth.signOut();
-            location.reload();
+        async function logout() {
+            if (!supabaseClient) return;
+            try {
+                await supabaseClient.auth.signOut();
+                currentUser = null;
+                updateUI();
+                loadGames();
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
         }
 
-        window.onload = init;
+        // Запускаем инициализацию после загрузки страницы
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
     </script>
 </body>
 </html>
