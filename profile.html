@@ -16,7 +16,7 @@
 
     <nav class="bg-black border-b-4 border-orange-500 p-5">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-black">← FuckHub</a>
+            <a href="index.html" class="text-2xl font-black flex items-center gap-2">← FuckHub</a>
             <span class="text-orange-400 font-bold">Профиль</span>
         </div>
     </nav>
@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <!-- Modal -->
+    <!-- Modal публикации / редактирования -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
             <h2 id="modal-title" class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
@@ -81,7 +81,11 @@
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             
             const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) return window.location.href = "index.html";
+            if (!session) {
+                alert("Вы не авторизованы! Перейдите на главную и войдите.");
+                window.location.href = "index.html";
+                return;
+            }
 
             currentUser = session.user;
             document.getElementById('profile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
@@ -127,7 +131,7 @@
 
         async function saveGame() {
             const title = document.getElementById('game-title').value.trim();
-            if (!title) return alert("Название обязательно!");
+            if (!title) return alert("Название игры обязательно!");
 
             const gameData = {
                 title: title,
@@ -143,11 +147,11 @@
                 if (editingGameId) {
                     const { error } = await supabaseClient.from('games').update(gameData).eq('id', editingGameId);
                     if (error) throw error;
-                    alert("Игра обновлена!");
+                    alert("Игра успешно обновлена!");
                 } else {
                     const { error } = await supabaseClient.from('games').insert(gameData);
                     if (error) throw error;
-                    alert("Игра опубликована!");
+                    alert("Игра успешно опубликована!");
                 }
                 hidePublishModal();
                 loadMyGames();
@@ -160,13 +164,9 @@
             if (!confirm("Вы уверены, что хотите удалить эту игру?")) return;
 
             try {
-                console.log("Удаляем игру с id:", id);
                 const { error } = await supabaseClient.from('games').delete().eq('id', id);
-                if (error) {
-                    console.error(error);
-                    throw error;
-                }
-                alert("Игра удалена!");
+                if (error) throw error;
+                alert("Игра успешно удалена!");
                 loadMyGames();
             } catch (e) {
                 alert("Ошибка удаления: " + e.message);
@@ -199,7 +199,8 @@
                             <h3 class="text-2xl font-bold">${g.title}</h3>
                             <p class="text-orange-400">Автор: FuckHub</p>
                             <p class="text-gray-400 mt-3">${g.description || 'Без описания'}</p>
-                            <div class="flex gap-4 mt-6">
+                            <p class="text-xs text-gray-500 mt-4">Платформы: ${g.platforms || 'Не указано'}</p>
+                            <div class="mt-6 flex gap-4">
                                 <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Редактировать</button>
                                 <button onclick="deleteGame('${g.id}')" class="flex-1 bg-red-600 hover:bg-red-700 py-3 rounded-2xl">Удалить</button>
                                 <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl">Скачать</a>
