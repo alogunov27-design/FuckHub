@@ -108,11 +108,11 @@
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
 
-            const fuckhubGames = games.filter(g => g.author === 'alogunov27@gmail.com');
+            const fuckhubGames = games.filter(g => g.author === 'FuckHub');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g, true)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
 
-            const otherGames = games.filter(g => g.author !== 'alogunov27@gmail.com');
+            const otherGames = games.filter(g => g.author !== 'FuckHub');
             allContainer.innerHTML = otherGames.map(g => createCard(g, false)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
         }
