@@ -6,77 +6,112 @@
     <title>FuckHub - FuckFaz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
+        .game-card { transition: all 0.3s; }
+        .game-card:hover { transform: translateY(-10px); }
+    </style>
 </head>
-<body class="bg-[#0a0a0a] text-white">
+<body>
 
-    <nav class="bg-black p-5">
+    <!-- Навбар -->
+    <nav class="bg-black border-b-4 border-orange-500 p-5 sticky top-0 z-50">
         <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="text-3xl font-black">FUCK<span class="text-orange-500">HUB</span></div>
-            <div>
-                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 mr-3 font-bold">Регистрация</button>
-                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold">Войти</button>
+            <div class="flex items-center gap-4">
+                <span class="text-4xl font-black text-white">FUCK</span>
+                <span class="text-4xl font-black text-orange-500">HUB</span>
+            </div>
+            <div class="flex gap-8 text-lg">
+                <a href="#" class="hover:text-orange-400">Магазин</a>
+                <a href="profile.html" class="hover:text-orange-400">Мои Игры</a>
+            </div>
+            <div id="auth-buttons">
+                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 font-bold mr-3 hover:bg-orange-600">Регистрация</button>
+                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold hover:bg-orange-500 hover:text-black">Войти</button>
+            </div>
+            <div id="user-section" class="hidden items-center gap-4">
+                <span id="username-display" class="text-orange-400 font-bold"></span>
+                <a href="profile.html" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-2 rounded">Профиль</a>
+                <button onclick="logout()" class="text-red-400 hover:text-red-500">Выйти</button>
             </div>
         </div>
     </nav>
 
-    <div class="text-center py-20" style="background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover; height: 70vh;">
-        <h1 class="text-6xl font-black">FUCKHUB</h1>
-        <p class="text-2xl text-orange-400">От команды FuckFaz</p>
+    <!-- Hero -->
+    <div class="h-[65vh] flex items-center justify-center text-center" 
+         style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
+        <div>
+            <h1 class="text-7xl font-black text-white mb-4">FUCKHUB</h1>
+            <p class="text-3xl text-orange-400">От команды FuckFaz</p>
+        </div>
+    </div>
+
+    <!-- Контент -->
+    <div class="max-w-6xl mx-auto px-8 py-8">
+        <input id="search-input" onkeyup="filterGames()" placeholder="🔍 Поиск игр..." 
+               class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-10 focus:outline-none focus:border-orange-500">
+
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
+        <div id="fuckhub-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16"></div>
+
+        <h2 class="text-3xl font-bold mb-6 text-orange-400">Все опубликованные игры</h2>
+        <div id="all-games" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
     </div>
 
     <!-- Register Modal -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
-            <h2 class="text-3xl font-bold text-orange-400 mb-8">Регистрация</h2>
-            <input id="reg-username" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded mb-4">
-            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded mb-4">
-            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded mb-6">
-            <button onclick="registerUser()" class="w-full bg-orange-500 text-black py-4 rounded font-bold">Зарегистрироваться</button>
-            <button onclick="hideModals()" class="mt-4 text-gray-400">Отмена</button>
+    <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 border border-orange-500 p-10 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
+            <input id="reg-username" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <button onclick="registerUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Зарегистрироваться</button>
+            <button onclick="hideModals()" class="mt-4 text-gray-400 w-full">Отмена</button>
         </div>
     </div>
 
     <!-- Login Modal -->
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
-            <h2 class="text-3xl font-bold text-orange-400 mb-8">Вход</h2>
-            <input id="login-email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded mb-4">
-            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded mb-6">
-            <button onclick="loginUser()" class="w-full bg-orange-500 text-black py-4 rounded font-bold">Войти</button>
-            <button onclick="hideModals()" class="mt-4 text-gray-400">Отмена</button>
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 border border-orange-500 p-10 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
+            <input id="login-email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <button onclick="loginUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Войти</button>
+            <button onclick="hideModals()" class="mt-4 text-gray-400 w-full">Отмена</button>
         </div>
     </div>
 
     <script>
+        // Правильная инициализация Supabase
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Используем сущность из глобального объекта window.supabase
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        let currentUser = null;
 
-        function showRegisterModal() {
+        // Объявляем функции в глобальной области видимости
+        window.showRegisterModal = function() {
             document.getElementById('register-modal').classList.remove('hidden');
-        }
+        };
 
-        function showLoginModal() {
+        window.showLoginModal = function() {
             document.getElementById('login-modal').classList.remove('hidden');
-        }
+        };
 
-        function hideModals() {
+        window.hideModals = function() {
             document.getElementById('register-modal').classList.add('hidden');
             document.getElementById('login-modal').classList.add('hidden');
-        }
+        };
 
-        async function registerUser() {
+        window.registerUser = async function() {
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
 
-            if (!username || !email || !password) {
-                alert("Заполните все поля");
-                return;
-            }
+            if (!username || !email || !password) return alert("Заполните все поля");
 
-            const { error } = await supabase.auth.signUp({
+            const { error } = await supabaseClient.auth.signUp({
                 email: email,
                 password: password,
                 options: { data: { username: username } }
@@ -88,18 +123,15 @@
                 alert("✅ Регистрация прошла! Проверь почту.");
                 hideModals();
             }
-        }
+        };
 
-        async function loginUser() {
+        window.loginUser = async function() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
 
-            if (!email || !password) {
-                alert("Заполните email и пароль");
-                return;
-            }
+            if (!email || !password) return alert("Заполните email и пароль");
 
-            const { error } = await supabase.auth.signInWithPassword({
+            const { error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: password
             });
@@ -111,7 +143,62 @@
                 hideModals();
                 location.reload();
             }
+        };
+
+        window.logout = function() {
+            supabaseClient.auth.signOut();
+            location.reload();
+        };
+
+        async function init() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                currentUser = session.user;
+                document.getElementById('auth-buttons').classList.add('hidden');
+                document.getElementById('user-section').classList.remove('hidden');
+                document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+            }
+            await loadGames();
         }
+
+        async function loadGames() {
+            const { data } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
+            renderGames(data || []);
+        }
+
+        function renderGames(games) {
+            const fuckhubContainer = document.getElementById('fuckhub-games');
+            const allContainer = document.getElementById('all-games');
+
+            const fuckhubGames = games.filter(g => g.author === 'FuckHub');
+            fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
+                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
+
+            const otherGames = games.filter(g => g.author !== 'FuckHub');
+            allContainer.innerHTML = otherGames.map(g => createCard(g)).join('') || 
+                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
+        }
+
+        function createCard(g) {
+            return `
+                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
+                    <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover" alt="${g.title}">
+                    <div class="p-6">
+                        <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
+                        <p class="text-gray-400 mt-3 line-clamp-3">${g.description || ''}</p>
+                        <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.filterGames = function() {
+            loadGames();
+        };
+
+        // Запускаем инициализацию при загрузке
+        window.onload = init;
     </script>
 </body>
 </html>
