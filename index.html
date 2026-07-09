@@ -10,6 +10,18 @@
         body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
         .game-card { transition: all 0.3s; }
         .game-card:hover { transform: translateY(-10px); }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.95);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal.active {
+            display: flex;
+        }
     </style>
 </head>
 <body>
@@ -57,67 +69,122 @@
     </div>
 
     <!-- Register Modal -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
+    <div id="register-modal" class="modal">
+        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md relative">
+            <button onclick="hideRegisterModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
             <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
-            <input id="reg-username" type="text" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <input id="reg-username" type="text" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4 text-white">
+            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4 text-white">
+            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6 text-white">
             <button onclick="registerUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Зарегистрироваться</button>
-            <button onclick="hideRegisterModal()" class="mt-4 text-gray-400 w-full">Отмена</button>
         </div>
     </div>
 
     <!-- Login Modal -->
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md">
+    <div id="login-modal" class="modal">
+        <div class="bg-zinc-900 p-8 rounded-3xl w-full max-w-md relative">
+            <button onclick="hideLoginModal()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-2xl">&times;</button>
             <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
-            <input id="login-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <input id="login-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4 text-white">
+            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6 text-white">
             <button onclick="loginUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Войти</button>
-            <button onclick="hideLoginModal()" class="mt-4 text-gray-400 w-full">Отмена</button>
         </div>
     </div>
 
     <script>
+        // Проверяем, что Supabase загрузился
+        console.log('Supabase loaded:', typeof window.supabase !== 'undefined');
+        
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
-        // Инициализируем клиент глобально
         let supabaseClient = null;
         let currentUser = null;
 
-        // Ждем загрузки Supabase
-        function initSupabase() {
-            if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-                return true;
+        // Функции для модальных окон
+        function showRegisterModal() {
+            console.log('showRegisterModal called');
+            const modal = document.getElementById('register-modal');
+            if (modal) {
+                modal.classList.add('active');
+                console.log('Register modal shown');
+            } else {
+                console.error('Register modal not found');
             }
-            return false;
+        }
+
+        function hideRegisterModal() {
+            console.log('hideRegisterModal called');
+            const modal = document.getElementById('register-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        function showLoginModal() {
+            console.log('showLoginModal called');
+            const modal = document.getElementById('login-modal');
+            if (modal) {
+                modal.classList.add('active');
+                console.log('Login modal shown');
+            } else {
+                console.error('Login modal not found');
+            }
+        }
+
+        function hideLoginModal() {
+            console.log('hideLoginModal called');
+            const modal = document.getElementById('login-modal');
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        }
+
+        // Инициализация Supabase
+        function initSupabase() {
+            try {
+                if (typeof window.supabase !== 'undefined' && window.supabase.createClient) {
+                    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    console.log('Supabase client created successfully');
+                    return true;
+                } else {
+                    console.error('Supabase SDK not available');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error creating Supabase client:', error);
+                return false;
+            }
         }
 
         async function init() {
-            // Пробуем инициализировать Supabase с повторными попытками
-            let attempts = 0;
-            while (!initSupabase() && attempts < 10) {
-                await new Promise(resolve => setTimeout(resolve, 500));
-                attempts++;
-            }
+            console.log('Initializing app...');
             
-            if (!supabaseClient) {
-                console.error('Supabase не загрузился');
+            // Инициализируем Supabase
+            if (!initSupabase()) {
+                console.error('Failed to initialize Supabase');
                 return;
             }
-            
+
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                // Проверяем сессию
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error('Session error:', error);
+                }
+                
                 if (session) {
                     currentUser = session.user;
                     updateUI();
+                    console.log('User logged in:', currentUser.email);
+                } else {
+                    console.log('No active session');
                 }
-                loadGames();
+                
+                // Загружаем игры
+                await loadGames();
             } catch (error) {
-                console.error('Ошибка инициализации:', error);
+                console.error('Init error:', error);
             }
         }
 
@@ -133,19 +200,36 @@
         }
 
         async function loadGames() {
-            if (!supabaseClient) return;
+            if (!supabaseClient) {
+                console.error('Supabase client not initialized');
+                return;
+            }
+            
             try {
-                const { data, error } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
+                const { data, error } = await supabaseClient
+                    .from('games')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                    
+                if (error) {
+                    console.error('Error loading games:', error);
+                    return;
+                }
+                
                 renderGames(data || []);
             } catch (error) {
-                console.error('Ошибка загрузки игр:', error);
+                console.error('Load games error:', error);
             }
         }
 
         function renderGames(games) {
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
+
+            if (!fuckhubContainer || !allContainer) {
+                console.error('Game containers not found');
+                return;
+            }
 
             const fuckhubGames = games.filter(g => g.author === 'FuckHub');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
@@ -161,10 +245,10 @@
                 <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
                     <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover">
                     <div class="p-6">
-                        <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <h3 class="text-2xl font-bold">${g.title || 'Без названия'}</h3>
                         <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
                         <p class="text-gray-400 mt-3 line-clamp-3">${g.description || ''}</p>
-                        <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
+                        <a href="${g.download || '#'}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
                     </div>
                 </div>
             `;
@@ -172,20 +256,6 @@
 
         function filterGames() {
             loadGames();
-        }
-
-        function showRegisterModal() {
-            document.getElementById('register-modal').classList.remove('hidden');
-        }
-        function hideRegisterModal() {
-            document.getElementById('register-modal').classList.add('hidden');
-        }
-
-        function showLoginModal() {
-            document.getElementById('login-modal').classList.remove('hidden');
-        }
-        function hideLoginModal() {
-            document.getElementById('login-modal').classList.add('hidden');
         }
 
         async function registerUser() {
@@ -213,8 +283,7 @@
                     email, 
                     password,
                     options: { 
-                        data: { username },
-                        emailRedirectTo: window.location.origin
+                        data: { username }
                     }
                 });
                 
@@ -262,7 +331,7 @@
                 // Обновляем состояние
                 currentUser = data.user;
                 updateUI();
-                loadGames();
+                await loadGames();
                 
                 // Очищаем поля
                 document.getElementById('login-email').value = '';
@@ -280,7 +349,7 @@
                 await supabaseClient.auth.signOut();
                 currentUser = null;
                 updateUI();
-                loadGames();
+                await loadGames();
             } catch (error) {
                 console.error('Logout error:', error);
             }
@@ -292,6 +361,18 @@
         } else {
             init();
         }
+
+        // Для отладки - делаем функции доступными глобально
+        window.showRegisterModal = showRegisterModal;
+        window.showLoginModal = showLoginModal;
+        window.hideRegisterModal = hideRegisterModal;
+        window.hideLoginModal = hideLoginModal;
+        window.registerUser = registerUser;
+        window.loginUser = loginUser;
+        window.logout = logout;
+        window.filterGames = filterGames;
+
+        console.log('Script loaded');
     </script>
 </body>
 </html>
