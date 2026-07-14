@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Игра • FuckHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
+    </style>
+</head>
+<body>
+    <nav class="bg-[#0f1117] border-b border-[#1f2533] px-8 py-4">
+        <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
+                ← <span>FUCK</span><span class="text-orange-500">HUB</span>
+            </a>
+        </div>
+    </nav>
+
+    <div class="max-w-6xl mx-auto px-8 py-10" id="game-content">
+        <!-- Здесь будет загружаться игра -->
+        <div class="text-center py-20 text-zinc-500">Загрузка игры...</div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        async function loadGame() {
+            const params = new URLSearchParams(window.location.search);
+            const gameId = params.get('id');
+
+            if (!gameId) {
+                document.getElementById('game-content').innerHTML = `<p class="text-red-400">Игра не найдена</p>`;
+                return;
+            }
+
+            const { data: game, error } = await supabaseClient
+                .from('games')
+                .select('*')
+                .eq('id', gameId)
+                .single();
+
+            if (error || !game) {
+                document.getElementById('game-content').innerHTML = `<p class="text-red-400">Игра не найдена</p>`;
+                return;
+            }
+
+            // Рендерим страницу игры
+            document.getElementById('game-content').innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Левая колонка -->
+                    <div class="lg:col-span-2">
+                        <img src="${game.cover || 'https://picsum.photos/800/450'}" class="w-full rounded-2xl mb-6" alt="${game.title}">
+                        
+                        <h1 class="text-4xl font-bold mb-2">${game.title}</h1>
+                        <p class="text-zinc-400 mb-6">от ${game.author} • ${new Date(game.created_at).toLocaleDateString('ru-RU')}</p>
+
+                        <div class="prose prose-invert max-w-none mb-8">
+                            <p>${game.description || 'Описание отсутствует.'}</p>
+                        </div>
+
+                        <!-- Скриншоты / Арты (пока заглушка) -->
+                        <div class="mb-10">
+                            <h3 class="text-xl font-semibold mb-4">Скриншоты и арты</h3>
+                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                <div class="aspect-video bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500">Скриншот 1</div>
+                                <div class="aspect-video bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500">Скриншот 2</div>
+                                <div class="aspect-video bg-zinc-800 rounded-xl flex items-center justify-center text-zinc-500">Скриншот 3</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Правая колонка -->
+                    <div>
+                        <div class="bg-[#1a1f2e] rounded-2xl p-6 mb-6">
+                            <button onclick="window.open('${game.download}', '_blank')" 
+                                    class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl mb-4">
+                                Скачать игру
+                            </button>
+                            
+                            <div class="text-sm text-zinc-400 space-y-1">
+                                <div>Платформы: <span class="text-white">${game.platforms || 'Не указано'}</span></div>
+                                <div>Теги: <span class="text-white">${game.tags ? game.tags.join(', ') : 'Нет'}</span></div>
+                            </div>
+                        </div>
+
+                        <!-- Комментарии -->
+                        <div class="bg-[#1a1f2e] rounded-2xl p-6">
+                            <h3 class="font-semibold mb-4">Обсуждение</h3>
+                            <div class="text-zinc-400 text-sm">
+                                Комментарии появятся позже (в разработке)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        window.onload = loadGame;
+    </script>
+</body>
+</html>
