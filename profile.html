@@ -3,89 +3,121 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль - FuckHub</title>
+    <title>Профиль • FuckHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
-        .platform-btn, .tag-btn { transition: all 0.2s; }
-        .platform-btn.active, .tag-btn.active { background-color: #f97316; color: black; font-weight: bold; }
-        .tag-btn { font-size: 0.875rem; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0f1117;
+            color: #c5d1e0;
+        }
+        .game-card {
+            transition: all 0.3s ease;
+            background: #1a1f2e;
+        }
+        .platform-btn, .tag-btn {
+            transition: all 0.2s;
+        }
+        .platform-btn.active, .tag-btn.active {
+            background-color: #f97316;
+            color: black;
+            font-weight: 600;
+        }
     </style>
 </head>
-<body class="min-h-screen">
+<body>
 
-    <nav class="bg-black border-b-4 border-orange-500 p-5">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="text-2xl font-black flex items-center gap-2">← FuckHub</a>
-            <span class="text-orange-400 font-bold">Профиль</span>
+    <!-- Навбар -->
+    <nav class="bg-[#0f1117] border-b border-[#1f2533] sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-8 flex justify-between items-center h-14">
+            <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
+                ← <span>FUCK</span><span class="text-orange-500">HUB</span>
+            </a>
+            <span class="font-semibold text-orange-500">Профиль</span>
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto p-6 md:p-10">
-        <div class="bg-zinc-900 rounded-3xl p-8 md:p-10">
-            <h1 class="text-4xl md:text-5xl font-bold text-orange-400 mb-8">Профиль</h1>
-            
-            <div class="mb-10 p-6 bg-zinc-800 rounded-2xl">
-                <p class="text-xl"><strong>Никнейм:</strong> <span id="profile-username"></span></p>
-                <p class="text-xl"><strong>Email:</strong> <span id="profile-email"></span></p>
+    <div class="max-w-5xl mx-auto px-8 py-10">
+        
+        <!-- Информация о пользователе -->
+        <div class="bg-[#1a1f2e] rounded-3xl p-8 mb-10">
+            <h1 class="text-3xl font-semibold mb-6">Профиль</h1>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 text-lg">
+                <div>
+                    <span class="text-zinc-400">Никнейм:</span> 
+                    <span id="profile-username" class="font-medium"></span>
+                </div>
+                <div>
+                    <span class="text-zinc-400">Email:</span> 
+                    <span id="profile-email" class="font-medium"></span>
+                </div>
             </div>
+        </div>
 
-            <button onclick="showPublishModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-2xl py-6 rounded-2xl mb-10">
+        <!-- Кнопка публикации -->
+        <div class="mb-10">
+            <button onclick="showPublishModal()" 
+                    class="w-full md:w-auto bg-white text-black font-semibold px-8 py-4 rounded-2xl hover:bg-zinc-100 transition-colors text-lg">
                 + Опубликовать новую игру
             </button>
+        </div>
 
-            <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои опубликованные игры</h2>
-            <div id="my-games-list" class="space-y-6"></div>
+        <!-- Мои игры -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-6">Мои опубликованные игры</h2>
+            <div id="my-games-list" class="space-y-5"></div>
         </div>
     </div>
 
     <!-- Модал публикации -->
-    <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
-        <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-8">
-            <h2 id="modal-title" class="text-3xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
+    <div id="publish-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-2xl">
+            <h2 id="modal-title" class="text-2xl font-semibold mb-8 text-center">Публикация игры</h2>
             
             <input id="game-id" type="hidden">
             
-            <input id="game-title" placeholder="Название игры" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <textarea id="game-desc" placeholder="Описание игры" class="w-full p-4 bg-zinc-800 rounded-2xl h-28 mb-6"></textarea>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <input id="game-title" placeholder="Название игры" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                <input id="game-cover" placeholder="Ссылка на обложку" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            </div>
+            
+            <textarea id="game-desc" placeholder="Описание игры" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl h-28 mb-6"></textarea>
             
             <!-- Платформы -->
             <div class="mb-6">
-                <p class="mb-3 text-lg">Платформы:</p>
-                <div class="flex gap-3 flex-wrap">
-                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-5 py-2 bg-zinc-800 rounded-xl">🖥️ PC</button>
-                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-5 py-2 bg-zinc-800 rounded-xl">📱 Android</button>
-                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-5 py-2 bg-zinc-800 rounded-xl">🍎 iOS</button>
+                <p class="mb-3 text-sm font-medium text-zinc-400">Платформы</p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-5 py-2 bg-[#1f2533] rounded-xl text-sm">🖥️ PC</button>
+                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-5 py-2 bg-[#1f2533] rounded-xl text-sm">📱 Android</button>
+                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-5 py-2 bg-[#1f2533] rounded-xl text-sm">🍎 iOS</button>
                 </div>
             </div>
 
             <!-- Теги -->
             <div class="mb-6">
-                <p class="mb-3 text-lg">Теги:</p>
-                <div class="flex flex-wrap gap-2" id="tags-container">
-                    <button onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Furry</button>
-                    <button onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Adult</button>
-                    <button onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">NSFW</button>
-                    <button onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Horror</button>
-                    <button onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Action</button>
-                    <button onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">RPG</button>
-                    <button onclick="toggleTag(this)" data-tag="Puzzle" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Puzzle</button>
+                <p class="mb-3 text-sm font-medium text-zinc-400">Теги</p>
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Furry</button>
+                    <button onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Adult</button>
+                    <button onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">NSFW</button>
+                    <button onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Horror</button>
+                    <button onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Action</button>
+                    <button onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">RPG</button>
                 </div>
             </div>
 
             <!-- NSFW -->
-            <div class="mb-6 flex items-center gap-3">
-                <input type="checkbox" id="game-nsfw" class="w-5 h-5 accent-orange-500">
-                <label for="game-nsfw" class="text-lg">Это 18+ контент</label>
+            <div class="mb-8 flex items-center gap-3">
+                <input type="checkbox" id="game-nsfw" class="w-4 h-4 accent-orange-500">
+                <label for="game-nsfw" class="text-sm">Это 18+ контент</label>
             </div>
-            
-            <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-8">
+
+            <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-8">
 
             <div class="flex gap-4">
-                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Сохранить</button>
-                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">Отмена</button>
+                <button onclick="saveGame()" class="flex-1 bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Сохранить</button>
+                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3.5 rounded-2xl">Отмена</button>
             </div>
         </div>
     </div>
@@ -142,7 +174,6 @@
             editingGameId = game ? game.id : null;
             document.getElementById('modal-title').textContent = game ? "Редактировать игру" : "Новая игра";
 
-            // Сброс
             selectedPlatforms = [];
             selectedTags = [];
             document.querySelectorAll('.platform-btn, .tag-btn').forEach(el => el.classList.remove('active'));
@@ -157,7 +188,6 @@
                 if (game.platforms) selectedPlatforms = game.platforms.split(', ');
                 if (game.tags) selectedTags = game.tags;
 
-                // Активируем выбранные платформы и теги
                 document.querySelectorAll('.platform-btn').forEach(btn => {
                     if (selectedPlatforms.includes(btn.dataset.platform)) btn.classList.add('active');
                 });
@@ -197,11 +227,11 @@
                 if (editingGameId) {
                     const { error } = await supabaseClient.from('games').update(gameData).eq('id', editingGameId);
                     if (error) throw error;
-                    alert("Игра успешно обновлена!");
+                    alert("Игра обновлена!");
                 } else {
                     const { error } = await supabaseClient.from('games').insert(gameData);
                     if (error) throw error;
-                    alert("Игра успешно опубликована!");
+                    alert("Игра опубликована!");
                 }
                 hidePublishModal();
                 loadMyGames();
@@ -218,37 +248,32 @@
                 .order('created_at', { ascending: false });
 
             const container = document.getElementById('my-games-list');
-            if (error) {
-                container.innerHTML = `<p class="text-red-400">Ошибка: ${error.message}</p>`;
-                return;
-            }
-            if (!data || data.length === 0) {
-                container.innerHTML = `<p class="text-gray-400 text-center py-10">У вас пока нет опубликованных игр</p>`;
+            if (error || !data || data.length === 0) {
+                container.innerHTML = `<p class="text-zinc-500 py-8 text-center">У вас пока нет опубликованных игр</p>`;
                 return;
             }
 
             container.innerHTML = data.map(g => {
                 const tagsHTML = g.tags && g.tags.length > 0 
-                    ? g.tags.map(tag => `<span class="inline-block bg-zinc-700 text-xs px-3 py-1 rounded-full mr-1 mb-1">${tag}</span>`).join('')
+                    ? g.tags.map(tag => `<span class="inline-block bg-[#1f2533] text-xs px-3 py-1 rounded-full mr-1 mb-1">${tag}</span>`).join('')
                     : '';
 
                 return `
-                    <div class="bg-zinc-800 rounded-3xl p-6">
+                    <div class="bg-[#1a1f2e] rounded-2xl p-6 border border-[#2a3344]">
                         <div class="flex gap-6">
-                            <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-36 h-36 object-cover rounded-2xl flex-shrink-0">
-                            <div class="flex-1">
-                                <div class="flex justify-between">
-                                    <h3 class="text-2xl font-bold">${g.title}</h3>
-                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full h-fit">18+</span>' : ''}
+                            <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-28 h-28 object-cover rounded-xl flex-shrink-0">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-start">
+                                    <h3 class="font-semibold text-xl">${g.title}</h3>
+                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>' : ''}
                                 </div>
-                                <p class="text-orange-400 text-sm">Автор: ${g.author}</p>
-                                <p class="text-gray-400 mt-2 text-sm">${g.description || ''}</p>
+                                <p class="text-sm text-zinc-400 mt-1">${g.author}</p>
                                 
                                 ${tagsHTML ? `<div class="mt-3">${tagsHTML}</div>` : ''}
                                 
                                 <div class="mt-5 flex gap-3">
-                                    <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl text-sm">Редактировать</button>
-                                    <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl text-sm">Скачать</a>
+                                    <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-xl text-sm">Редактировать</button>
+                                    <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-xl text-sm">Скачать</a>
                                 </div>
                             </div>
                         </div>
