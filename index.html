@@ -48,14 +48,12 @@
         </div>
     </div>
 
-    <!-- Контент -->
     <div class="max-w-6xl mx-auto px-6 py-8">
-        
         <!-- Поиск -->
         <input id="search-input" onkeyup="filterGames()" placeholder="🔍 Поиск игр..." 
-               class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-8 focus:outline-none focus:border-orange-500">
+               class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-6 focus:outline-none focus:border-orange-500">
 
-        <!-- Фильтры по платформам -->
+        <!-- Фильтры -->
         <div class="flex flex-wrap gap-3 mb-8">
             <button onclick="filterByPlatform('all')" class="filter-btn active px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="all">Все</button>
             <button onclick="filterByPlatform('PC')" class="filter-btn px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="PC">🖥️ PC</button>
@@ -70,8 +68,28 @@
         <div id="all-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
 
-    <!-- Модалы (регистрация и вход) -->
-    <!-- ... (оставляю как было) -->
+    <!-- Register Modal -->
+    <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 border border-orange-500 p-8 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
+            <input id="reg-username" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <button onclick="registerUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Зарегистрироваться</button>
+            <button onclick="hideModals()" class="mt-4 text-gray-400 w-full">Отмена</button>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
+        <div class="bg-zinc-900 border border-orange-500 p-8 rounded-3xl w-full max-w-md">
+            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
+            <input id="login-email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
+            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
+            <button onclick="loginUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Войти</button>
+            <button onclick="hideModals()" class="mt-4 text-gray-400 w-full">Отмена</button>
+        </div>
+    </div>
 
     <script>
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
@@ -82,7 +100,65 @@
         let allGames = [];
         let currentPlatformFilter = 'all';
 
-        // Функции регистрации, входа, выхода (оставляю как было)
+        // === АВТОРИЗАЦИЯ ===
+        window.showRegisterModal = function() {
+            document.getElementById('register-modal').classList.remove('hidden');
+        };
+
+        window.showLoginModal = function() {
+            document.getElementById('login-modal').classList.remove('hidden');
+        };
+
+        window.hideModals = function() {
+            document.getElementById('register-modal').classList.add('hidden');
+            document.getElementById('login-modal').classList.add('hidden');
+        };
+
+        window.registerUser = async function() {
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            const password = document.getElementById('reg-password').value.trim();
+
+            if (!username || !email || !password) return alert("Заполните все поля");
+
+            const { error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: password,
+                options: { data: { username: username } }
+            });
+
+            if (error) {
+                alert("Ошибка: " + error.message);
+            } else {
+                alert("✅ Регистрация прошла! Проверь почту.");
+                hideModals();
+            }
+        };
+
+        window.loginUser = async function() {
+            const email = document.getElementById('login-email').value.trim();
+            const password = document.getElementById('login-password').value.trim();
+
+            if (!email || !password) return alert("Заполните email и пароль");
+
+            const { error } = await supabaseClient.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                alert("Ошибка: " + error.message);
+            } else {
+                alert("✅ Успешный вход!");
+                hideModals();
+                location.reload();
+            }
+        };
+
+        window.logout = function() {
+            supabaseClient.auth.signOut();
+            location.reload();
+        };
 
         async function init() {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -107,12 +183,10 @@
 
             let filteredGames = games;
 
-            // Фильтр по платформе
             if (currentPlatformFilter !== 'all') {
                 filteredGames = games.filter(g => g.platforms && g.platforms.includes(currentPlatformFilter));
             }
 
-            // Фильтр по поиску
             const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
             if (searchTerm) {
                 filteredGames = filteredGames.filter(g =>
@@ -123,7 +197,7 @@
 
             const fuckhubGames = filteredGames.filter(g => g.author === 'FuckHub');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
-                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
+                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр</p>';
 
             const otherGames = filteredGames.filter(g => g.author !== 'FuckHub');
             allContainer.innerHTML = otherGames.map(g => createCard(g)).join('') || 
@@ -159,13 +233,11 @@
                         </div>
                         
                         <p class="text-orange-400 text-sm mb-2">Автор: ${g.author || 'Неизвестно'}</p>
-                        
                         ${platformsHTML ? `<div class="mb-3">${platformsHTML}</div>` : ''}
-                        
                         <p class="text-gray-400 text-sm line-clamp-3 mb-4">${g.description || 'Описание отсутствует'}</p>
                         
                         <a href="${g.download || '#'}" target="_blank" 
-                           class="block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3.5 rounded-2xl text-sm transition-all">
+                           class="block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3.5 rounded-2xl text-sm">
                             Скачать / Играть
                         </a>
                     </div>
@@ -173,17 +245,11 @@
             `;
         }
 
-        // Фильтр по платформе
         window.filterByPlatform = function(platform) {
             currentPlatformFilter = platform;
-            
-            // Снимаем активный класс со всех кнопок
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            
-            // Добавляем активный класс на нужную кнопку
             const activeBtn = document.querySelector(`.filter-btn[data-platform="${platform}"]`);
             if (activeBtn) activeBtn.classList.add('active');
-            
             renderGames(allGames);
         };
 
