@@ -82,15 +82,13 @@
     </div>
 
     <script>
-        // Правильная инициализация Supabase
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
-        // Используем сущность из глобального объекта window.supabase
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         let currentUser = null;
+        let allGames = [];
 
-        // Объявляем функции в глобальной области видимости
         window.showRegisterModal = function() {
             document.getElementById('register-modal').classList.remove('hidden');
         };
@@ -163,13 +161,15 @@
 
         async function loadGames() {
             const { data } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
-            renderGames(data || []);
+            allGames = data || [];
+            renderGames(allGames);
         }
 
         function renderGames(games) {
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
 
+            // Твои игры (FuckHub) всегда первыми
             const fuckhubGames = games.filter(g => g.author === 'FuckHub');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр от FuckHub</p>';
@@ -179,25 +179,59 @@
                 '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
         }
 
+        window.filterGames = function() {
+            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderGames(allGames);
+                return;
+            }
+
+            const filtered = allGames.filter(g => 
+                (g.title && g.title.toLowerCase().includes(searchTerm)) ||
+                (g.description && g.description.toLowerCase().includes(searchTerm)) ||
+                (g.author && g.author.toLowerCase().includes(searchTerm))
+            );
+
+            renderGames(filtered);
+        };
+
         function createCard(g) {
+            let platformsHTML = '';
+            if (g.platforms) {
+                const platforms = g.platforms.split(',').map(p => p.trim());
+                platformsHTML = platforms.map(p => {
+                    let icon = '';
+                    if (p.includes('PC')) icon = '🖥️';
+                    else if (p.includes('Android')) icon = '📱';
+                    else if (p.includes('iOS') || p.includes('iPhone')) icon = '🍎';
+                    return `<span class="inline-block bg-zinc-800 text-xs px-3 py-1 rounded-full mr-1 mb-1">${icon} ${p}</span>`;
+                }).join('');
+            }
+
             return `
-                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden">
+                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 hover:border-orange-500">
                     <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-64 object-cover" alt="${g.title}">
                     <div class="p-6">
-                        <h3 class="text-2xl font-bold">${g.title}</h3>
-                        <p class="text-orange-400 text-sm">Автор: ${g.author || 'Неизвестно'}</p>
-                        <p class="text-gray-400 mt-3 line-clamp-3">${g.description || ''}</p>
-                        <a href="${g.download}" target="_blank" class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Скачать</a>
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-2xl font-bold">${g.title}</h3>
+                            ${g.author === 'FuckHub' ? '<span class="bg-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">🔥 От FuckFaz</span>' : ''}
+                        </div>
+                        <p class="text-orange-400 text-sm mb-2">Автор: ${g.author || 'Неизвестно'}</p>
+                        
+                        ${platformsHTML ? `<div class="mb-3">${platformsHTML}</div>` : ''}
+                        
+                        <p class="text-gray-400 mt-1 line-clamp-3 text-sm">${g.description || 'Описание отсутствует'}</p>
+                        
+                        <a href="${g.download || '#'}" target="_blank" 
+                           class="mt-6 block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl transition-all active:scale-[0.985]">
+                            Скачать / Играть
+                        </a>
                     </div>
                 </div>
             `;
         }
 
-        window.filterGames = function() {
-            loadGames();
-        };
-
-        // Запускаем инициализацию при загрузке
         window.onload = init;
     </script>
 </body>
