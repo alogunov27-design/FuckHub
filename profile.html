@@ -10,6 +10,7 @@
         body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
         .platform-btn { transition: all 0.2s; }
         .platform-btn.active { background-color: #f97316; color: black; font-weight: bold; }
+        .game-card { transition: all 0.3s ease; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -21,49 +22,55 @@
         </div>
     </nav>
 
-    <div class="max-w-4xl mx-auto p-10">
-        <div class="bg-zinc-900 rounded-3xl p-10">
-            <h1 class="text-5xl font-bold text-orange-400 mb-8">Профиль</h1>
+    <div class="max-w-4xl mx-auto p-6 md:p-10">
+        <div class="bg-zinc-900 rounded-3xl p-8 md:p-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-orange-400 mb-8">Профиль</h1>
             
-            <div class="mb-12 p-6 bg-zinc-800 rounded-2xl">
+            <div class="mb-10 p-6 bg-zinc-800 rounded-2xl">
                 <p class="text-xl"><strong>Никнейм:</strong> <span id="profile-username"></span></p>
                 <p class="text-xl"><strong>Email:</strong> <span id="profile-email"></span></p>
             </div>
 
-            <button onclick="showPublishModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-2xl py-6 rounded-2xl mb-12">
+            <button onclick="showPublishModal()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-black text-2xl py-6 rounded-2xl mb-10">
                 + Опубликовать новую игру
             </button>
 
             <h2 class="text-3xl font-bold mb-6 text-orange-400">Мои опубликованные игры</h2>
-            <div id="my-games-list" class="space-y-8"></div>
+            <div id="my-games-list" class="space-y-6"></div>
         </div>
     </div>
 
-    <!-- Modal публикации -->
-    <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
-            <h2 id="modal-title" class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
+    <!-- Модал публикации / редактирования -->
+    <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
+        <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-8">
+            <h2 id="modal-title" class="text-3xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
             
             <input id="game-id" type="hidden">
             
-            <input id="game-title" placeholder="Название игры" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-4">
-            <textarea id="game-desc" placeholder="Описание игры" class="w-full p-5 bg-zinc-800 rounded-2xl h-32 mb-6"></textarea>
+            <input id="game-title" placeholder="Название игры" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-4">
+            <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-4">
+            <textarea id="game-desc" placeholder="Описание игры" class="w-full p-4 bg-zinc-800 rounded-2xl h-28 mb-6"></textarea>
             
             <div class="mb-6">
                 <p class="mb-3 text-lg">Платформы:</p>
                 <div class="flex gap-3 flex-wrap">
-                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🖥️ PC</button>
-                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">📱 Android</button>
-                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-6 py-3 bg-zinc-800 rounded-xl">🍎 iPhone / iPad</button>
+                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-5 py-2 bg-zinc-800 rounded-xl">🖥️ PC</button>
+                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-5 py-2 bg-zinc-800 rounded-xl">📱 Android</button>
+                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-5 py-2 bg-zinc-800 rounded-xl">🍎 iOS</button>
                 </div>
             </div>
+
+            <!-- NSFW чекбокс -->
+            <div class="mb-6 flex items-center gap-3">
+                <input type="checkbox" id="game-nsfw" class="w-5 h-5 accent-orange-500">
+                <label for="game-nsfw" class="text-lg">Это 18+ контент (NSFW)</label>
+            </div>
             
-            <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full p-5 bg-zinc-800 rounded-2xl text-lg mb-8">
-            
+            <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-8">
+
             <div class="flex gap-4">
-                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-5 rounded-2xl">Сохранить</button>
-                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-5 rounded-2xl">Отмена</button>
+                <button onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Сохранить</button>
+                <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-4 rounded-2xl">Отмена</button>
             </div>
         </div>
     </div>
@@ -114,12 +121,14 @@
                 document.getElementById('game-cover').value = game.cover || '';
                 document.getElementById('game-desc').value = game.description || '';
                 document.getElementById('game-download').value = game.download || '';
+                document.getElementById('game-nsfw').checked = game.is_nsfw || false;
                 selectedPlatforms = game.platforms ? game.platforms.split(', ') : [];
             } else {
                 document.getElementById('game-title').value = '';
                 document.getElementById('game-cover').value = '';
                 document.getElementById('game-desc').value = '';
                 document.getElementById('game-download').value = '';
+                document.getElementById('game-nsfw').checked = false;
                 selectedPlatforms = [];
             }
             document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.toggle('active', selectedPlatforms.includes(btn.dataset.platform)));
@@ -139,6 +148,7 @@
                 description: document.getElementById('game-desc').value || null,
                 platforms: selectedPlatforms.join(', '),
                 download: document.getElementById('game-download').value,
+                is_nsfw: document.getElementById('game-nsfw').checked,
                 author: currentUser.user_metadata?.username || currentUser.email.split('@')[0],
                 user_id: currentUser.id
             };
@@ -157,19 +167,6 @@
                 loadMyGames();
             } catch (e) {
                 alert("Ошибка: " + e.message);
-            }
-        }
-
-        async function deleteGame(id) {
-            if (!confirm("Вы уверены, что хотите удалить эту игру?")) return;
-
-            try {
-                const { error } = await supabaseClient.from('games').delete().eq('id', id);
-                if (error) throw error;
-                alert("Игра успешно удалена!");
-                loadMyGames();
-            } catch (e) {
-                alert("Ошибка удаления: " + e.message);
             }
         }
 
@@ -192,18 +189,23 @@
             }
 
             container.innerHTML = data.map(g => `
-                <div class="bg-zinc-800 rounded-3xl p-6">
+                <div class="bg-zinc-800 rounded-3xl p-6 game-card">
                     <div class="flex gap-6">
-                        <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-40 h-40 object-cover rounded-2xl">
-                        <div class="flex-1">
-                            <h3 class="text-2xl font-bold">${g.title}</h3>
+                        <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-36 h-36 object-cover rounded-2xl flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex justify-between items-start">
+                                <h3 class="text-2xl font-bold">${g.title}</h3>
+                                ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex-shrink-0">18+</span>' : ''}
+                            </div>
                             <p class="text-orange-400">Автор: ${g.author || 'FuckHub'}</p>
-                            <p class="text-gray-400 mt-3">${g.description || 'Без описания'}</p>
-                            <p class="text-xs text-gray-500 mt-4">Платформы: ${g.platforms || 'Не указано'}</p>
-                            <div class="mt-6 flex gap-4">
-                                <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Редактировать</button>
-                                <button onclick="deleteGame('${g.id}')" class="flex-1 bg-red-600 hover:bg-red-700 py-3 rounded-2xl">Удалить</button>
-                                <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl">Скачать</a>
+                            <p class="text-gray-400 mt-2 text-sm">${g.description || 'Без описания'}</p>
+                            <p class="text-xs text-gray-500 mt-3">Платформы: ${g.platforms || 'Не указано'}</p>
+                            
+                            <div class="mt-5 flex gap-3">
+                                <button onclick='showPublishModal(${JSON.stringify(g)})' 
+                                        class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl text-sm">Редактировать</button>
+                                <a href="${g.download}" target="_blank" 
+                                   class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl text-sm">Скачать</a>
                             </div>
                         </div>
                     </div>
