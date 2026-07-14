@@ -79,8 +79,6 @@
         let currentUser = null;
         let gamesList = [];
 
-        const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
-
         async function loadGamesForSelect() {
             const { data } = await supabaseClient.from('games').select('id, title');
             gamesList = data || [];
@@ -119,12 +117,14 @@
                     mediaHTML = `<img src="${post.image_url}" class="w-full aspect-video object-cover" onerror="this.src='https://picsum.photos/800/450'">`;
                 }
 
+                // Реакции
+                const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
                 let reactionsHTML = reactionsList.map(emoji => {
                     const count = reactions[emoji] || 0;
                     return `<button onclick="addReaction('${post.id}', '${emoji}')" class="hover:scale-125 transition-transform text-2xl">${emoji} ${count > 0 ? `<span class="text-sm">${count}</span>` : ''}</button>`;
                 }).join('');
 
-                // Комментарии
+                // Комментарии (сворачиваемые)
                 const { data: comments } = await supabaseClient
                     .from('post_comments')
                     .select('*')
@@ -163,14 +163,17 @@
                             ${reactionsHTML}
                         </div>
 
-                        <!-- Комментарии -->
-                        <div class="mt-4">
-                            <div class="text-sm font-medium mb-3">Комментарии (${comments ? comments.length : 0})</div>
-                            <div class="space-y-4 mb-4">
+                        <!-- Комментарии (сворачиваемые) -->
+                        <div>
+                            <button onclick="toggleComments(this)" 
+                                    class="text-sm font-medium mb-3 flex items-center gap-2 text-zinc-400 hover:text-white">
+                                Комментарии (${comments ? comments.length : 0}) ▼
+                            </button>
+                            <div class="comments-section hidden space-y-4">
                                 ${commentsHTML || '<p class="text-xs text-zinc-500">Комментариев пока нет</p>'}
                             </div>
 
-                            <div class="flex gap-2">
+                            <div class="flex gap-2 mt-4">
                                 <input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий..." 
                                        class="flex-1 px-4 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm">
                                 <button onclick="addComment('${post.id}')" 
@@ -183,6 +186,14 @@
                 `;
                 container.appendChild(postDiv);
             }
+        }
+
+        function toggleComments(btn) {
+            const commentsSection = btn.parentElement.querySelector('.comments-section');
+            commentsSection.classList.toggle('hidden');
+            btn.textContent = commentsSection.classList.contains('hidden') 
+                ? btn.textContent.replace('▼', '▶') 
+                : btn.textContent.replace('▶', '▼');
         }
 
         async function addReaction(postId, emoji) {
