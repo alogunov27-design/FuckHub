@@ -3,92 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FuckHub - FuckFaz</title>
+    <title>FuckHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
-        .game-card { transition: all 0.3s ease; }
-        .game-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.1); }
-        .filter-btn { transition: all 0.2s; }
-        .filter-btn.active { background-color: #f97316; color: black; font-weight: 700; }
-        .tag-badge { font-size: 0.75rem; padding: 2px 10px; border-radius: 9999px; background-color: #27272a; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0f1117;
+            color: #c5d1e0;
+        }
+        .game-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #1a1f2e;
+        }
+        .game-card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.1);
+        }
     </style>
 </head>
 <body>
 
     <!-- Навбар -->
-    <nav class="bg-black border-b-4 border-orange-500 p-5 sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <span class="text-4xl font-black text-white">FUCK</span>
-                <span class="text-4xl font-black text-orange-500">HUB</span>
+    <nav class="bg-[#0f1117] border-b border-[#1f2533] sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-8 flex justify-between items-center h-14">
+            <div class="flex items-center gap-2">
+                <span class="text-3xl font-bold tracking-tighter">FUCK</span>
+                <span class="text-3xl font-bold tracking-tighter text-orange-500">HUB</span>
             </div>
-            <div class="flex gap-8 text-lg">
-                <a href="#" class="hover:text-orange-400">Магазин</a>
-                <a href="profile.html" class="hover:text-orange-400">Мои Игры</a>
+            
+            <div class="flex items-center gap-7 text-sm font-medium">
+                <a href="#" class="hover:text-white">Магазин</a>
+                <a href="profile.html" class="hover:text-white">Мои Игры</a>
             </div>
-            <div id="auth-buttons">
-                <button onclick="showRegisterModal()" class="bg-orange-500 text-black px-6 py-2 font-bold mr-3 hover:bg-orange-600">Регистрация</button>
-                <button onclick="showLoginModal()" class="border border-orange-500 px-6 py-2 font-bold hover:bg-orange-500 hover:text-black">Войти</button>
+
+            <div id="auth-buttons" class="flex items-center gap-3">
+                <button onclick="showRegisterModal()" class="px-5 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-zinc-100">Регистрация</button>
+                <button onclick="showLoginModal()" class="px-5 py-2 text-sm font-semibold border border-zinc-700 hover:bg-zinc-800 rounded-xl">Войти</button>
             </div>
-            <div id="user-section" class="hidden items-center gap-4">
-                <span id="username-display" class="text-orange-400 font-bold"></span>
-                <a href="profile.html" class="bg-zinc-800 hover:bg-zinc-700 px-5 py-2 rounded">Профиль</a>
+
+            <div id="user-section" class="hidden items-center gap-4 text-sm">
+                <span id="username-display" class="text-zinc-400"></span>
+                <a href="profile.html" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl">Профиль</a>
                 <button onclick="logout()" class="text-red-400 hover:text-red-500">Выйти</button>
             </div>
         </div>
     </nav>
 
     <!-- Hero -->
-    <div class="h-[65vh] flex items-center justify-center text-center" 
-         style="background: linear-gradient(rgba(0,0,0,0.75), rgba(0,0,0,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
-        <div>
-            <h1 class="text-7xl font-black text-white mb-4">FUCKHUB</h1>
-            <p class="text-3xl text-orange-400">От команды FuckFaz</p>
+    <div class="max-w-7xl mx-auto px-8 pt-10 pb-14">
+        <div class="rounded-3xl h-[340px] flex items-center relative overflow-hidden"
+             style="background: linear-gradient(rgba(15,17,23,0.7), rgba(15,17,23,0.85)), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
+            <div class="px-10">
+                <h1 class="text-6xl font-bold tracking-tighter mb-3">FUCKHUB</h1>
+                <p class="text-xl text-zinc-300 max-w-md">Свободная платформа для игр без цензуры</p>
+            </div>
         </div>
     </div>
 
-    <div class="max-w-6xl mx-auto px-6 py-8">
+    <div class="max-w-7xl mx-auto px-8 pb-16">
         
-        <!-- Поиск -->
-        <input id="search-input" onkeyup="filterGames()" placeholder="🔍 Поиск игр..." 
-               class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-6 focus:outline-none focus:border-orange-500">
-
-        <!-- Фильтры по платформам -->
-        <div class="flex flex-wrap gap-3 mb-8">
-            <button onclick="filterByPlatform('all')" class="filter-btn active px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="all">Все</button>
-            <button onclick="filterByPlatform('PC')" class="filter-btn px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="PC">🖥️ PC</button>
-            <button onclick="filterByPlatform('Android')" class="filter-btn px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="Android">📱 Android</button>
-            <button onclick="filterByPlatform('iOS')" class="filter-btn px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="iOS">🍎 iOS</button>
+        <!-- Поиск + фильтры -->
+        <div class="flex flex-col md:flex-row gap-4 mb-8">
+            <input id="search-input" onkeyup="filterGames()" placeholder="Поиск игр..." 
+                   class="flex-1 px-6 py-3.5 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl focus:outline-none focus:border-zinc-500">
+            
+            <div class="flex gap-2">
+                <button onclick="filterByPlatform('all')" class="filter-btn active px-5 py-3 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-2xl text-sm font-medium" data-platform="all">Все</button>
+                <button onclick="filterByPlatform('PC')" class="filter-btn px-5 py-3 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-2xl text-sm font-medium" data-platform="PC">PC</button>
+                <button onclick="filterByPlatform('Android')" class="filter-btn px-5 py-3 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-2xl text-sm font-medium" data-platform="Android">Android</button>
+                <button onclick="filterByPlatform('iOS')" class="filter-btn px-5 py-3 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-2xl text-sm font-medium" data-platform="iOS">iOS</button>
+            </div>
         </div>
 
-        <h2 class="text-3xl font-bold mb-6 text-orange-400">🎮 Игры от FuckHub</h2>
-        <div id="fuckhub-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16"></div>
+        <!-- Игры от FuckHub -->
+        <div class="mb-14">
+            <h2 class="text-2xl font-semibold mb-6">Игры от FuckHub</h2>
+            <div id="fuckhub-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+        </div>
 
-        <h2 class="text-3xl font-bold mb-6 text-orange-400">Все опубликованные игры</h2>
-        <div id="all-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        <!-- Все игры -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-6">Все опубликованные игры</h2>
+            <div id="all-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+        </div>
     </div>
 
     <!-- Модалы -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 border border-orange-500 p-8 rounded-3xl w-full max-w-md">
-            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
-            <input id="reg-username" placeholder="Никнейм" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="reg-email" type="email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="reg-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
-            <button onclick="registerUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Зарегистрироваться</button>
-            <button onclick="hideModals()" class="mt-4 text-gray-400 w-full">Отмена</button>
+    <div id="register-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-semibold mb-7">Регистрация</h2>
+            <input id="reg-username" placeholder="Никнейм" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-4">
+            <input id="reg-email" type="email" placeholder="Email" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-4">
+            <input id="reg-password" type="password" placeholder="Пароль" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-6">
+            <button onclick="registerUser()" class="w-full bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Зарегистрироваться</button>
+            <button onclick="hideModals()" class="mt-3 w-full text-zinc-400 hover:text-white">Отмена</button>
         </div>
     </div>
 
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
-        <div class="bg-zinc-900 border border-orange-500 p-8 rounded-3xl w-full max-w-md">
-            <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
-            <input id="login-email" placeholder="Email" class="w-full p-4 bg-zinc-800 rounded-2xl mb-4">
-            <input id="login-password" type="password" placeholder="Пароль" class="w-full p-4 bg-zinc-800 rounded-2xl mb-6">
-            <button onclick="loginUser()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl">Войти</button>
-            <button onclick="hideModals()" class="mt-4 text-gray-400 w-full">Отмена</button>
+    <div id="login-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-semibold mb-7">Вход</h2>
+            <input id="login-email" placeholder="Email" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-4">
+            <input id="login-password" type="password" placeholder="Пароль" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-6">
+            <button onclick="loginUser()" class="w-full bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Войти</button>
+            <button onclick="hideModals()" class="mt-3 w-full text-zinc-400 hover:text-white">Отмена</button>
         </div>
     </div>
 
@@ -101,7 +120,6 @@
         let allGames = [];
         let currentPlatformFilter = 'all';
 
-        // Авторизация
         window.showRegisterModal = function() { document.getElementById('register-modal').classList.remove('hidden'); };
         window.showLoginModal = function() { document.getElementById('login-modal').classList.remove('hidden'); };
         window.hideModals = function() {
@@ -115,11 +133,9 @@
             const password = document.getElementById('reg-password').value.trim();
             if (!username || !email || !password) return alert("Заполните все поля");
 
-            const { error } = await supabaseClient.auth.signUp({
-                email, password, options: { data: { username } }
-            });
+            const { error } = await supabaseClient.auth.signUp({ email, password, options: { data: { username } } });
             if (error) alert("Ошибка: " + error.message);
-            else { alert("✅ Регистрация прошла!"); hideModals(); }
+            else { alert("Регистрация прошла!"); hideModals(); }
         };
 
         window.loginUser = async function() {
@@ -129,7 +145,7 @@
 
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) alert("Ошибка: " + error.message);
-            else { alert("✅ Успешный вход!"); hideModals(); location.reload(); }
+            else { alert("Успешный вход!"); hideModals(); location.reload(); }
         };
 
         window.logout = function() { supabaseClient.auth.signOut(); location.reload(); };
@@ -170,59 +186,55 @@
 
             const fuckhubGames = filteredGames.filter(g => g.author === 'FuckHub');
             fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
-                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет официальных игр</p>';
+                '<p class="col-span-3 text-center py-10 text-zinc-500">Пока нет официальных игр</p>';
 
             const otherGames = filteredGames.filter(g => g.author !== 'FuckHub');
             allContainer.innerHTML = otherGames.map(g => createCard(g)).join('') || 
-                '<p class="col-span-3 text-center py-10 text-gray-400">Пока нет других игр</p>';
+                '<p class="col-span-3 text-center py-10 text-zinc-500">Пока нет других игр</p>';
         }
 
         function createCard(g) {
-            // Платформы
             let platformsHTML = '';
             if (g.platforms) {
                 platformsHTML = g.platforms.split(',').map(p => p.trim()).map(p => {
                     let icon = p.includes('PC') ? '🖥️' : p.includes('Android') ? '📱' : '🍎';
-                    return `<span class="inline-block bg-zinc-800 text-xs px-3 py-1 rounded-full mr-1 mb-1">${icon} ${p}</span>`;
+                    return `<span class="inline-block bg-[#1f2533] text-xs px-3 py-1 rounded-full mr-1 mb-1">${icon} ${p}</span>`;
                 }).join('');
             }
 
-            // Теги
             let tagsHTML = '';
             if (g.tags && g.tags.length > 0) {
-                tagsHTML = g.tags.map(tag => 
-                    `<span class="tag-badge text-gray-300 mr-1 mb-1">${tag}</span>`
-                ).join('');
+                tagsHTML = g.tags.map(tag => `<span class="inline-block bg-[#1f2533] text-xs px-3 py-1 rounded-full mr-1 mb-1">${tag}</span>`).join('');
             }
 
             const nsfwBadge = g.is_nsfw ? `<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>` : '';
             const downloadCount = g.download_count || 0;
 
             return `
-                <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 hover:border-orange-500">
-                    <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-56 object-cover" alt="${g.title}">
+                <div class="game-card rounded-2xl overflow-hidden border border-[#2a3344]">
+                    <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-52 object-cover" alt="${g.title}">
                     <div class="p-5">
                         <div class="flex justify-between items-start mb-3">
-                            <h3 class="text-xl font-bold pr-2">${g.title}</h3>
+                            <h3 class="font-semibold text-lg leading-tight">${g.title}</h3>
                             <div class="flex gap-2 flex-shrink-0">
-                                ${g.author === 'FuckHub' ? '<span class="bg-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full whitespace-nowrap">🔥 FuckFaz</span>' : ''}
+                                ${g.author === 'FuckHub' ? '<span class="bg-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full">FuckFaz</span>' : ''}
                                 ${nsfwBadge}
                             </div>
                         </div>
                         
-                        <p class="text-orange-400 text-sm mb-2">Автор: ${g.author || 'Неизвестно'}</p>
+                        <p class="text-sm text-zinc-400 mb-3">${g.author || 'Неизвестно'}</p>
                         
-                        ${platformsHTML ? `<div class="mb-2">${platformsHTML}</div>` : ''}
-                        ${tagsHTML ? `<div class="mb-3 flex flex-wrap">${tagsHTML}</div>` : ''}
+                        ${platformsHTML ? `<div class="mb-3">${platformsHTML}</div>` : ''}
+                        ${tagsHTML ? `<div class="mb-4 flex flex-wrap">${tagsHTML}</div>` : ''}
                         
-                        <p class="text-gray-400 text-sm line-clamp-3 mb-3">${g.description || 'Описание отсутствует'}</p>
+                        <p class="text-sm text-zinc-400 line-clamp-3 mb-4">${g.description || 'Описание отсутствует'}</p>
                         
-                        <div class="flex justify-between items-center mb-3 text-sm">
-                            <span class="text-gray-400">Скачано: <span class="font-bold text-white">${downloadCount}</span></span>
+                        <div class="flex justify-between items-center mb-4 text-sm">
+                            <span class="text-zinc-400">Скачано: <span class="font-medium text-white">${downloadCount}</span></span>
                         </div>
 
                         <button onclick="downloadGame('${g.id}', '${g.download}')" 
-                                class="w-full text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3.5 rounded-2xl text-sm">
+                                class="w-full bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-xl text-sm transition-colors">
                             Скачать / Играть
                         </button>
                     </div>
@@ -230,16 +242,10 @@
             `;
         }
 
-        // Скачивание с увеличением счётчика
         window.downloadGame = async function(gameId, downloadUrl) {
             if (!downloadUrl) return alert("Ссылка отсутствует");
-
             try {
-                await supabaseClient
-                    .from('games')
-                    .update({ download_count: (supabaseClient.rpc ? supabaseClient.rpc('increment_download', { game_id: gameId }) : null) })
-                    .eq('id', gameId);
-
+                await supabaseClient.from('games').update({ download_count: (supabaseClient.rpc ? supabaseClient.rpc('increment_download', { game_id: gameId }) : null) }).eq('id', gameId);
                 window.open(downloadUrl, '_blank');
                 setTimeout(() => loadGames(), 1200);
             } catch (e) {
