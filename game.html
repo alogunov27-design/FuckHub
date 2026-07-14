@@ -76,6 +76,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        let currentUser = null;
         let gamesList = [];
 
         async function loadGamesForSelect() {
@@ -108,7 +109,7 @@
             for (const post of posts) {
                 const gameTitle = post.games ? post.games.title : 'Неизвестная игра';
                 
-                // Загружаем комментарии к посту
+                // Загружаем комментарии
                 const { data: comments } = await supabaseClient
                     .from('post_comments')
                     .select('*')
@@ -121,9 +122,8 @@
                 let mediaHTML = '';
                 if (post.video_url) {
                     mediaHTML = `
-                        <video controls class="w-full aspect-video bg-black">
-                            <source src="${post.video_url}" type="video/mp4">
-                            Ваш браузер не поддерживает видео.
+                        <video controls class="w-full aspect-video bg-black rounded-xl">
+                            <source src="${post.video_url}">
                         </video>
                     `;
                 } else if (post.image_url) {
@@ -134,8 +134,11 @@
                 if (comments && comments.length > 0) {
                     commentsHTML = comments.map(c => `
                         <div class="text-sm border-t border-[#2a3344] pt-3 mt-3">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-semibold text-orange-400">${c.username || 'Аноним'}</span>
+                                <span class="text-xs text-zinc-500">${new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
+                            </div>
                             <p class="text-zinc-300">${c.content}</p>
-                            <div class="text-xs text-zinc-500 mt-1">${new Date(c.created_at).toLocaleDateString('ru-RU')}</div>
                         </div>
                     `).join('');
                 }
@@ -198,14 +201,11 @@
             const data = {
                 game_id: gameId,
                 description: description || null,
-                user_id: (await supabaseClient.auth.getSession()).data.session?.user?.id
+                user_id: currentUser?.id
             };
 
-            if (type === 'image') {
-                data.image_url = mediaUrl;
-            } else {
-                data.video_url = mediaUrl;
-            }
+            if (type === 'image') data.image_url = mediaUrl;
+            else data.video_url = mediaUrl;
 
             const { error } = await supabaseClient.from('community_posts').insert(data);
 
@@ -221,23 +221,29 @@
         async function addComment(postId) {
             const input = document.getElementById(`comment-input-${postId}`);
             const content = input.value.trim();
-            if (!content) return;
+            if (!content || !currentUser) return;
+
+            const username = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
 
             const { error } = await supabaseClient.from('post_comments').insert({
                 post_id: postId,
                 content: content,
-                user_id: (await supabaseClient.auth.getSession()).data.session?.user?.id
+                username: username,
+                user_id: currentUser.id
             });
 
             if (error) {
                 alert("Ошибка: " + error.message);
             } else {
                 input.value = '';
-                loadPosts(); // перезагружаем посты с комментариями
+                loadPosts();
             }
         }
 
         async function init() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) currentUser = session.user;
+
             await loadGamesForSelect();
             await loadPosts();
         }
