@@ -21,54 +21,52 @@
     </nav>
 
     <div class="max-w-7xl mx-auto px-8 py-10">
-        
         <div class="flex justify-between items-center mb-8">
             <div>
                 <h1 class="text-3xl font-bold">Сообщество</h1>
-                <p class="text-zinc-400">Делись артами, скриншотами и мемами</p>
+                <p class="text-zinc-400">Арты, скриншоты, видео и обсуждения</p>
             </div>
-            <button onclick="showUploadModal()" 
-                    class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3 rounded-2xl">
-                + Выложить арт / скриншот
+            <button onclick="showUploadModal()" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3 rounded-2xl">
+                + Выложить контент
             </button>
         </div>
 
-        <div id="posts-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <!-- Посты -->
-        </div>
+        <div id="posts-container" class="space-y-8"></div>
     </div>
 
-    <!-- Модал -->
+    <!-- Модал загрузки -->
     <div id="upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
         <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
-            <h2 class="text-2xl font-semibold mb-6">Выложить арт / скриншот</h2>
+            <h2 class="text-2xl font-semibold mb-6">Выложить контент</h2>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm text-zinc-400 mb-2">К какой игре это относится?</label>
+                    <label class="block text-sm text-zinc-400 mb-1">К какой игре?</label>
                     <select id="game-select" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl"></select>
                 </div>
 
                 <div>
-                    <label class="block text-sm text-zinc-400 mb-2">Ссылка на изображение (Imgur / Catbox)</label>
-                    <input id="image-url" type="text" placeholder="https://i.imgur.com/xxxx.jpg" 
-                           class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                    <label class="block text-sm text-zinc-400 mb-1">Тип контента</label>
+                    <select id="content-type" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                        <option value="image">Изображение</option>
+                        <option value="video">Видео</option>
+                    </select>
                 </div>
 
                 <div>
-                    <label class="block text-sm text-zinc-400 mb-2">Описание (опционально)</label>
-                    <textarea id="post-desc" placeholder="Забавный момент..." 
-                              class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-20"></textarea>
+                    <label class="block text-sm text-zinc-400 mb-1">Ссылка на контент</label>
+                    <input id="media-url" type="text" placeholder="https://..." class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                </div>
+
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-1">Описание</label>
+                    <textarea id="post-desc" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-20"></textarea>
                 </div>
             </div>
 
             <div class="flex gap-4 mt-8">
-                <button onclick="uploadPost()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">
-                    Опубликовать
-                </button>
-                <button onclick="hideUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">
-                    Отмена
-                </button>
+                <button onclick="uploadPost()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Опубликовать</button>
+                <button onclick="hideUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
             </div>
         </div>
     </div>
@@ -94,7 +92,7 @@
         }
 
         async function loadPosts() {
-            const { data } = await supabaseClient
+            const { data: posts } = await supabaseClient
                 .from('community_posts')
                 .select(`*, games (title)`)
                 .order('created_at', { ascending: false });
@@ -102,37 +100,80 @@
             const container = document.getElementById('posts-container');
             container.innerHTML = '';
 
-            if (!data || data.length === 0) {
-                container.innerHTML = `<p class="col-span-full text-center py-12 text-zinc-500">Пока ничего не выложили</p>`;
+            if (!posts || posts.length === 0) {
+                container.innerHTML = `<p class="text-center py-12 text-zinc-500">Пока ничего не выложили</p>`;
                 return;
             }
 
-            data.forEach(post => {
+            for (const post of posts) {
                 const gameTitle = post.games ? post.games.title : 'Неизвестная игра';
                 
-                const div = document.createElement('div');
-                div.className = 'bg-[#1a1f2e] rounded-2xl overflow-hidden border border-[#2a3344]';
-                
-                div.innerHTML = `
-                    <div class="relative">
-                        <img src="${post.image_url}" 
-                             class="w-full aspect-video object-cover"
-                             onerror="this.src='https://picsum.photos/600/340'; this.classList.add('opacity-60')">
-                        
-                        <div class="absolute top-3 left-3">
-                            <span class="bg-black/70 text-white text-xs px-3 py-1 rounded-full">${gameTitle}</span>
+                // Загружаем комментарии к посту
+                const { data: comments } = await supabaseClient
+                    .from('post_comments')
+                    .select('*')
+                    .eq('post_id', post.id)
+                    .order('created_at', { ascending: true });
+
+                const postDiv = document.createElement('div');
+                postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
+
+                let mediaHTML = '';
+                if (post.video_url) {
+                    mediaHTML = `
+                        <video controls class="w-full aspect-video bg-black">
+                            <source src="${post.video_url}" type="video/mp4">
+                            Ваш браузер не поддерживает видео.
+                        </video>
+                    `;
+                } else if (post.image_url) {
+                    mediaHTML = `<img src="${post.image_url}" class="w-full aspect-video object-cover" onerror="this.src='https://picsum.photos/800/450'">`;
+                }
+
+                let commentsHTML = '';
+                if (comments && comments.length > 0) {
+                    commentsHTML = comments.map(c => `
+                        <div class="text-sm border-t border-[#2a3344] pt-3 mt-3">
+                            <p class="text-zinc-300">${c.content}</p>
+                            <div class="text-xs text-zinc-500 mt-1">${new Date(c.created_at).toLocaleDateString('ru-RU')}</div>
                         </div>
-                    </div>
-                    
+                    `).join('');
+                }
+
+                postDiv.innerHTML = `
                     <div class="p-5">
-                        ${post.description ? `<p class="text-sm text-zinc-300 mb-3">${post.description}</p>` : ''}
-                        <div class="text-xs text-zinc-500">
-                            ${new Date(post.created_at).toLocaleDateString('ru-RU')}
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="bg-[#2a3344] text-xs px-3 py-1 rounded-full">${gameTitle}</span>
+                            <span class="text-xs text-zinc-500">${new Date(post.created_at).toLocaleDateString('ru-RU')}</span>
+                        </div>
+                        
+                        ${post.description ? `<p class="mb-4 text-zinc-200">${post.description}</p>` : ''}
+                        
+                        <div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344]">
+                            ${mediaHTML}
+                        </div>
+
+                        <!-- Комментарии -->
+                        <div class="mt-4">
+                            <div class="text-sm font-medium mb-3">Комментарии (${comments ? comments.length : 0})</div>
+                            
+                            <div class="space-y-4 mb-4">
+                                ${commentsHTML || '<p class="text-xs text-zinc-500">Комментариев пока нет</p>'}
+                            </div>
+
+                            <div class="flex gap-2">
+                                <input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий..." 
+                                       class="flex-1 px-4 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm">
+                                <button onclick="addComment('${post.id}')" 
+                                        class="px-5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm">
+                                    Отправить
+                                </button>
+                            </div>
                         </div>
                     </div>
                 `;
-                container.appendChild(div);
-            });
+                container.appendChild(postDiv);
+            }
         }
 
         function showUploadModal() {
@@ -145,29 +186,54 @@
 
         async function uploadPost() {
             const gameId = document.getElementById('game-select').value;
-            const imageUrl = document.getElementById('image-url').value.trim();
+            const type = document.getElementById('content-type').value;
+            const mediaUrl = document.getElementById('media-url').value.trim();
             const description = document.getElementById('post-desc').value.trim();
 
-            if (!gameId || !imageUrl) {
-                alert("Выбери игру и вставь ссылку на картинку");
+            if (!gameId || !mediaUrl) {
+                alert("Выбери игру и укажи ссылку");
                 return;
             }
 
-            const { error } = await supabaseClient.from('community_posts').insert({
+            const data = {
                 game_id: gameId,
-                image_url: imageUrl,
                 description: description || null,
+                user_id: (await supabaseClient.auth.getSession()).data.session?.user?.id
+            };
+
+            if (type === 'image') {
+                data.image_url = mediaUrl;
+            } else {
+                data.video_url = mediaUrl;
+            }
+
+            const { error } = await supabaseClient.from('community_posts').insert(data);
+
+            if (error) {
+                alert("Ошибка: " + error.message);
+            } else {
+                alert("Опубликовано!");
+                hideUploadModal();
+                loadPosts();
+            }
+        }
+
+        async function addComment(postId) {
+            const input = document.getElementById(`comment-input-${postId}`);
+            const content = input.value.trim();
+            if (!content) return;
+
+            const { error } = await supabaseClient.from('post_comments').insert({
+                post_id: postId,
+                content: content,
                 user_id: (await supabaseClient.auth.getSession()).data.session?.user?.id
             });
 
             if (error) {
                 alert("Ошибка: " + error.message);
             } else {
-                alert("Арт опубликован!");
-                hideUploadModal();
-                loadPosts();
-                document.getElementById('image-url').value = '';
-                document.getElementById('post-desc').value = '';
+                input.value = '';
+                loadPosts(); // перезагружаем посты с комментариями
             }
         }
 
