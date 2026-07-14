@@ -34,6 +34,7 @@
             
             <div class="flex items-center gap-7 text-sm font-medium">
                 <a href="#" class="hover:text-white">Магазин</a>
+                <a href="game.html" class="hover:text-white">Сообщество</a>
                 <a href="profile.html" class="hover:text-white">Мои Игры</a>
             </div>
 
@@ -209,7 +210,7 @@
 
             const nsfwBadge = g.is_nsfw ? `<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>` : '';
             const downloadCount = g.download_count || 0;
-            const date = g.created_at ? new Date(g.created_at).toLocaleDateString('ru-RU', {day:'numeric', month:'long', year:'numeric'}) : '';
+            const date = g.created_at ? new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
             return `
                 <div onclick="goToGame('${g.id}')" class="game-card cursor-pointer rounded-2xl overflow-hidden border border-[#2a3344]">
