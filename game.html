@@ -79,6 +79,8 @@
         let currentUser = null;
         let gamesList = [];
 
+        const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
+
         async function loadGamesForSelect() {
             const { data } = await supabaseClient.from('games').select('id, title');
             gamesList = data || [];
@@ -108,41 +110,22 @@
 
             for (const post of posts) {
                 const gameTitle = post.games ? post.games.title : 'Неизвестная игра';
-                
-                // Загружаем комментарии
-                const { data: comments } = await supabaseClient
-                    .from('post_comments')
-                    .select('*')
-                    .eq('post_id', post.id)
-                    .order('created_at', { ascending: true });
-
-                const postDiv = document.createElement('div');
-                postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
+                const reactions = post.reactions || {};
 
                 let mediaHTML = '';
                 if (post.video_url) {
-                    mediaHTML = `
-                        <video controls class="w-full aspect-video bg-black rounded-xl">
-                            <source src="${post.video_url}">
-                        </video>
-                    `;
+                    mediaHTML = `<video controls class="w-full aspect-video bg-black rounded-xl"><source src="${post.video_url}"></video>`;
                 } else if (post.image_url) {
                     mediaHTML = `<img src="${post.image_url}" class="w-full aspect-video object-cover" onerror="this.src='https://picsum.photos/800/450'">`;
                 }
 
-                let commentsHTML = '';
-                if (comments && comments.length > 0) {
-                    commentsHTML = comments.map(c => `
-                        <div class="text-sm border-t border-[#2a3344] pt-3 mt-3">
-                            <div class="flex items-center gap-2 mb-1">
-                                <span class="font-semibold text-orange-400">${c.username || 'Аноним'}</span>
-                                <span class="text-xs text-zinc-500">${new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
-                            </div>
-                            <p class="text-zinc-300">${c.content}</p>
-                        </div>
-                    `).join('');
-                }
+                let reactionsHTML = reactionsList.map(emoji => {
+                    const count = reactions[emoji] || 0;
+                    return `<button onclick="addReaction('${post.id}', '${emoji}')" class="hover:scale-125 transition-transform text-xl">${emoji} ${count > 0 ? count : ''}</button>`;
+                }).join('');
 
+                const postDiv = document.createElement('div');
+                postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
                 postDiv.innerHTML = `
                     <div class="p-5">
                         <div class="flex justify-between items-center mb-4">
@@ -156,27 +139,26 @@
                             ${mediaHTML}
                         </div>
 
-                        <!-- Комментарии -->
-                        <div class="mt-4">
-                            <div class="text-sm font-medium mb-3">Комментарии (${comments ? comments.length : 0})</div>
-                            
-                            <div class="space-y-4 mb-4">
-                                ${commentsHTML || '<p class="text-xs text-zinc-500">Комментариев пока нет</p>'}
-                            </div>
-
-                            <div class="flex gap-2">
-                                <input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий..." 
-                                       class="flex-1 px-4 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm">
-                                <button onclick="addComment('${post.id}')" 
-                                        class="px-5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm">
-                                    Отправить
-                                </button>
-                            </div>
+                        <!-- Реакции -->
+                        <div class="flex gap-4 mb-6 text-2xl">
+                            ${reactionsHTML}
                         </div>
+
+                        <!-- Комментарии (можно добавить позже) -->
+                        <div class="text-sm text-zinc-400">Комментарии (в разработке)</div>
                     </div>
                 `;
                 container.appendChild(postDiv);
             }
+        }
+
+        async function addReaction(postId, emoji) {
+            const { data: post } = await supabaseClient.from('community_posts').select('reactions').eq('id', postId).single();
+            const reactions = post.reactions || {};
+            reactions[emoji] = (reactions[emoji] || 0) + 1;
+
+            await supabaseClient.from('community_posts').update({ reactions }).eq('id', postId);
+            loadPosts();
         }
 
         function showUploadModal() {
@@ -209,33 +191,10 @@
 
             const { error } = await supabaseClient.from('community_posts').insert(data);
 
-            if (error) {
-                alert("Ошибка: " + error.message);
-            } else {
+            if (error) alert("Ошибка: " + error.message);
+            else {
                 alert("Опубликовано!");
                 hideUploadModal();
-                loadPosts();
-            }
-        }
-
-        async function addComment(postId) {
-            const input = document.getElementById(`comment-input-${postId}`);
-            const content = input.value.trim();
-            if (!content || !currentUser) return;
-
-            const username = currentUser.user_metadata?.username || currentUser.email.split('@')[0];
-
-            const { error } = await supabaseClient.from('post_comments').insert({
-                post_id: postId,
-                content: content,
-                username: username,
-                user_id: currentUser.id
-            });
-
-            if (error) {
-                alert("Ошибка: " + error.message);
-            } else {
-                input.value = '';
                 loadPosts();
             }
         }
