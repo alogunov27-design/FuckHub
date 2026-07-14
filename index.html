@@ -12,6 +12,7 @@
         .game-card:hover { transform: translateY(-8px); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 10px 10px -5px rgb(0 0 0 / 0.1); }
         .filter-btn { transition: all 0.2s; }
         .filter-btn.active { background-color: #f97316; color: black; font-weight: 700; }
+        .tag-badge { font-size: 0.75rem; padding: 2px 10px; border-radius: 9999px; background-color: #27272a; }
     </style>
 </head>
 <body>
@@ -49,11 +50,12 @@
     </div>
 
     <div class="max-w-6xl mx-auto px-6 py-8">
+        
         <!-- Поиск -->
         <input id="search-input" onkeyup="filterGames()" placeholder="🔍 Поиск игр..." 
                class="w-full p-5 bg-zinc-900 border border-zinc-700 rounded-3xl text-lg mb-6 focus:outline-none focus:border-orange-500">
 
-        <!-- Фильтры -->
+        <!-- Фильтры по платформам -->
         <div class="flex flex-wrap gap-3 mb-8">
             <button onclick="filterByPlatform('all')" class="filter-btn active px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="all">Все</button>
             <button onclick="filterByPlatform('PC')" class="filter-btn px-6 py-2 bg-zinc-800 rounded-2xl text-sm font-medium" data-platform="PC">🖥️ PC</button>
@@ -68,7 +70,7 @@
         <div id="all-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
     </div>
 
-    <!-- Register Modal -->
+    <!-- Модалы -->
     <div id="register-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 p-8 rounded-3xl w-full max-w-md">
             <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Регистрация</h2>
@@ -80,7 +82,6 @@
         </div>
     </div>
 
-    <!-- Login Modal -->
     <div id="login-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 p-8 rounded-3xl w-full max-w-md">
             <h2 class="text-3xl font-bold text-orange-400 mb-8 text-center">Вход</h2>
@@ -100,15 +101,9 @@
         let allGames = [];
         let currentPlatformFilter = 'all';
 
-        // === АВТОРИЗАЦИЯ ===
-        window.showRegisterModal = function() {
-            document.getElementById('register-modal').classList.remove('hidden');
-        };
-
-        window.showLoginModal = function() {
-            document.getElementById('login-modal').classList.remove('hidden');
-        };
-
+        // Авторизация
+        window.showRegisterModal = function() { document.getElementById('register-modal').classList.remove('hidden'); };
+        window.showLoginModal = function() { document.getElementById('login-modal').classList.remove('hidden'); };
         window.hideModals = function() {
             document.getElementById('register-modal').classList.add('hidden');
             document.getElementById('login-modal').classList.add('hidden');
@@ -118,47 +113,26 @@
             const username = document.getElementById('reg-username').value.trim();
             const email = document.getElementById('reg-email').value.trim();
             const password = document.getElementById('reg-password').value.trim();
-
             if (!username || !email || !password) return alert("Заполните все поля");
 
             const { error } = await supabaseClient.auth.signUp({
-                email: email,
-                password: password,
-                options: { data: { username: username } }
+                email, password, options: { data: { username } }
             });
-
-            if (error) {
-                alert("Ошибка: " + error.message);
-            } else {
-                alert("✅ Регистрация прошла! Проверь почту.");
-                hideModals();
-            }
+            if (error) alert("Ошибка: " + error.message);
+            else { alert("✅ Регистрация прошла!"); hideModals(); }
         };
 
         window.loginUser = async function() {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value.trim();
-
             if (!email || !password) return alert("Заполните email и пароль");
 
-            const { error } = await supabaseClient.auth.signInWithPassword({
-                email: email,
-                password: password
-            });
-
-            if (error) {
-                alert("Ошибка: " + error.message);
-            } else {
-                alert("✅ Успешный вход!");
-                hideModals();
-                location.reload();
-            }
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) alert("Ошибка: " + error.message);
+            else { alert("✅ Успешный вход!"); hideModals(); location.reload(); }
         };
 
-        window.logout = function() {
-            supabaseClient.auth.signOut();
-            location.reload();
-        };
+        window.logout = function() { supabaseClient.auth.signOut(); location.reload(); };
 
         async function init() {
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -182,7 +156,6 @@
             const allContainer = document.getElementById('all-games');
 
             let filteredGames = games;
-
             if (currentPlatformFilter !== 'all') {
                 filteredGames = games.filter(g => g.platforms && g.platforms.includes(currentPlatformFilter));
             }
@@ -205,20 +178,25 @@
         }
 
         function createCard(g) {
+            // Платформы
             let platformsHTML = '';
             if (g.platforms) {
-                const platforms = g.platforms.split(',').map(p => p.trim());
-                platformsHTML = platforms.map(p => {
-                    let icon = '';
-                    if (p.includes('PC')) icon = '🖥️';
-                    else if (p.includes('Android')) icon = '📱';
-                    else if (p.includes('iOS')) icon = '🍎';
+                platformsHTML = g.platforms.split(',').map(p => p.trim()).map(p => {
+                    let icon = p.includes('PC') ? '🖥️' : p.includes('Android') ? '📱' : '🍎';
                     return `<span class="inline-block bg-zinc-800 text-xs px-3 py-1 rounded-full mr-1 mb-1">${icon} ${p}</span>`;
                 }).join('');
             }
 
-            const nsfwBadge = g.is_nsfw ? 
-                `<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>` : '';
+            // Теги
+            let tagsHTML = '';
+            if (g.tags && g.tags.length > 0) {
+                tagsHTML = g.tags.map(tag => 
+                    `<span class="tag-badge text-gray-300 mr-1 mb-1">${tag}</span>`
+                ).join('');
+            }
+
+            const nsfwBadge = g.is_nsfw ? `<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>` : '';
+            const downloadCount = g.download_count || 0;
 
             return `
                 <div class="game-card bg-zinc-900 rounded-3xl overflow-hidden border border-zinc-800 hover:border-orange-500">
@@ -233,17 +211,41 @@
                         </div>
                         
                         <p class="text-orange-400 text-sm mb-2">Автор: ${g.author || 'Неизвестно'}</p>
-                        ${platformsHTML ? `<div class="mb-3">${platformsHTML}</div>` : ''}
-                        <p class="text-gray-400 text-sm line-clamp-3 mb-4">${g.description || 'Описание отсутствует'}</p>
                         
-                        <a href="${g.download || '#'}" target="_blank" 
-                           class="block text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3.5 rounded-2xl text-sm">
+                        ${platformsHTML ? `<div class="mb-2">${platformsHTML}</div>` : ''}
+                        ${tagsHTML ? `<div class="mb-3 flex flex-wrap">${tagsHTML}</div>` : ''}
+                        
+                        <p class="text-gray-400 text-sm line-clamp-3 mb-3">${g.description || 'Описание отсутствует'}</p>
+                        
+                        <div class="flex justify-between items-center mb-3 text-sm">
+                            <span class="text-gray-400">Скачано: <span class="font-bold text-white">${downloadCount}</span></span>
+                        </div>
+
+                        <button onclick="downloadGame('${g.id}', '${g.download}')" 
+                                class="w-full text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3.5 rounded-2xl text-sm">
                             Скачать / Играть
-                        </a>
+                        </button>
                     </div>
                 </div>
             `;
         }
+
+        // Скачивание с увеличением счётчика
+        window.downloadGame = async function(gameId, downloadUrl) {
+            if (!downloadUrl) return alert("Ссылка отсутствует");
+
+            try {
+                await supabaseClient
+                    .from('games')
+                    .update({ download_count: (supabaseClient.rpc ? supabaseClient.rpc('increment_download', { game_id: gameId }) : null) })
+                    .eq('id', gameId);
+
+                window.open(downloadUrl, '_blank');
+                setTimeout(() => loadGames(), 1200);
+            } catch (e) {
+                window.open(downloadUrl, '_blank');
+            }
+        };
 
         window.filterByPlatform = function(platform) {
             currentPlatformFilter = platform;
