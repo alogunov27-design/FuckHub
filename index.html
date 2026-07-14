@@ -213,7 +213,7 @@
             const date = g.created_at ? new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
 
             return `
-                <div onclick="goToGame('${g.id}')" class="game-card cursor-pointer rounded-2xl overflow-hidden border border-[#2a3344]">
+                <div class="game-card rounded-2xl overflow-hidden border border-[#2a3344]">
                     <img src="${g.cover || 'https://picsum.photos/400/300'}" class="w-full h-52 object-cover" alt="${g.title}">
                     <div class="p-5">
                         <div class="flex justify-between items-start mb-3">
@@ -236,7 +236,7 @@
                             <span class="text-zinc-400 text-xs">${date}</span>
                         </div>
 
-                        <button onclick="event.stopImmediatePropagation(); downloadGame('${g.id}', '${g.download}')" 
+                        <button onclick="downloadGame('${g.id}', '${g.download}')" 
                                 class="w-full bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-xl text-sm transition-colors">
                             Скачать / Играть
                         </button>
@@ -245,13 +245,7 @@
             `;
         }
 
-        // Переход на страницу игры
-        window.goToGame = function(gameId) {
-            window.location.href = `game.html?id=${gameId}`;
-        };
-
         window.downloadGame = async function(gameId, downloadUrl) {
-            event.stopImmediatePropagation();
             if (!downloadUrl) return alert("Ссылка отсутствует");
             try {
                 await supabaseClient.from('games').update({ download_count: (supabaseClient.rpc ? supabaseClient.rpc('increment_download', { game_id: gameId }) : null) }).eq('id', gameId);
