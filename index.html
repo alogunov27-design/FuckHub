@@ -167,30 +167,13 @@
             renderGames(allGames);
         }
 
-        function renderGames(games) {
-            const fuckhubContainer = document.getElementById('fuckhub-games');
-            const allContainer = document.getElementById('all-games');
-
-            let filteredGames = games;
-            if (currentPlatformFilter !== 'all') {
-                filteredGames = games.filter(g => g.platforms && g.platforms.includes(currentPlatformFilter));
-            }
-
-            const searchTerm = document.getElementById('search-input').value.toLowerCase().trim();
-            if (searchTerm) {
-                filteredGames = filteredGames.filter(g =>
-                    (g.title && g.title.toLowerCase().includes(searchTerm)) ||
-                    (g.description && g.description.toLowerCase().includes(searchTerm))
-                );
-            }
-
-            const fuckhubGames = filteredGames.filter(g => g.author === 'FuckHub');
-            fuckhubContainer.innerHTML = fuckhubGames.map(g => createCard(g)).join('') || 
-                '<p class="col-span-3 text-center py-10 text-zinc-500">Пока нет официальных игр</p>';
-
-            const otherGames = filteredGames.filter(g => g.author !== 'FuckHub');
-            allContainer.innerHTML = otherGames.map(g => createCard(g)).join('') || 
-                '<p class="col-span-3 text-center py-10 text-zinc-500">Пока нет других игр</p>';
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('ru-RU', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric' 
+            });
         }
 
         function createCard(g) {
@@ -209,6 +192,7 @@
 
             const nsfwBadge = g.is_nsfw ? `<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>` : '';
             const downloadCount = g.download_count || 0;
+            const date = g.created_at ? formatDate(g.created_at) : '';
 
             return `
                 <div class="game-card rounded-2xl overflow-hidden border border-[#2a3344]">
@@ -229,8 +213,9 @@
                         
                         <p class="text-sm text-zinc-400 line-clamp-3 mb-4">${g.description || 'Описание отсутствует'}</p>
                         
-                        <div class="flex justify-between items-center mb-4 text-sm">
+                        <div class="flex justify-between items-center mb-5 text-sm">
                             <span class="text-zinc-400">Скачано: <span class="font-medium text-white">${downloadCount}</span></span>
+                            <span class="text-zinc-400 text-xs">${date}</span>
                         </div>
 
                         <button onclick="downloadGame('${g.id}', '${g.download}')" 
