@@ -39,7 +39,7 @@
         </div>
     </div>
 
-    <!-- Modal публикации / редактирования -->
+    <!-- Modal публикации -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50">
         <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-10">
             <h2 id="modal-title" class="text-4xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
@@ -139,7 +139,7 @@
                 description: document.getElementById('game-desc').value || null,
                 platforms: selectedPlatforms.join(', '),
                 download: document.getElementById('game-download').value,
-                author: 'FuckHub',
+                author: currentUser.user_metadata?.username || currentUser.email.split('@')[0],
                 user_id: currentUser.id
             };
 
@@ -197,7 +197,7 @@
                         <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-40 h-40 object-cover rounded-2xl">
                         <div class="flex-1">
                             <h3 class="text-2xl font-bold">${g.title}</h3>
-                            <p class="text-orange-400">Автор: FuckHub</p>
+                            <p class="text-orange-400">Автор: ${g.author || 'FuckHub'}</p>
                             <p class="text-gray-400 mt-3">${g.description || 'Без описания'}</p>
                             <p class="text-xs text-gray-500 mt-4">Платформы: ${g.platforms || 'Не указано'}</p>
                             <div class="mt-6 flex gap-4">
