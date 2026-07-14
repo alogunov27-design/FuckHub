@@ -3,142 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Игра • FuckHub</title>
+    <title>Сообщество • FuckHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
+    </style>
 </head>
-<body class="bg-[#0f1117] text-[#c5d1e0]">
-
+<body>
+    <!-- Навбар -->
     <nav class="bg-[#0f1117] border-b border-[#1f2533] px-8 py-4">
-        <div class="max-w-6xl mx-auto flex justify-between items-center">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
             <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
-                ← FUCK<span class="text-orange-500">HUB</span>
+                ← <span>FUCK</span><span class="text-orange-500">HUB</span>
             </a>
+            <span class="font-semibold text-orange-500">Сообщество</span>
         </div>
     </nav>
 
-    <div class="max-w-6xl mx-auto px-8 py-10" id="game-page">
-        <!-- Контент игры загружается сюда -->
+    <div class="max-w-7xl mx-auto px-8 py-10">
+        
+        <!-- Заголовок -->
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-bold">Сообщество</h1>
+                <p class="text-zinc-400">Делись артами, скриншотами и мемами</p>
+            </div>
+            <button onclick="showUploadModal()" 
+                    class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3 rounded-2xl">
+                + Выложить арт / скриншот
+            </button>
+        </div>
+
+        <!-- Галерея -->
+        <div id="posts-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Посты будут загружаться сюда -->
+        </div>
+    </div>
+
+    <!-- Модал загрузки -->
+    <div id="upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
+            <h2 class="text-2xl font-semibold mb-6">Выложить арт / скриншот</h2>
+            
+            <div class="space-y-4">
+                <!-- Выбор игры -->
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">К какой игре это относится?</label>
+                    <select id="game-select" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                        <option value="">Выбери игру...</option>
+                    </select>
+                </div>
+
+                <!-- Ссылка на изображение -->
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Ссылка на изображение</label>
+                    <input id="image-url" type="text" placeholder="https://i.imgur.com/..." 
+                           class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                </div>
+
+                <!-- Описание -->
+                <div>
+                    <label class="block text-sm text-zinc-400 mb-2">Описание (опционально)</label>
+                    <textarea id="post-desc" placeholder="Забавный момент или арт..." 
+                              class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-24"></textarea>
+                </div>
+            </div>
+
+            <div class="flex gap-4 mt-8">
+                <button onclick="uploadPost()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">
+                    Опубликовать
+                </button>
+                <button onclick="hideUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">
+                    Отмена
+                </button>
+            </div>
+        </div>
     </div>
 
     <script>
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function loadGamePage() {
-            const params = new URLSearchParams(window.location.search);
-            const gameId = params.get('id');
+        let gamesList = [];
 
-            if (!gameId) {
-                document.getElementById('game-page').innerHTML = `<p class="text-red-400">Игра не найдена</p>`;
+        async function loadGamesForSelect() {
+            const { data } = await supabaseClient.from('games').select('id, title');
+            gamesList = data || [];
+            
+            const select = document.getElementById('game-select');
+            select.innerHTML = '<option value="">Выбери игру...</option>';
+            
+            gamesList.forEach(game => {
+                const option = document.createElement('option');
+                option.value = game.id;
+                option.textContent = game.title;
+                select.appendChild(option);
+            });
+        }
+
+        async function loadPosts() {
+            const { data, error } = await supabaseClient
+                .from('community_posts')
+                .select(`
+                    *,
+                    games (title)
+                `)
+                .order('created_at', { ascending: false });
+
+            const container = document.getElementById('posts-container');
+            container.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-center py-12 text-zinc-500">Пока никто ничего не выложил</p>`;
                 return;
             }
 
-            // Загружаем игру
-            const { data: game } = await supabase.from('games').select('*').eq('id', gameId).single();
-            if (!game) return;
-
-            // Загружаем комментарии
-            const { data: comments } = await supabase
-                .from('comments')
-                .select('*, profiles:user_id (username)')
-                .eq('game_id', gameId)
-                .order('created_at', { ascending: true });
-
-            let commentsHTML = '';
-            if (comments && comments.length > 0) {
-                commentsHTML = comments.map(c => `
-                    <div class="bg-[#1a1f2e] p-4 rounded-xl mb-3">
-                        <div class="flex justify-between mb-1">
-                            <span class="font-medium">${c.profiles?.username || 'Пользователь'}</span>
-                            <span class="text-xs text-zinc-400">${new Date(c.created_at).toLocaleDateString('ru-RU')}</span>
+            data.forEach(post => {
+                const gameTitle = post.games ? post.games.title : 'Неизвестная игра';
+                
+                const div = document.createElement('div');
+                div.className = 'bg-[#1a1f2e] rounded-2xl overflow-hidden border border-[#2a3344]';
+                div.innerHTML = `
+                    <img src="${post.image_url}" class="w-full aspect-video object-cover" alt="Арт">
+                    <div class="p-5">
+                        <div class="flex justify-between items-start mb-3">
+                            <span class="text-sm bg-[#2a3344] px-3 py-1 rounded-full">${gameTitle}</span>
                         </div>
-                        <p class="text-sm">${c.content}</p>
-                    </div>
-                `).join('');
-            } else {
-                commentsHTML = `<p class="text-zinc-400 text-sm">Комментариев пока нет. Будь первым!</p>`;
-            }
-
-            document.getElementById('game-page').innerHTML = `
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-2">
-                        <img src="${game.cover || 'https://picsum.photos/800/450'}" class="w-full rounded-2xl mb-6" alt="${game.title}">
-                        
-                        <h1 class="text-4xl font-bold mb-2">${game.title}</h1>
-                        <p class="text-zinc-400 mb-6">от ${game.author} • ${new Date(game.created_at).toLocaleDateString('ru-RU')}</p>
-
-                        <div class="mb-8">
-                            <h3 class="font-semibold mb-3">Описание</h3>
-                            <p class="text-zinc-300">${game.description || 'Описание отсутствует.'}</p>
-                        </div>
-
-                        <!-- Скриншоты -->
-                        <div class="mb-10">
-                            <h3 class="font-semibold mb-4">Скриншоты и арты</h3>
-                            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                ${(game.screenshots && game.screenshots.length > 0) 
-                                    ? game.screenshots.map(url => `<img src="${url}" class="rounded-xl w-full aspect-video object-cover">`).join('')
-                                    : `<div class="col-span-3 text-zinc-400 text-sm">Скриншоты пока не добавлены</div>`
-                                }
-                            </div>
+                        ${post.description ? `<p class="text-sm text-zinc-400 mb-4">${post.description}</p>` : ''}
+                        <div class="text-xs text-zinc-500">
+                            ${new Date(post.created_at).toLocaleDateString('ru-RU')}
                         </div>
                     </div>
-
-                    <div>
-                        <div class="bg-[#1a1f2e] rounded-2xl p-6 mb-6">
-                            <button onclick="window.open('${game.download}', '_blank')" 
-                                    class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl mb-4">
-                                Скачать игру
-                            </button>
-                        </div>
-
-                        <!-- Комментарии -->
-                        <div class="bg-[#1a1f2e] rounded-2xl p-6">
-                            <h3 class="font-semibold mb-4">Обсуждение (${comments ? comments.length : 0})</h3>
-                            
-                            <div class="max-h-80 overflow-y-auto mb-4 pr-2">
-                                ${commentsHTML}
-                            </div>
-
-                            <!-- Форма комментария -->
-                            <div class="mt-4">
-                                <textarea id="comment-text" placeholder="Напиши комментарий..." 
-                                          class="w-full p-3 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm h-24 resize-none"></textarea>
-                                <button onclick="postComment('${gameId}')" 
-                                        class="mt-2 w-full bg-white text-black font-semibold py-2.5 rounded-xl text-sm hover:bg-zinc-200">
-                                    Отправить
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+                `;
+                container.appendChild(div);
+            });
         }
 
-        async function postComment(gameId) {
-            const text = document.getElementById('comment-text').value.trim();
-            if (!text) return alert("Комментарий не может быть пустым");
+        function showUploadModal() {
+            document.getElementById('upload-modal').classList.remove('hidden');
+        }
 
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) return alert("Сначала войдите в аккаунт");
+        function hideUploadModal() {
+            document.getElementById('upload-modal').classList.add('hidden');
+        }
 
-            const { error } = await supabase.from('comments').insert({
+        async function uploadPost() {
+            const gameId = document.getElementById('game-select').value;
+            const imageUrl = document.getElementById('image-url').value.trim();
+            const description = document.getElementById('post-desc').value.trim();
+
+            if (!gameId || !imageUrl) {
+                alert("Выбери игру и укажи ссылку на изображение");
+                return;
+            }
+
+            const { error } = await supabaseClient.from('community_posts').insert({
                 game_id: gameId,
-                user_id: user.id,
-                content: text
+                image_url: imageUrl,
+                description: description || null,
+                user_id: (await supabaseClient.auth.getSession()).data.session?.user?.id
             });
 
             if (error) {
-                alert("Ошибка при отправке комментария");
+                alert("Ошибка: " + error.message);
             } else {
-                document.getElementById('comment-text').value = '';
-                loadGamePage(); // перезагружаем комментарии
+                alert("Арт опубликован!");
+                hideUploadModal();
+                loadPosts();
+                
+                // Очищаем форму
+                document.getElementById('image-url').value = '';
+                document.getElementById('post-desc').value = '';
             }
         }
 
-        window.onload = loadGamePage;
+        async function init() {
+            await loadGamesForSelect();
+            await loadPosts();
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
