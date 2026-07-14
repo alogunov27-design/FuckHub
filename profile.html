@@ -8,9 +8,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #ddd; }
-        .platform-btn { transition: all 0.2s; }
-        .platform-btn.active { background-color: #f97316; color: black; font-weight: bold; }
-        .game-card { transition: all 0.3s ease; }
+        .platform-btn, .tag-btn { transition: all 0.2s; }
+        .platform-btn.active, .tag-btn.active { background-color: #f97316; color: black; font-weight: bold; }
+        .tag-btn { font-size: 0.875rem; }
     </style>
 </head>
 <body class="min-h-screen">
@@ -40,7 +40,7 @@
         </div>
     </div>
 
-    <!-- Модал публикации / редактирования -->
+    <!-- Модал публикации -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center z-50 p-4">
         <div class="bg-zinc-900 border border-orange-500 rounded-3xl w-full max-w-2xl p-8">
             <h2 id="modal-title" class="text-3xl font-bold text-orange-400 mb-8 text-center">Публикация игры</h2>
@@ -51,6 +51,7 @@
             <input id="game-cover" placeholder="Ссылка на обложку" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-4">
             <textarea id="game-desc" placeholder="Описание игры" class="w-full p-4 bg-zinc-800 rounded-2xl h-28 mb-6"></textarea>
             
+            <!-- Платформы -->
             <div class="mb-6">
                 <p class="mb-3 text-lg">Платформы:</p>
                 <div class="flex gap-3 flex-wrap">
@@ -60,10 +61,24 @@
                 </div>
             </div>
 
-            <!-- NSFW чекбокс -->
+            <!-- Теги -->
+            <div class="mb-6">
+                <p class="mb-3 text-lg">Теги:</p>
+                <div class="flex flex-wrap gap-2" id="tags-container">
+                    <button onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Furry</button>
+                    <button onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Adult</button>
+                    <button onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">NSFW</button>
+                    <button onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Horror</button>
+                    <button onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Action</button>
+                    <button onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">RPG</button>
+                    <button onclick="toggleTag(this)" data-tag="Puzzle" class="tag-btn px-4 py-1.5 bg-zinc-800 rounded-xl">Puzzle</button>
+                </div>
+            </div>
+
+            <!-- NSFW -->
             <div class="mb-6 flex items-center gap-3">
                 <input type="checkbox" id="game-nsfw" class="w-5 h-5 accent-orange-500">
-                <label for="game-nsfw" class="text-lg">Это 18+ контент (NSFW)</label>
+                <label for="game-nsfw" class="text-lg">Это 18+ контент</label>
             </div>
             
             <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full p-4 bg-zinc-800 rounded-2xl text-lg mb-8">
@@ -82,6 +97,7 @@
         let supabaseClient;
         let currentUser = null;
         let selectedPlatforms = [];
+        let selectedTags = [];
         let editingGameId = null;
 
         async function init() {
@@ -89,7 +105,7 @@
             
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (!session) {
-                alert("Вы не авторизованы! Перейдите на главную и войдите.");
+                alert("Вы не авторизованы!");
                 window.location.href = "index.html";
                 return;
             }
@@ -111,10 +127,25 @@
             }
         }
 
+        function toggleTag(btn) {
+            btn.classList.toggle('active');
+            const tag = btn.getAttribute('data-tag');
+            if (selectedTags.includes(tag)) {
+                selectedTags = selectedTags.filter(t => t !== tag);
+            } else {
+                selectedTags.push(tag);
+            }
+        }
+
         function showPublishModal(game = null) {
             document.getElementById('publish-modal').classList.remove('hidden');
             editingGameId = game ? game.id : null;
             document.getElementById('modal-title').textContent = game ? "Редактировать игру" : "Новая игра";
+
+            // Сброс
+            selectedPlatforms = [];
+            selectedTags = [];
+            document.querySelectorAll('.platform-btn, .tag-btn').forEach(el => el.classList.remove('active'));
 
             if (game) {
                 document.getElementById('game-title').value = game.title || '';
@@ -122,16 +153,24 @@
                 document.getElementById('game-desc').value = game.description || '';
                 document.getElementById('game-download').value = game.download || '';
                 document.getElementById('game-nsfw').checked = game.is_nsfw || false;
-                selectedPlatforms = game.platforms ? game.platforms.split(', ') : [];
+
+                if (game.platforms) selectedPlatforms = game.platforms.split(', ');
+                if (game.tags) selectedTags = game.tags;
+
+                // Активируем выбранные платформы и теги
+                document.querySelectorAll('.platform-btn').forEach(btn => {
+                    if (selectedPlatforms.includes(btn.dataset.platform)) btn.classList.add('active');
+                });
+                document.querySelectorAll('.tag-btn').forEach(btn => {
+                    if (selectedTags.includes(btn.dataset.tag)) btn.classList.add('active');
+                });
             } else {
                 document.getElementById('game-title').value = '';
                 document.getElementById('game-cover').value = '';
                 document.getElementById('game-desc').value = '';
                 document.getElementById('game-download').value = '';
                 document.getElementById('game-nsfw').checked = false;
-                selectedPlatforms = [];
             }
-            document.querySelectorAll('.platform-btn').forEach(btn => btn.classList.toggle('active', selectedPlatforms.includes(btn.dataset.platform)));
         }
 
         function hidePublishModal() {
@@ -147,6 +186,7 @@
                 cover: document.getElementById('game-cover').value || null,
                 description: document.getElementById('game-desc').value || null,
                 platforms: selectedPlatforms.join(', '),
+                tags: selectedTags,
                 download: document.getElementById('game-download').value,
                 is_nsfw: document.getElementById('game-nsfw').checked,
                 author: currentUser.user_metadata?.username || currentUser.email.split('@')[0],
@@ -179,8 +219,7 @@
 
             const container = document.getElementById('my-games-list');
             if (error) {
-                console.error(error);
-                container.innerHTML = `<p class="text-red-400">Ошибка загрузки: ${error.message}</p>`;
+                container.innerHTML = `<p class="text-red-400">Ошибка: ${error.message}</p>`;
                 return;
             }
             if (!data || data.length === 0) {
@@ -188,29 +227,34 @@
                 return;
             }
 
-            container.innerHTML = data.map(g => `
-                <div class="bg-zinc-800 rounded-3xl p-6 game-card">
-                    <div class="flex gap-6">
-                        <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-36 h-36 object-cover rounded-2xl flex-shrink-0">
-                        <div class="flex-1 min-w-0">
-                            <div class="flex justify-between items-start">
-                                <h3 class="text-2xl font-bold">${g.title}</h3>
-                                ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full flex-shrink-0">18+</span>' : ''}
-                            </div>
-                            <p class="text-orange-400">Автор: ${g.author || 'FuckHub'}</p>
-                            <p class="text-gray-400 mt-2 text-sm">${g.description || 'Без описания'}</p>
-                            <p class="text-xs text-gray-500 mt-3">Платформы: ${g.platforms || 'Не указано'}</p>
-                            
-                            <div class="mt-5 flex gap-3">
-                                <button onclick='showPublishModal(${JSON.stringify(g)})' 
-                                        class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl text-sm">Редактировать</button>
-                                <a href="${g.download}" target="_blank" 
-                                   class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl text-sm">Скачать</a>
+            container.innerHTML = data.map(g => {
+                const tagsHTML = g.tags && g.tags.length > 0 
+                    ? g.tags.map(tag => `<span class="inline-block bg-zinc-700 text-xs px-3 py-1 rounded-full mr-1 mb-1">${tag}</span>`).join('')
+                    : '';
+
+                return `
+                    <div class="bg-zinc-800 rounded-3xl p-6">
+                        <div class="flex gap-6">
+                            <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-36 h-36 object-cover rounded-2xl flex-shrink-0">
+                            <div class="flex-1">
+                                <div class="flex justify-between">
+                                    <h3 class="text-2xl font-bold">${g.title}</h3>
+                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full h-fit">18+</span>' : ''}
+                                </div>
+                                <p class="text-orange-400 text-sm">Автор: ${g.author}</p>
+                                <p class="text-gray-400 mt-2 text-sm">${g.description || ''}</p>
+                                
+                                ${tagsHTML ? `<div class="mt-3">${tagsHTML}</div>` : ''}
+                                
+                                <div class="mt-5 flex gap-3">
+                                    <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl text-sm">Редактировать</button>
+                                    <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-2xl text-sm">Скачать</a>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         window.onload = init;
