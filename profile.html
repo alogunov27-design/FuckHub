@@ -24,13 +24,17 @@
             color: black;
             font-weight: 600;
         }
+        .avatar-img {
+            object-fit: cover;
+            background: #1f2533;
+        }
     </style>
 </head>
 <body>
 
     <!-- Навбар -->
     <nav class="bg-[#0f1117] border-b border-[#1f2533] sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-8 flex justify-between items-center h-14">
+        <div class="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center h-14">
             <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
                 ← <span>FUCK</span><span class="text-orange-500">HUB</span>
             </a>
@@ -38,84 +42,111 @@
         </div>
     </nav>
 
-    <div class="max-w-5xl mx-auto px-8 py-10">
-        
-        <!-- Информация о пользователе -->
-        <div class="bg-[#1a1f2e] rounded-3xl p-8 mb-10">
-            <h1 class="text-3xl font-semibold mb-6">Профиль</h1>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-y-4 text-lg">
-                <div>
-                    <span class="text-zinc-400">Никнейм:</span> 
-                    <span id="profile-username" class="font-medium"></span>
+    <div class="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
+
+        <!-- Информация о пользователе + аватар -->
+        <div class="bg-[#1a1f2e] rounded-3xl p-6 sm:p-8 mb-8 border border-[#2a3344]">
+            <div class="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
+                <!-- Аватар -->
+                <div class="relative shrink-0">
+                    <img id="profile-avatar" 
+                         src="https://ui-avatars.com/api/?name=User&background=1f2533&color=c5d1e0&size=128"
+                         class="avatar-img w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-[#2a3344]"
+                         alt="Аватар">
                 </div>
-                <div>
-                    <span class="text-zinc-400">Email:</span> 
-                    <span id="profile-email" class="font-medium"></span>
+
+                <div class="flex-1 min-w-0">
+                    <h1 class="text-2xl sm:text-3xl font-semibold mb-1" id="profile-username">—</h1>
+                    <p class="text-zinc-400 text-sm sm:text-base mb-4" id="profile-email">—</p>
+
+                    <div class="flex flex-wrap gap-3">
+                        <button onclick="showAvatarModal()" 
+                                class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm transition-colors">
+                            Изменить аватар
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
 
         <!-- Кнопка публикации -->
-        <div class="mb-10">
+        <div class="mb-8">
             <button onclick="showPublishModal()" 
-                    class="w-full md:w-auto bg-white text-black font-semibold px-8 py-4 rounded-2xl hover:bg-zinc-100 transition-colors text-lg">
+                    class="w-full sm:w-auto bg-white text-black font-semibold px-8 py-3.5 rounded-2xl hover:bg-zinc-100 transition-colors">
                 + Опубликовать новую игру
             </button>
         </div>
 
         <!-- Мои игры -->
         <div>
-            <h2 class="text-2xl font-semibold mb-6">Мои опубликованные игры</h2>
-            <div id="my-games-list" class="space-y-5"></div>
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
+                <h2 class="text-xl sm:text-2xl font-semibold">Мои опубликованные игры</h2>
+                <button id="toggle-games-btn" onclick="toggleGamesVisibility()" 
+                        class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm transition-colors">
+                    Скрыть игры
+                </button>
+            </div>
+            <div id="my-games-list" class="space-y-4"></div>
+        </div>
+    </div>
+
+    <!-- Модал аватара -->
+    <div id="avatar-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-5">Аватар</h2>
+            <p class="text-sm text-zinc-400 mb-3">Вставь прямую ссылку на картинку (imgur, postimg, discord CDN и т.д.)</p>
+            <input id="avatar-url-input" type="url" placeholder="https://..." 
+                   class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-5">
+            <div class="flex gap-3">
+                <button onclick="saveAvatar()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-xl">Сохранить</button>
+                <button onclick="hideAvatarModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-xl">Отмена</button>
+            </div>
         </div>
     </div>
 
     <!-- Модал публикации -->
-    <div id="publish-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-2xl">
-            <h2 id="modal-title" class="text-2xl font-semibold mb-8 text-center">Публикация игры</h2>
+    <div id="publish-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-2xl my-8">
+            <h2 id="modal-title" class="text-xl sm:text-2xl font-semibold mb-6 text-center">Публикация игры</h2>
             
             <input id="game-id" type="hidden">
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                <input id="game-title" placeholder="Название игры" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
-                <input id="game-cover" placeholder="Ссылка на обложку" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+                <input id="game-title" placeholder="Название игры" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                <input id="game-cover" placeholder="Ссылка на обложку" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
             </div>
             
-            <textarea id="game-desc" placeholder="Описание игры" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl h-28 mb-6"></textarea>
+            <textarea id="game-desc" placeholder="Описание игры" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl h-28 mb-5"></textarea>
             
-            <!-- Платформы -->
-            <div class="mb-6">
-                <p class="mb-3 text-sm font-medium text-zinc-400">Платформы</p>
+            <div class="mb-5">
+                <p class="mb-2 text-sm font-medium text-zinc-400">Платформы</p>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-5 py-2 bg-[#1f2533] rounded-xl text-sm">🖥️ PC</button>
-                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-5 py-2 bg-[#1f2533] rounded-xl text-sm">📱 Android</button>
-                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-5 py-2 bg-[#1f2533] rounded-xl text-sm">🍎 iOS</button>
+                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">🖥️ PC</button>
+                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">📱 Android</button>
+                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">🍎 iOS</button>
                 </div>
             </div>
 
-            <!-- Теги -->
-            <div class="mb-6">
-                <p class="mb-3 text-sm font-medium text-zinc-400">Теги</p>
+            <div class="mb-5">
+                <p class="mb-2 text-sm font-medium text-zinc-400">Теги</p>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Furry</button>
-                    <button onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Adult</button>
-                    <button onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">NSFW</button>
-                    <button onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Horror</button>
-                    <button onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">Action</button>
-                    <button onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-4 py-1.5 bg-[#1f2533] rounded-xl text-sm">RPG</button>
+                    <button onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Furry</button>
+                    <button onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Adult</button>
+                    <button onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">NSFW</button>
+                    <button onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Horror</button>
+                    <button onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Action</button>
+                    <button onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">RPG</button>
                 </div>
             </div>
 
-            <!-- NSFW -->
-            <div class="mb-8 flex items-center gap-3">
+            <div class="mb-5 flex items-center gap-3">
                 <input type="checkbox" id="game-nsfw" class="w-4 h-4 accent-orange-500">
                 <label for="game-nsfw" class="text-sm">Это 18+ контент</label>
             </div>
 
-            <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-8">
+            <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-6">
 
-            <div class="flex gap-4">
+            <div class="flex gap-3">
                 <button onclick="saveGame()" class="flex-1 bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Сохранить</button>
                 <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3.5 rounded-2xl">Отмена</button>
             </div>
@@ -131,6 +162,7 @@
         let selectedPlatforms = [];
         let selectedTags = [];
         let editingGameId = null;
+        let gamesVisible = true;
 
         async function init() {
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -143,10 +175,69 @@
             }
 
             currentUser = session.user;
-            document.getElementById('profile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
-            document.getElementById('profile-email').textContent = currentUser.email;
+            const username = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'User';
+            document.getElementById('profile-username').textContent = username;
+            document.getElementById('profile-email').textContent = currentUser.email || '';
+
+            // Аватар
+            const avatarUrl = currentUser.user_metadata?.avatar_url;
+            if (avatarUrl) {
+                document.getElementById('profile-avatar').src = avatarUrl;
+            } else {
+                document.getElementById('profile-avatar').src = 
+                    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=1f2533&color=c5d1e0&size=128`;
+            }
 
             loadMyGames();
+        }
+
+        // ===== Аватар =====
+        function showAvatarModal() {
+            const current = currentUser.user_metadata?.avatar_url || '';
+            document.getElementById('avatar-url-input').value = current;
+            document.getElementById('avatar-modal').classList.remove('hidden');
+        }
+
+        function hideAvatarModal() {
+            document.getElementById('avatar-modal').classList.add('hidden');
+        }
+
+        async function saveAvatar() {
+            const url = document.getElementById('avatar-url-input').value.trim();
+            
+            try {
+                const { error } = await supabaseClient.auth.updateUser({
+                    data: { avatar_url: url || null }
+                });
+                if (error) throw error;
+
+                if (!currentUser.user_metadata) currentUser.user_metadata = {};
+                currentUser.user_metadata.avatar_url = url || null;
+
+                const username = currentUser.user_metadata?.username || 'User';
+                document.getElementById('profile-avatar').src = url 
+                    ? url 
+                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=1f2533&color=c5d1e0&size=128`;
+
+                hideAvatarModal();
+                alert('Аватар обновлён!');
+            } catch (e) {
+                alert('Ошибка: ' + e.message);
+            }
+        }
+
+        // ===== Скрыть / показать игры =====
+        function toggleGamesVisibility() {
+            gamesVisible = !gamesVisible;
+            const list = document.getElementById('my-games-list');
+            const btn = document.getElementById('toggle-games-btn');
+            if (gamesVisible) {
+                list.classList.remove('hidden');
+                btn.textContent = 'Скрыть игры';
+            } else {
+                list.classList.add('hidden');
+                btn.textContent = 'Показать игры';
+            }
         }
 
         function togglePlatform(btn) {
@@ -185,8 +276,14 @@
                 document.getElementById('game-download').value = game.download || '';
                 document.getElementById('game-nsfw').checked = game.is_nsfw || false;
 
-                if (game.platforms) selectedPlatforms = game.platforms.split(', ');
-                if (game.tags) selectedTags = game.tags;
+                if (game.platforms) {
+                    selectedPlatforms = typeof game.platforms === 'string' 
+                        ? game.platforms.split(',').map(p => p.trim()) 
+                        : (Array.isArray(game.platforms) ? game.platforms : []);
+                }
+                if (game.tags) {
+                    selectedTags = Array.isArray(game.tags) ? [...game.tags] : [];
+                }
 
                 document.querySelectorAll('.platform-btn').forEach(btn => {
                     if (selectedPlatforms.includes(btn.dataset.platform)) btn.classList.add('active');
@@ -240,6 +337,19 @@
             }
         }
 
+        async function deleteGame(gameId, title) {
+            if (!confirm(`Удалить игру «${title}»?\nЭто действие нельзя отменить.`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('games').delete().eq('id', gameId);
+                if (error) throw error;
+                alert('Игра удалена');
+                loadMyGames();
+            } catch (e) {
+                alert('Ошибка удаления: ' + e.message);
+            }
+        }
+
         async function loadMyGames() {
             const { data, error } = await supabaseClient
                 .from('games')
@@ -249,37 +359,58 @@
 
             const container = document.getElementById('my-games-list');
             if (error || !data || data.length === 0) {
-                container.innerHTML = `<p class="text-zinc-500 py-8 text-center">У вас пока нет опубликованных игр</p>`;
+                container.innerHTML = `<p class="text-zinc-500 py-10 text-center">У вас пока нет опубликованных игр</p>`;
                 return;
             }
 
             container.innerHTML = data.map(g => {
-                const tagsHTML = g.tags && g.tags.length > 0 
-                    ? g.tags.map(tag => `<span class="inline-block bg-[#1f2533] text-xs px-3 py-1 rounded-full mr-1 mb-1">${tag}</span>`).join('')
-                    : '';
+                let tagsHTML = '';
+                if (g.tags) {
+                    const tags = Array.isArray(g.tags) ? g.tags : [];
+                    tagsHTML = tags.map(tag => 
+                        `<span class="inline-block bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">${tag}</span>`
+                    ).join('');
+                }
+
+                const downloads = g.download_count || 0;
 
                 return `
-                    <div class="bg-[#1a1f2e] rounded-2xl p-6 border border-[#2a3344]">
-                        <div class="flex gap-6">
-                            <img src="${g.cover || 'https://picsum.photos/300/300'}" class="w-28 h-28 object-cover rounded-xl flex-shrink-0">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-start">
-                                    <h3 class="font-semibold text-xl">${g.title}</h3>
-                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full">18+</span>' : ''}
+                    <div class="game-card rounded-2xl p-4 sm:p-5 border border-[#2a3344]">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <img src="${g.cover || 'https://picsum.photos/200/200?grayscale'}" 
+                                 class="w-full sm:w-28 h-40 sm:h-28 object-cover rounded-xl flex-shrink-0">
+                            <div class="flex-1 min-w-0 flex flex-col">
+                                <div class="flex justify-between items-start gap-2">
+                                    <h3 class="font-semibold text-lg leading-tight">${g.title || 'Без названия'}</h3>
+                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">18+</span>' : ''}
                                 </div>
-                                <p class="text-sm text-zinc-400 mt-1">${g.author}</p>
+                                <p class="text-sm text-zinc-400 mt-1">Скачано: ${downloads}</p>
                                 
-                                ${tagsHTML ? `<div class="mt-3">${tagsHTML}</div>` : ''}
+                                \( {tagsHTML ? `<div class="mt-2 flex flex-wrap gap-1.5"> \){tagsHTML}</div>` : ''}
                                 
-                                <div class="mt-5 flex gap-3">
-                                    <button onclick='showPublishModal(${JSON.stringify(g)})' class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-xl text-sm">Редактировать</button>
-                                    <a href="${g.download}" target="_blank" class="flex-1 text-center bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-xl text-sm">Скачать</a>
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <button onclick='showPublishModal(${JSON.stringify(g).replace(/'/g, "&#39;")})' 
+                                            class="px-4 py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">
+                                        Редактировать
+                                    </button>
+                                    <a href="${g.download || '#'}" target="_blank" 
+                                       class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm transition-colors">
+                                        Скачать
+                                    </a>
+                                    <button onclick="deleteGame('\( {g.id}', ' \){(g.title || '').replace(/'/g, "\\'")}')" 
+                                            class="px-4 py-2.5 bg-red-900/60 hover:bg-red-800 text-red-200 rounded-xl text-sm transition-colors">
+                                        Удалить
+                                    </button>
                                 </div>
                             </div>
                         </div>
                     </div>
                 `;
             }).join('');
+
+            if (!gamesVisible) {
+                container.classList.add('hidden');
+            }
         }
 
         window.onload = init;
