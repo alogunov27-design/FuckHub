@@ -32,7 +32,6 @@
 </head>
 <body>
 
-    <!-- Навбар -->
     <nav class="bg-[#0f1117] border-b border-[#1f2533] sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center h-14">
             <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
@@ -44,20 +43,20 @@
 
     <div class="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
 
-        <!-- Информация о пользователе + аватар -->
+        <!-- Профиль -->
         <div class="bg-[#1a1f2e] rounded-3xl p-6 sm:p-8 mb-8 border border-[#2a3344]">
             <div class="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-                <!-- Аватар -->
                 <div class="relative shrink-0">
                     <img id="profile-avatar" 
                          src="https://ui-avatars.com/api/?name=User&background=1f2533&color=c5d1e0&size=128"
                          class="avatar-img w-24 h-24 sm:w-28 sm:h-28 rounded-full border-2 border-[#2a3344]"
-                         alt="Аватар">
+                         alt="Аватар"
+                         onerror="this.src='https://ui-avatars.com/api/?name=User&background=1f2533&color=c5d1e0&size=128'">
                 </div>
 
                 <div class="flex-1 min-w-0">
-                    <h1 class="text-2xl sm:text-3xl font-semibold mb-1" id="profile-username">—</h1>
-                    <p class="text-zinc-400 text-sm sm:text-base mb-4" id="profile-email">—</p>
+                    <h1 class="text-2xl sm:text-3xl font-semibold mb-1" id="profile-username">Загрузка...</h1>
+                    <p class="text-zinc-400 text-sm sm:text-base mb-4" id="profile-email">Загрузка...</p>
 
                     <div class="flex flex-wrap gap-3">
                         <button onclick="showAvatarModal()" 
@@ -86,7 +85,9 @@
                     Скрыть игры
                 </button>
             </div>
-            <div id="my-games-list" class="space-y-4"></div>
+            <div id="my-games-list" class="space-y-4">
+                <p class="text-zinc-500 py-6 text-center">Загрузка игр...</p>
+            </div>
         </div>
     </div>
 
@@ -94,7 +95,7 @@
     <div id="avatar-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
         <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
             <h2 class="text-xl font-semibold mb-5">Аватар</h2>
-            <p class="text-sm text-zinc-400 mb-3">Вставь прямую ссылку на картинку (imgur, postimg, discord CDN и т.д.)</p>
+            <p class="text-sm text-zinc-400 mb-3">Вставь прямую ссылку на картинку</p>
             <input id="avatar-url-input" type="url" placeholder="https://..." 
                    class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-5">
             <div class="flex gap-3">
@@ -109,8 +110,6 @@
         <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-2xl my-8">
             <h2 id="modal-title" class="text-xl sm:text-2xl font-semibold mb-6 text-center">Публикация игры</h2>
             
-            <input id="game-id" type="hidden">
-            
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
                 <input id="game-title" placeholder="Название игры" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
                 <input id="game-cover" placeholder="Ссылка на обложку" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
@@ -121,21 +120,21 @@
             <div class="mb-5">
                 <p class="mb-2 text-sm font-medium text-zinc-400">Платформы</p>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">🖥️ PC</button>
-                    <button onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">📱 Android</button>
-                    <button onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">🍎 iOS</button>
+                    <button type="button" onclick="togglePlatform(this)" data-platform="PC" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">🖥️ PC</button>
+                    <button type="button" onclick="togglePlatform(this)" data-platform="Android" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">📱 Android</button>
+                    <button type="button" onclick="togglePlatform(this)" data-platform="iOS" class="platform-btn px-4 py-2 bg-[#1f2533] rounded-xl text-sm">🍎 iOS</button>
                 </div>
             </div>
 
             <div class="mb-5">
                 <p class="mb-2 text-sm font-medium text-zinc-400">Теги</p>
                 <div class="flex flex-wrap gap-2">
-                    <button onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Furry</button>
-                    <button onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Adult</button>
-                    <button onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">NSFW</button>
-                    <button onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Horror</button>
-                    <button onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Action</button>
-                    <button onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">RPG</button>
+                    <button type="button" onclick="toggleTag(this)" data-tag="Furry" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Furry</button>
+                    <button type="button" onclick="toggleTag(this)" data-tag="Adult" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Adult</button>
+                    <button type="button" onclick="toggleTag(this)" data-tag="NSFW" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">NSFW</button>
+                    <button type="button" onclick="toggleTag(this)" data-tag="Horror" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Horror</button>
+                    <button type="button" onclick="toggleTag(this)" data-tag="Action" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">Action</button>
+                    <button type="button" onclick="toggleTag(this)" data-tag="RPG" class="tag-btn px-3 py-1.5 bg-[#1f2533] rounded-xl text-sm">RPG</button>
                 </div>
             </div>
 
@@ -157,7 +156,7 @@
         const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
         
-        let supabaseClient;
+        let supabaseClient = null;
         let currentUser = null;
         let selectedPlatforms = [];
         let selectedTags = [];
@@ -165,35 +164,59 @@
         let gamesVisible = true;
 
         async function init() {
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (!session) {
-                alert("Вы не авторизованы!");
-                window.location.href = "index.html";
-                return;
+            try {
+                console.log('Profile init started');
+                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                
+                if (sessionError) {
+                    console.error('Session error:', sessionError);
+                }
+
+                console.log('Session:', session);
+
+                if (!session || !session.user) {
+                    alert("Вы не авторизованы!");
+                    window.location.href = "index.html";
+                    return;
+                }
+
+                currentUser = session.user;
+                console.log('Current user:', currentUser);
+                console.log('user_metadata:', currentUser.user_metadata);
+
+                // Ник
+                const username = (currentUser.user_metadata && currentUser.user_metadata.username) 
+                    ? currentUser.user_metadata.username 
+                    : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+                
+                document.getElementById('profile-username').textContent = username;
+                
+                // Почта
+                document.getElementById('profile-email').textContent = currentUser.email || 'нет email';
+
+                // Аватар
+                const avatarUrl = currentUser.user_metadata && currentUser.user_metadata.avatar_url;
+                if (avatarUrl) {
+                    document.getElementById('profile-avatar').src = avatarUrl;
+                } else {
+                    document.getElementById('profile-avatar').src = 
+                        'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=1f2533&color=c5d1e0&size=128';
+                }
+
+                await loadMyGames();
+            } catch (e) {
+                console.error('Init error:', e);
+                document.getElementById('profile-username').textContent = 'Ошибка загрузки';
+                document.getElementById('profile-email').textContent = e.message || 'ошибка';
+                document.getElementById('my-games-list').innerHTML = 
+                    '<p class="text-red-400 py-6 text-center">Ошибка: ' + (e.message || e) + '</p>';
             }
-
-            currentUser = session.user;
-            const username = currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'User';
-            document.getElementById('profile-username').textContent = username;
-            document.getElementById('profile-email').textContent = currentUser.email || '';
-
-            // Аватар
-            const avatarUrl = currentUser.user_metadata?.avatar_url;
-            if (avatarUrl) {
-                document.getElementById('profile-avatar').src = avatarUrl;
-            } else {
-                document.getElementById('profile-avatar').src = 
-                    `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=1f2533&color=c5d1e0&size=128`;
-            }
-
-            loadMyGames();
         }
 
-        // ===== Аватар =====
         function showAvatarModal() {
-            const current = currentUser.user_metadata?.avatar_url || '';
+            const current = (currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url) || '';
             document.getElementById('avatar-url-input').value = current;
             document.getElementById('avatar-modal').classList.remove('hidden');
         }
@@ -206,27 +229,31 @@
             const url = document.getElementById('avatar-url-input').value.trim();
             
             try {
-                const { error } = await supabaseClient.auth.updateUser({
+                const { data, error } = await supabaseClient.auth.updateUser({
                     data: { avatar_url: url || null }
                 });
                 if (error) throw error;
 
-                if (!currentUser.user_metadata) currentUser.user_metadata = {};
-                currentUser.user_metadata.avatar_url = url || null;
+                if (data && data.user) {
+                    currentUser = data.user;
+                } else if (currentUser) {
+                    if (!currentUser.user_metadata) currentUser.user_metadata = {};
+                    currentUser.user_metadata.avatar_url = url || null;
+                }
 
-                const username = currentUser.user_metadata?.username || 'User';
+                const username = (currentUser.user_metadata && currentUser.user_metadata.username) || 'User';
                 document.getElementById('profile-avatar').src = url 
                     ? url 
-                    : `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=1f2533&color=c5d1e0&size=128`;
+                    : 'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=1f2533&color=c5d1e0&size=128';
 
                 hideAvatarModal();
                 alert('Аватар обновлён!');
             } catch (e) {
+                console.error(e);
                 alert('Ошибка: ' + e.message);
             }
         }
 
-        // ===== Скрыть / показать игры =====
         function toggleGamesVisibility() {
             gamesVisible = !gamesVisible;
             const list = document.getElementById('my-games-list');
@@ -274,22 +301,26 @@
                 document.getElementById('game-cover').value = game.cover || '';
                 document.getElementById('game-desc').value = game.description || '';
                 document.getElementById('game-download').value = game.download || '';
-                document.getElementById('game-nsfw').checked = game.is_nsfw || false;
+                document.getElementById('game-nsfw').checked = !!game.is_nsfw;
 
                 if (game.platforms) {
                     selectedPlatforms = typeof game.platforms === 'string' 
-                        ? game.platforms.split(',').map(p => p.trim()) 
+                        ? game.platforms.split(',').map(p => p.trim()).filter(Boolean)
                         : (Array.isArray(game.platforms) ? game.platforms : []);
                 }
                 if (game.tags) {
-                    selectedTags = Array.isArray(game.tags) ? [...game.tags] : [];
+                    selectedTags = Array.isArray(game.tags) ? game.tags.slice() : [];
                 }
 
                 document.querySelectorAll('.platform-btn').forEach(btn => {
-                    if (selectedPlatforms.includes(btn.dataset.platform)) btn.classList.add('active');
+                    if (selectedPlatforms.indexOf(btn.getAttribute('data-platform')) !== -1) {
+                        btn.classList.add('active');
+                    }
                 });
                 document.querySelectorAll('.tag-btn').forEach(btn => {
-                    if (selectedTags.includes(btn.dataset.tag)) btn.classList.add('active');
+                    if (selectedTags.indexOf(btn.getAttribute('data-tag')) !== -1) {
+                        btn.classList.add('active');
+                    }
                 });
             } else {
                 document.getElementById('game-title').value = '';
@@ -308,15 +339,21 @@
             const title = document.getElementById('game-title').value.trim();
             if (!title) return alert("Название игры обязательно!");
 
+            if (!currentUser) return alert("Нет пользователя");
+
+            const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
+                ? currentUser.user_metadata.username 
+                : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+
             const gameData = {
                 title: title,
-                cover: document.getElementById('game-cover').value || null,
-                description: document.getElementById('game-desc').value || null,
+                cover: document.getElementById('game-cover').value.trim() || null,
+                description: document.getElementById('game-desc').value.trim() || null,
                 platforms: selectedPlatforms.join(', '),
                 tags: selectedTags,
-                download: document.getElementById('game-download').value,
+                download: document.getElementById('game-download').value.trim() || null,
                 is_nsfw: document.getElementById('game-nsfw').checked,
-                author: currentUser.user_metadata?.username || currentUser.email.split('@')[0],
+                author: authorName,
                 user_id: currentUser.id
             };
 
@@ -331,85 +368,124 @@
                     alert("Игра опубликована!");
                 }
                 hidePublishModal();
-                loadMyGames();
+                await loadMyGames();
             } catch (e) {
+                console.error(e);
                 alert("Ошибка: " + e.message);
             }
         }
 
         async function deleteGame(gameId, title) {
-            if (!confirm(`Удалить игру «${title}»?\nЭто действие нельзя отменить.`)) return;
+            if (!confirm('Удалить игру «' + title + '»?\nЭто действие нельзя отменить.')) return;
 
             try {
                 const { error } = await supabaseClient.from('games').delete().eq('id', gameId);
                 if (error) throw error;
                 alert('Игра удалена');
-                loadMyGames();
+                await loadMyGames();
             } catch (e) {
+                console.error(e);
                 alert('Ошибка удаления: ' + e.message);
             }
         }
 
         async function loadMyGames() {
-            const { data, error } = await supabaseClient
-                .from('games')
-                .select('*')
-                .eq('user_id', currentUser.id)
-                .order('created_at', { ascending: false });
-
             const container = document.getElementById('my-games-list');
-            if (error || !data || data.length === 0) {
-                container.innerHTML = `<p class="text-zinc-500 py-10 text-center">У вас пока нет опубликованных игр</p>`;
+            
+            if (!currentUser || !currentUser.id) {
+                container.innerHTML = '<p class="text-red-400 py-6 text-center">Нет ID пользователя</p>';
                 return;
             }
 
-            container.innerHTML = data.map(g => {
+            try {
+                console.log('Loading games for user_id:', currentUser.id);
+
+                const { data, error } = await supabaseClient
+                    .from('games')
+                    .select('*')
+                    .eq('user_id', currentUser.id)
+                    .order('created_at', { ascending: false });
+
+                console.log('Games response:', { data, error });
+
+                if (error) {
+                    console.error('Load games error:', error);
+                    container.innerHTML = '<p class="text-red-400 py-6 text-center">Ошибка: ' + error.message + '</p>';
+                    return;
+                }
+
+                if (!data || data.length === 0) {
+                    // Запасной поиск по author
+                    const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
+                        ? currentUser.user_metadata.username 
+                        : (currentUser.email ? currentUser.email.split('@')[0] : null);
+                    
+                    if (authorName) {
+                        console.log('Trying by author:', authorName);
+                        const { data: data2, error: err2 } = await supabaseClient
+                            .from('games')
+                            .select('*')
+                            .eq('author', authorName)
+                            .order('created_at', { ascending: false });
+                        
+                        if (!err2 && data2 && data2.length > 0) {
+                            renderGamesList(data2);
+                            return;
+                        }
+                    }
+
+                    container.innerHTML = '<p class="text-zinc-500 py-10 text-center">У вас пока нет опубликованных игр</p>';
+                    return;
+                }
+
+                renderGamesList(data);
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p class="text-red-400 py-6 text-center">Ошибка: ' + e.message + '</p>';
+            }
+        }
+
+        function renderGamesList(data) {
+            const container = document.getElementById('my-games-list');
+            
+            container.innerHTML = data.map(function(g) {
                 let tagsHTML = '';
                 if (g.tags) {
                     const tags = Array.isArray(g.tags) ? g.tags : [];
-                    tagsHTML = tags.map(tag => 
-                        `<span class="inline-block bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">${tag}</span>`
-                    ).join('');
+                    tagsHTML = tags.map(function(tag) {
+                        return '<span class="inline-block bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">' + tag + '</span>';
+                    }).join('');
                 }
 
                 const downloads = g.download_count || 0;
+                const safeTitle = (g.title || 'Без названия').replace(/'/g, "\\'");
+                const cover = g.cover || 'https://picsum.photos/200/200?grayscale';
 
-                return `
-                    <div class="game-card rounded-2xl p-4 sm:p-5 border border-[#2a3344]">
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <img src="${g.cover || 'https://picsum.photos/200/200?grayscale'}" 
-                                 class="w-full sm:w-28 h-40 sm:h-28 object-cover rounded-xl flex-shrink-0">
-                            <div class="flex-1 min-w-0 flex flex-col">
-                                <div class="flex justify-between items-start gap-2">
-                                    <h3 class="font-semibold text-lg leading-tight">${g.title || 'Без названия'}</h3>
-                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">18+</span>' : ''}
-                                </div>
-                                <p class="text-sm text-zinc-400 mt-1">Скачано: ${downloads}</p>
-                                
-                                \( {tagsHTML ? `<div class="mt-2 flex flex-wrap gap-1.5"> \){tagsHTML}</div>` : ''}
-                                
-                                <div class="mt-4 flex flex-wrap gap-2">
-                                    <button onclick='showPublishModal(${JSON.stringify(g).replace(/'/g, "&#39;")})' 
-                                            class="px-4 py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">
-                                        Редактировать
-                                    </button>
-                                    <a href="${g.download || '#'}" target="_blank" 
-                                       class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm transition-colors">
-                                        Скачать
-                                    </a>
-                                    <button onclick="deleteGame('\( {g.id}', ' \){(g.title || '').replace(/'/g, "\\'")}')" 
-                                            class="px-4 py-2.5 bg-red-900/60 hover:bg-red-800 text-red-200 rounded-xl text-sm transition-colors">
-                                        Удалить
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                return '' +
+                    '<div class="game-card rounded-2xl p-4 sm:p-5 border border-[#2a3344]">' +
+                        '<div class="flex flex-col sm:flex-row gap-4">' +
+                            '<img src="' + cover + '" class="w-full sm:w-28 h-40 sm:h-28 object-cover rounded-xl flex-shrink-0" onerror="this.src=\'https://picsum.photos/200/200?grayscale\'">' +
+                            '<div class="flex-1 min-w-0 flex flex-col">' +
+                                '<div class="flex justify-between items-start gap-2">' +
+                                    '<h3 class="font-semibold text-lg leading-tight">' + (g.title || 'Без названия') + '</h3>' +
+                                    (g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">18+</span>' : '') +
+                                '</div>' +
+                                '<p class="text-sm text-zinc-400 mt-1">Скачано: ' + downloads + '</p>' +
+                                (tagsHTML ? '<div class="mt-2 flex flex-wrap gap-1.5">' + tagsHTML + '</div>' : '') +
+                                '<div class="mt-4 flex flex-wrap gap-2">' +
+                                    '<button onclick=\'showPublishModal(' + JSON.stringify(g).replace(/'/g, "&#39;") + ')\' class="px-4 py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">Редактировать</button>' +
+                                    '<a href="' + (g.download || '#') + '" target="_blank" class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm transition-colors">Скачать</a>' +
+                                    '<button onclick="deleteGame(\'' + g.id + '\', \'' + safeTitle + '\')" class="px-4 py-2.5 bg-red-900/60 hover:bg-red-800 text-red-200 rounded-xl text-sm transition-colors">Удалить</button>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
             }).join('');
 
             if (!gamesVisible) {
                 container.classList.add('hidden');
+            } else {
+                container.classList.remove('hidden');
             }
         }
 
