@@ -7,37 +7,88 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
-        body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: #0f1117;
+            color: #c5d1e0;
+        }
+        .game-card {
+            transition: all 0.25s ease;
+            background: #1a1f2e;
+        }
+        .game-card:hover {
+            transform: translateY(-4px);
+            border-color: #3a455a;
+            box-shadow: 0 12px 30px -10px rgba(0,0,0,0.45);
+        }
+        .game-card:hover .card-img {
+            transform: scale(1.04);
+        }
+        .card-img {
+            transition: transform 0.35s ease;
+        }
     </style>
 </head>
 <body>
-    <nav class="bg-[#0f1117] border-b border-[#1f2533] px-8 py-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
+
+    <nav class="bg-[#0f1117]/90 backdrop-blur-md border-b border-[#1f2533] sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-14">
+            <a href="index.html" class="flex items-center gap-1.5 text-xl font-bold">
                 ← <span>FUCK</span><span class="text-orange-500">HUB</span>
             </a>
             <span class="font-semibold text-orange-500">Сообщество</span>
         </div>
     </nav>
 
-    <div class="max-w-7xl mx-auto px-8 py-10">
-        <div class="flex justify-between items-center mb-8">
-            <div>
-                <h1 class="text-3xl font-bold">Сообщество</h1>
-                <p class="text-zinc-400">Арты, скриншоты, видео и обсуждения</p>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+        <!-- ===== VIEW 1: Список игр ===== -->
+        <div id="games-view">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div>
+                    <h1 class="text-2xl sm:text-3xl font-bold">Сообщество</h1>
+                    <p class="text-zinc-400 text-sm sm:text-base mt-1">Выбери игру, чтобы посмотреть арты, видео и обсуждения</p>
+                </div>
+                <button onclick="showUploadModal()" 
+                        class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-5 py-3 rounded-2xl transition-colors shrink-0">
+                    + Выложить контент
+                </button>
             </div>
-            <button onclick="showUploadModal()" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3 rounded-2xl">
-                + Выложить контент
-            </button>
+
+            <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5">
+                <p class="col-span-full text-center py-16 text-zinc-500">Загрузка игр...</p>
+            </div>
         </div>
 
-        <div id="posts-container" class="space-y-8"></div>
+        <!-- ===== VIEW 2: Посты конкретной игры ===== -->
+        <div id="posts-view" class="hidden">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                <div class="flex items-center gap-3">
+                    <button onclick="showGamesView()" 
+                            class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm transition-colors">
+                        ← Назад к играм
+                    </button>
+                    <div>
+                        <h1 id="current-game-title" class="text-xl sm:text-2xl font-bold">Игра</h1>
+                        <p class="text-zinc-400 text-sm">Арты, видео и обсуждения</p>
+                    </div>
+                </div>
+                <button onclick="showUploadModal(true)" 
+                        class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-5 py-3 rounded-2xl transition-colors shrink-0">
+                    + Выложить контент
+                </button>
+            </div>
+
+            <div id="posts-container" class="space-y-6">
+                <p class="text-center py-12 text-zinc-500">Загрузка...</p>
+            </div>
+        </div>
     </div>
 
     <!-- Модал загрузки -->
     <div id="upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
-            <h2 class="text-2xl font-semibold mb-6">Выложить контент</h2>
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
+            <h2 class="text-xl font-semibold mb-5">Выложить контент</h2>
             
             <div class="space-y-4">
                 <div>
@@ -59,12 +110,12 @@
                 </div>
 
                 <div>
-                    <label class="block text-sm text-zinc-400 mb-1">Описание</label>
+                    <label class="block text-sm text-zinc-400 mb-1">Описание (необязательно)</label>
                     <textarea id="post-desc" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-20"></textarea>
                 </div>
             </div>
 
-            <div class="flex gap-4 mt-8">
+            <div class="flex gap-3 mt-6">
                 <button onclick="uploadPost()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Опубликовать</button>
                 <button onclick="hideUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
             </div>
@@ -78,156 +129,300 @@
 
         let currentUser = null;
         let gamesList = [];
+        let currentGameId = null;
+        let currentGameTitle = '';
 
-        async function loadGamesForSelect() {
-            const { data } = await supabaseClient.from('games').select('id, title');
-            gamesList = data || [];
+        async function init() {
+            try {
+                const { data: { session } } = await supabaseClient.auth.getSession();
+                if (session) currentUser = session.user;
+
+                await loadGamesView();
+            } catch (e) {
+                console.error(e);
+                document.getElementById('games-grid').innerHTML = 
+                    '<p class="col-span-full text-center py-16 text-red-400">Ошибка загрузки</p>';
+            }
+        }
+
+        // ===== VIEW 1: Игры =====
+        async function loadGamesView() {
+            showGamesView();
+
+            const grid = document.getElementById('games-grid');
+            grid.innerHTML = '<p class="col-span-full text-center py-16 text-zinc-500">Загрузка игр...</p>';
+
+            const { data: games, error } = await supabaseClient
+                .from('games')
+                .select('id, title, cover, author, is_nsfw')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error(error);
+                grid.innerHTML = '<p class="col-span-full text-center py-16 text-red-400">Ошибка: ' + error.message + '</p>';
+                return;
+            }
+
+            gamesList = games || [];
+
+            const { data: posts } = await supabaseClient
+                .from('community_posts')
+                .select('game_id');
+
+            const postCount = {};
+            (posts || []).forEach(p => {
+                if (p.game_id) postCount[p.game_id] = (postCount[p.game_id] || 0) + 1;
+            });
+
+            if (!gamesList.length) {
+                grid.innerHTML = '<p class="col-span-full text-center py-16 text-zinc-500">Пока нет игр. Опубликуй первую в профиле.</p>';
+                return;
+            }
+
+            gamesList.sort((a, b) => (postCount[b.id] || 0) - (postCount[a.id] || 0));
+
+            grid.innerHTML = gamesList.map(g => {
+                const count = postCount[g.id] || 0;
+                const cover = g.cover || 'https://picsum.photos/400/300?grayscale';
+                const nsfw = g.is_nsfw ? '<span class="bg-red-600/90 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">18+</span>' : '';
+
+                return `
+                    <div class="game-card rounded-2xl overflow-hidden border border-[#2a3344] cursor-pointer" onclick="openGame('\( {g.id}', ' \){(g.title || '').replace(/'/g, "\\'")}')">
+                        <div class="relative overflow-hidden">
+                            <img src="\( {cover}" loading="lazy" class="card-img w-full h-44 sm:h-48 object-cover" alt=" \){g.title || ''}"
+                                 onerror="this.src='https://picsum.photos/400/300?grayscale'">
+                            <div class="absolute top-3 right-3 flex gap-1.5">${nsfw}</div>
+                        </div>
+                        <div class="p-4">
+                            <h3 class="font-semibold text-base leading-tight line-clamp-2 mb-1">${g.title || 'Без названия'}</h3>
+                            <p class="text-sm text-zinc-400 mb-3">${g.author || 'Неизвестно'}</p>
+                            <div class="flex items-center justify-between text-sm">
+                                <span class="text-zinc-400">${count} ${count === 1 ? 'пост' : (count > 1 && count < 5 ? 'поста' : 'постов')}</span>
+                                <span class="text-orange-400 text-xs font-medium">Открыть →</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            fillGameSelect();
+        }
+
+        function fillGameSelect(preselectId) {
             const select = document.getElementById('game-select');
             select.innerHTML = '<option value="">Выбери игру...</option>';
             gamesList.forEach(game => {
                 const option = document.createElement('option');
                 option.value = game.id;
-                option.textContent = game.title;
+                option.textContent = game.title || 'Без названия';
+                if (preselectId && game.id === preselectId) option.selected = true;
                 select.appendChild(option);
             });
         }
 
-        async function loadPosts() {
-            const { data: posts } = await supabaseClient
-                .from('community_posts')
-                .select(`*, games (title)`)
-                .order('created_at', { ascending: false });
+        function showGamesView() {
+            document.getElementById('games-view').classList.remove('hidden');
+            document.getElementById('posts-view').classList.add('hidden');
+            currentGameId = null;
+            currentGameTitle = '';
+        }
 
+        // ===== VIEW 2: Посты игры =====
+        async function openGame(gameId, title) {
+            currentGameId = gameId;
+            currentGameTitle = title || 'Игра';
+
+            document.getElementById('games-view').classList.add('hidden');
+            document.getElementById('posts-view').classList.remove('hidden');
+            document.getElementById('current-game-title').textContent = currentGameTitle;
+
+            await loadPostsForGame(gameId);
+        }
+
+        async function loadPostsForGame(gameId) {
             const container = document.getElementById('posts-container');
-            container.innerHTML = '';
+            container.innerHTML = '<p class="text-center py-12 text-zinc-500">Загрузка постов...</p>';
 
-            if (!posts || posts.length === 0) {
-                container.innerHTML = `<p class="text-center py-12 text-zinc-500">Пока ничего не выложили</p>`;
-                return;
-            }
+            try {
+                const { data: posts, error } = await supabaseClient
+                    .from('community_posts')
+                    .select('*')
+                    .eq('game_id', gameId)
+                    .order('created_at', { ascending: false });
 
-            for (const post of posts) {
-                const gameTitle = post.games ? post.games.title : 'Неизвестная игра';
-                const reactions = post.reactions || {};
-
-                let mediaHTML = '';
-                if (post.video_url) {
-                    mediaHTML = `<video controls class="w-full aspect-video bg-black rounded-xl"><source src="${post.video_url}"></video>`;
-                } else if (post.image_url) {
-                    mediaHTML = `<img src="${post.image_url}" class="w-full aspect-video object-cover" onerror="this.src='https://picsum.photos/800/450'">`;
+                if (error) {
+                    console.error(error);
+                    container.innerHTML = '<p class="text-center py-12 text-red-400">Ошибка: ' + error.message + '</p>';
+                    return;
                 }
 
-                // Реакции
-                const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
-                let reactionsHTML = reactionsList.map(emoji => {
-                    const count = reactions[emoji] || 0;
-                    return `<button onclick="addReaction('${post.id}', '${emoji}')" class="hover:scale-125 transition-transform text-2xl">${emoji} ${count > 0 ? `<span class="text-sm">${count}</span>` : ''}</button>`;
-                }).join('');
+                if (!posts || posts.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-16">
+                            <p class="text-zinc-500 mb-4">Пока нет контента по этой игре</p>
+                            <button onclick="showUploadModal(true)" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3 rounded-2xl">
+                                Выложить первый пост
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
 
-                // Комментарии (сворачиваемые)
-                const { data: comments } = await supabaseClient
+                const postIds = posts.map(p => p.id);
+                const { data: allComments } = await supabaseClient
                     .from('post_comments')
                     .select('*')
-                    .eq('post_id', post.id)
+                    .in('post_id', postIds)
                     .order('created_at', { ascending: true });
 
-                let commentsHTML = '';
-                if (comments && comments.length > 0) {
-                    commentsHTML = comments.map(c => `
-                        <div class="text-sm border-t border-[#2a3344] pt-3 mt-3">
-                            <div class="flex items-center gap-2 mb-1">
+                const commentsByPost = {};
+                (allComments || []).forEach(c => {
+                    if (!commentsByPost[c.post_id]) commentsByPost[c.post_id] = [];
+                    commentsByPost[c.post_id].push(c);
+                });
+
+                container.innerHTML = posts.map(post => {
+                    const reactions = post.reactions || {};
+                    const comments = commentsByPost[post.id] || [];
+
+                    let mediaHTML = '';
+                    if (post.video_url) {
+                        mediaHTML = `<video controls class="w-full aspect-video bg-black rounded-xl"><source src="${post.video_url}"></video>`;
+                    } else if (post.image_url) {
+                        mediaHTML = `<img src="${post.image_url}" class="w-full rounded-xl object-cover max-h-[480px]" onerror="this.src='https://picsum.photos/800/450'">`;
+                    }
+
+                    const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
+                    const reactionsHTML = reactionsList.map(emoji => {
+                        const count = reactions[emoji] || 0;
+                        return `<button onclick="addReaction('\( {post.id}', ' \){emoji}')" class="hover:scale-110 transition-transform text-xl sm:text-2xl flex items-center gap-1">
+                            \( {emoji} \){count > 0 ? `<span class="text-xs sm:text-sm text-zinc-400">${count}</span>` : ''}
+                        </button>`;
+                    }).join('');
+
+                    let commentsHTML = '';
+                    if (comments.length > 0) {
+                        commentsHTML = comments.map(c => `
+                            <div class="text-sm border-t border-[#2a3344] pt-3 mt-3">
                                 <span class="font-semibold text-orange-400">${c.username || 'Аноним'}</span>
+                                <p class="text-zinc-300 mt-0.5">${c.content || ''}</p>
                             </div>
-                            <p class="text-zinc-300">${c.content}</p>
-                        </div>
-                    `).join('');
-                }
+                        `).join('');
+                    }
 
-                const postDiv = document.createElement('div');
-                postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
-                postDiv.innerHTML = `
-                    <div class="p-5">
-                        <div class="flex justify-between items-center mb-4">
-                            <span class="bg-[#2a3344] text-xs px-3 py-1 rounded-full">${gameTitle}</span>
-                            <span class="text-xs text-zinc-500">${new Date(post.created_at).toLocaleDateString('ru-RU')}</span>
-                        </div>
-                        
-                        ${post.description ? `<p class="mb-4 text-zinc-200">${post.description}</p>` : ''}
-                        
-                        <div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344]">
-                            ${mediaHTML}
-                        </div>
+                    const date = post.created_at 
+                        ? new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : '';
 
-                        <!-- Реакции -->
-                        <div class="flex gap-5 mb-6 text-2xl">
-                            ${reactionsHTML}
-                        </div>
+                    return `
+                        <div class="bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden">
+                            <div class="p-4 sm:p-5">
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="text-xs text-zinc-500">${date}</span>
+                                </div>
+                                
+                                \( {post.description ? `<p class="mb-4 text-zinc-200"> \){post.description}</p>` : ''}
+                                
+                                \( {mediaHTML ? `<div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344]"> \){mediaHTML}</div>` : ''}
 
-                        <!-- Комментарии (сворачиваемые) -->
-                        <div>
-                            <button onclick="toggleComments(this)" 
-                                    class="text-sm font-medium mb-3 flex items-center gap-2 text-zinc-400 hover:text-white">
-                                Комментарии (${comments ? comments.length : 0}) ▼
-                            </button>
-                            <div class="comments-section hidden space-y-4">
-                                ${commentsHTML || '<p class="text-xs text-zinc-500">Комментариев пока нет</p>'}
-                            </div>
+                                <div class="flex gap-4 sm:gap-5 mb-5">
+                                    ${reactionsHTML}
+                                </div>
 
-                            <div class="flex gap-2 mt-4">
-                                <input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий..." 
-                                       class="flex-1 px-4 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm">
-                                <button onclick="addComment('${post.id}')" 
-                                        class="px-5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm">
-                                    Отправить
-                                </button>
+                                <div>
+                                    <button onclick="toggleComments(this)" 
+                                            class="text-sm font-medium mb-2 flex items-center gap-2 text-zinc-400 hover:text-white transition-colors">
+                                        Комментарии (${comments.length}) ▼
+                                    </button>
+                                    <div class="comments-section hidden space-y-1">
+                                        ${commentsHTML || '<p class="text-xs text-zinc-500 py-2">Комментариев пока нет</p>'}
+                                    </div>
+
+                                    <div class="flex gap-2 mt-3">
+                                        <input type="text" id="comment-input-${post.id}" placeholder="Написать комментарий..." 
+                                               class="flex-1 px-4 py-2.5 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm">
+                                        <button onclick="addComment('${post.id}')" 
+                                                class="px-4 sm:px-5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm transition-colors">
+                                            Отправить
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                `;
-                container.appendChild(postDiv);
+                    `;
+                }).join('');
+
+            } catch (e) {
+                console.error(e);
+                container.innerHTML = '<p class="text-center py-12 text-red-400">Ошибка загрузки</p>';
             }
         }
 
         function toggleComments(btn) {
-            const commentsSection = btn.parentElement.querySelector('.comments-section');
-            commentsSection.classList.toggle('hidden');
-            btn.textContent = commentsSection.classList.contains('hidden') 
-                ? btn.textContent.replace('▼', '▶') 
-                : btn.textContent.replace('▶', '▼');
+            const section = btn.parentElement.querySelector('.comments-section');
+            section.classList.toggle('hidden');
+            const isHidden = section.classList.contains('hidden');
+            btn.innerHTML = btn.innerHTML.replace(/[▼▶]/ isHidden ? '▶' : '▼');
         }
 
         async function addReaction(postId, emoji) {
-            const { data: post } = await supabaseClient.from('community_posts').select('reactions').eq('id', postId).single();
-            const reactions = post.reactions || {};
-            reactions[emoji] = (reactions[emoji] || 0) + 1;
+            try {
+                const { data: post } = await supabaseClient
+                    .from('community_posts')
+                    .select('reactions')
+                    .eq('id', postId)
+                    .single();
 
-            await supabaseClient.from('community_posts').update({ reactions }).eq('id', postId);
-            loadPosts();
-        }
+                const reactions = post?.reactions || {};
+                reactions[emoji] = (reactions[emoji] || 0) + 1;
 
-        async function addComment(postId) {
-            const input = document.getElementById(`comment-input-${postId}`);
-            const content = input.value.trim();
-            if (!content) return;
+                await supabaseClient
+                    .from('community_posts')
+                    .update({ reactions })
+                    .eq('id', postId);
 
-            const username = currentUser ? (currentUser.user_metadata?.username || currentUser.email.split('@')[0]) : 'Аноним';
-
-            const { error } = await supabaseClient.from('post_comments').insert({
-                post_id: postId,
-                content: content,
-                username: username,
-                user_id: currentUser ? currentUser.id : null
-            });
-
-            if (error) {
-                alert("Ошибка: " + error.message);
-            } else {
-                input.value = '';
-                loadPosts();
+                if (currentGameId) await loadPostsForGame(currentGameId);
+            } catch (e) {
+                console.error(e);
             }
         }
 
-        function showUploadModal() {
+        async function addComment(postId) {
+            const input = document.getElementById('comment-input-' + postId);
+            const content = (input?.value || '').trim();
+            if (!content) return;
+
+            const username = currentUser
+                ? (currentUser.user_metadata?.username || currentUser.email?.split('@')[0] || 'User')
+                : 'Аноним';
+
+            try {
+                const { error } = await supabaseClient.from('post_comments').insert({
+                    post_id: postId,
+                    content: content,
+                    username: username,
+                    user_id: currentUser ? currentUser.id : null
+                });
+
+                if (error) {
+                    alert('Ошибка: ' + error.message);
+                    return;
+                }
+
+                input.value = '';
+                if (currentGameId) await loadPostsForGame(currentGameId);
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка отправки');
+            }
+        }
+
+        // ===== Upload =====
+        function showUploadModal(preselectCurrent) {
+            fillGameSelect(preselectCurrent && currentGameId ? currentGameId : null);
+            document.getElementById('media-url').value = '';
+            document.getElementById('post-desc').value = '';
+            document.getElementById('content-type').value = 'image';
             document.getElementById('upload-modal').classList.remove('hidden');
         }
 
@@ -242,35 +437,38 @@
             const description = document.getElementById('post-desc').value.trim();
 
             if (!gameId || !mediaUrl) {
-                alert("Выбери игру и укажи ссылку");
+                alert('Выбери игру и укажи ссылку');
                 return;
             }
 
             const data = {
                 game_id: gameId,
                 description: description || null,
-                user_id: currentUser?.id
+                user_id: currentUser ? currentUser.id : null
             };
 
             if (type === 'image') data.image_url = mediaUrl;
             else data.video_url = mediaUrl;
 
-            const { error } = await supabaseClient.from('community_posts').insert(data);
+            try {
+                const { error } = await supabaseClient.from('community_posts').insert(data);
+                if (error) {
+                    alert('Ошибка: ' + error.message);
+                    return;
+                }
 
-            if (error) alert("Ошибка: " + error.message);
-            else {
-                alert("Опубликовано!");
+                alert('Опубликовано!');
                 hideUploadModal();
-                loadPosts();
+
+                if (currentGameId === gameId) {
+                    await loadPostsForGame(gameId);
+                } else {
+                    await loadGamesView();
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка публикации');
             }
-        }
-
-        async function init() {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) currentUser = session.user;
-
-            await loadGamesForSelect();
-            await loadPosts();
         }
 
         window.onload = init;
