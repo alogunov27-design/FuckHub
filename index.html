@@ -44,7 +44,7 @@
             overflow: hidden;
         }
         #mobile-menu.open {
-            max-height: 480px;
+            max-height: 520px;
             opacity: 1;
         }
 
@@ -53,6 +53,13 @@
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
             overflow: hidden;
+        }
+
+        .donate-btn {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+        }
+        .donate-btn:hover {
+            background: linear-gradient(135deg, #fb923c, #f97316);
         }
     </style>
 </head>
@@ -72,9 +79,12 @@
                     <a href="index.html" class="text-white">Магазин</a>
                     <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
                     <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
+                    <button onclick="showDonateModal()" class="donate-btn text-black font-semibold px-4 py-1.5 rounded-xl text-sm transition-all hover:scale-105">
+                        Монетка в киску
+                    </button>
                 </div>
 
-                <!-- Desktop auth — как в оригинале: по умолчанию видно -->
+                <!-- Desktop auth -->
                 <div id="auth-buttons" class="hidden md:flex items-center gap-3">
                     <button onclick="showRegisterModal()" class="px-5 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">Регистрация</button>
                     <button onclick="showLoginModal()" class="px-5 py-2 text-sm font-semibold border border-zinc-700 hover:bg-zinc-800 rounded-xl transition-colors">Войти</button>
@@ -103,6 +113,9 @@
                     <a href="index.html" class="block px-3 py-2.5 rounded-xl text-white bg-zinc-800/60 font-medium">Магазин</a>
                     <a href="game.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Сообщество</a>
                     <a href="profile.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Мои Игры</a>
+                    <button onclick="showDonateModal(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-xl donate-btn text-black font-semibold mt-1">
+                        Монетка в киску
+                    </button>
 
                     <div class="pt-3 mt-2 border-t border-[#1f2533] space-y-2">
                         <div id="mobile-auth-buttons">
@@ -162,7 +175,41 @@
         </div>
     </div>
 
-    <!-- Модалы — ТОЧНО как у тебя, не трогал -->
+    <!-- Модал доната -->
+    <div id="donate-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md relative">
+            <button onclick="hideDonateModal()" class="absolute top-4 right-4 text-zinc-500 hover:text-white text-2xl leading-none">&times;</button>
+            
+            <h2 class="text-2xl font-bold mb-2 text-center">Монетка в киску</h2>
+            <p class="text-zinc-400 text-sm text-center mb-6">Поддержи проект — чтобы киски всегда были мокрыми</p>
+
+            <div class="bg-[#11141c] border border-[#2a3344] rounded-2xl p-4 mb-5">
+                <p class="text-xs text-zinc-500 mb-1">Сеть: <span class="text-orange-400 font-medium">Ethereum (ERC20)</span></p>
+                <p class="text-xs text-zinc-500 mb-3">USDT или ETH</p>
+                
+                <div class="flex items-center gap-2">
+                    <code id="donate-address" class="flex-1 text-sm break-all text-zinc-200 font-mono">0x68F9011124C1e3E0E6CC84B5fa77e5f82A44Ff23</code>
+                    <button onclick="copyAddress()" class="shrink-0 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">
+                        Копировать
+                    </button>
+                </div>
+                <p id="copy-success" class="text-green-400 text-xs mt-2 hidden">Адрес скопирован</p>
+            </div>
+
+            <a href="https://link.trustwallet.com/send?coin=60&address=0x68F9011124C1e3E0E6CC84B5fa77e5f82A44Ff23&token_id=0xdAC17F958D2ee523a2206206994597C13D831ec7" 
+               target="_blank"
+               class="block w-full text-center donate-btn text-black font-bold py-3.5 rounded-2xl mb-4 transition-all hover:scale-[1.02]">
+                Открыть в Trust Wallet
+            </a>
+
+            <p class="text-xs text-zinc-500 text-center leading-relaxed">
+                Лучше всего отправлять через <b class="text-zinc-300">Trust Wallet</b>.<br>
+                Убедись, что сеть — <b class="text-orange-400">Ethereum</b>.
+            </p>
+        </div>
+    </div>
+
+    <!-- Модалы авторизации -->
     <div id="register-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
         <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
             <h2 class="text-2xl font-semibold mb-7">Регистрация</h2>
@@ -193,7 +240,35 @@
         let allGames = [];
         let currentPlatformFilter = 'all';
 
-        // ===== AUTH — 1 в 1 как было =====
+        // ===== DONATE =====
+        window.showDonateModal = function() {
+            document.getElementById('donate-modal').classList.remove('hidden');
+            document.getElementById('copy-success').classList.add('hidden');
+        };
+        window.hideDonateModal = function() {
+            document.getElementById('donate-modal').classList.add('hidden');
+        };
+        window.copyAddress = function() {
+            const addr = document.getElementById('donate-address').textContent.trim();
+            navigator.clipboard.writeText(addr).then(() => {
+                const el = document.getElementById('copy-success');
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 2000);
+            }).catch(() => {
+                // fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = addr;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                const el = document.getElementById('copy-success');
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 2000);
+            });
+        };
+
+        // ===== AUTH =====
         window.showRegisterModal = function() { document.getElementById('register-modal').classList.remove('hidden'); };
         window.showLoginModal = function() { document.getElementById('login-modal').classList.remove('hidden'); };
         window.hideModals = function() {
@@ -249,7 +324,6 @@
                 if (session) {
                     currentUser = session.user;
 
-                    // Desktop
                     document.getElementById('auth-buttons').classList.add('hidden');
                     document.getElementById('auth-buttons').classList.remove('md:flex');
                     const userSec = document.getElementById('user-section');
@@ -257,12 +331,10 @@
                     userSec.classList.add('flex');
                     document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
 
-                    // Mobile
                     document.getElementById('mobile-auth-buttons').classList.add('hidden');
                     document.getElementById('mobile-user-section').classList.remove('hidden');
                     document.getElementById('mobile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
                 } else {
-                    // Не залогинен — показываем кнопки
                     document.getElementById('auth-buttons').classList.remove('hidden');
                     document.getElementById('mobile-auth-buttons').classList.remove('hidden');
                     document.getElementById('mobile-user-section').classList.add('hidden');
