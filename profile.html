@@ -32,6 +32,26 @@
             object-fit: cover;
             background: #11141c;
         }
+        /* Явные стили инпутов — чтобы ничего не пропадало */
+        #publish-modal input[type="text"],
+        #publish-modal input[type="url"],
+        #publish-modal textarea,
+        #avatar-modal input[type="url"] {
+            color: #e5e7eb !important;
+            background-color: #11141c !important;
+            border: 1px solid #3a455a !important;
+            min-height: 48px;
+        }
+        #publish-modal input::placeholder,
+        #publish-modal textarea::placeholder {
+            color: #6b7280 !important;
+            opacity: 1;
+        }
+        #publish-modal label {
+            color: #a1a1aa !important;
+            display: block !important;
+            margin-bottom: 6px;
+        }
     </style>
 </head>
 <body>
@@ -125,14 +145,15 @@
 
     <!-- Модал публикации -->
     <div id="publish-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
-        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-2xl my-8">
+        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-2xl my-8 max-h-[90vh] overflow-y-auto">
             <h2 id="modal-title" class="text-xl sm:text-2xl font-semibold mb-6 text-center">Публикация игры</h2>
             
-            <!-- Название -->
+            <!-- Название — самое верхнее поле -->
             <div class="mb-5">
-                <label class="block text-sm text-zinc-400 mb-1">Название игры</label>
+                <label for="game-title" class="block text-sm font-medium text-zinc-300 mb-2">Название игры *</label>
                 <input id="game-title" type="text" placeholder="Например: Sweet Torment" 
-                       class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                       class="w-full px-4 py-3.5 bg-[#11141c] border border-[#3a455a] rounded-2xl text-white"
+                       style="color:#e5e7eb;background:#11141c;min-height:48px;">
             </div>
 
             <!-- Обложка -->
@@ -706,4 +727,4 @@
         window.onload = init;
     </script>
 </body>
-</html>
+                                                                                                                                                                     </html>
