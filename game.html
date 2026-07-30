@@ -15,6 +15,15 @@
             transform: scale(1.01);
             box-shadow: 0 0 40px rgba(249, 115, 22, 0.25);
         }
+        .avatar-sm {
+            object-fit: cover;
+            background: #1f2533;
+        }
+        .news-gallery img {
+            max-height: 420px;
+            object-fit: contain;
+            background: #11141c;
+        }
     </style>
 </head>
 <body>
@@ -32,8 +41,6 @@
 
     <!-- ========== ГЛАВНЫЙ ВИД: НОВОСТИ + ИГРЫ ========== -->
     <div id="games-view">
-
-        <!-- БАННЕР НОВОСТЕЙ -->
         <div class="mb-10">
             <div onclick="openNews()" class="news-banner relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer border border-[#2a3344] group">
                 <img src="https://i.imgur.com/nz7hXID.jpg" 
@@ -54,7 +61,6 @@
             </div>
         </div>
 
-        <!-- Заголовок игр -->
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
                 <h1 class="text-xl sm:text-2xl font-bold">Игры сообщества</h1>
@@ -141,8 +147,8 @@
 </div>
 
 <!-- Модал новости -->
-<div id="news-upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-    <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
+<div id="news-upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-lg my-8">
         <h2 class="text-xl font-semibold mb-5">Опубликовать новость</h2>
         <div class="space-y-4">
             <div>
@@ -154,20 +160,27 @@
                 <textarea id="news-content" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-32" placeholder="Что нового..."></textarea>
             </div>
             <div>
-                <label class="block text-sm text-zinc-400 mb-1">Ссылка на картинку (прямая!)</label>
-                <input id="news-image" type="text" placeholder="https://i.imgur.com/xxxx.jpg" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                <label class="block text-sm text-zinc-400 mb-1">Фото (можно несколько)</label>
+                <input type="file" id="news-files" accept="image/*" multiple class="hidden" onchange="previewNewsFiles(this)">
+                <button type="button" onclick="document.getElementById('news-files').click()"
+                        class="w-full px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium">
+                    Выбрать файлы
+                </button>
+                <p class="text-xs text-zinc-500 mt-2">До 1 МБ каждый. JPG, PNG, WebP</p>
+                <div id="news-files-preview" class="flex flex-wrap gap-2 mt-3"></div>
+                <p id="news-files-status" class="text-xs text-zinc-400 mt-1"></p>
             </div>
         </div>
         <div class="flex gap-3 mt-6">
-            <button onclick="uploadNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Опубликовать</button>
+            <button id="news-upload-btn" onclick="uploadNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Опубликовать</button>
             <button onclick="hideNewsUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
         </div>
     </div>
 </div>
 
 <!-- Модал редактирования новости -->
-<div id="news-edit-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-    <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
+<div id="news-edit-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto">
+    <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-lg my-8">
         <h2 class="text-xl font-semibold mb-5">Редактировать новость</h2>
         <input type="hidden" id="edit-news-id">
         <div class="space-y-4">
@@ -180,12 +193,20 @@
                 <textarea id="edit-news-content" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-32"></textarea>
             </div>
             <div>
-                <label class="block text-sm text-zinc-400 mb-1">Ссылка на картинку</label>
-                <input id="edit-news-image" type="text" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                <label class="block text-sm text-zinc-400 mb-1">Текущие фото</label>
+                <div id="edit-news-current-images" class="flex flex-wrap gap-2 mb-2"></div>
+                <label class="block text-sm text-zinc-400 mb-1">Добавить новые фото (опционально)</label>
+                <input type="file" id="edit-news-files" accept="image/*" multiple class="hidden" onchange="previewEditNewsFiles(this)">
+                <button type="button" onclick="document.getElementById('edit-news-files').click()"
+                        class="w-full px-4 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium">
+                    Выбрать файлы
+                </button>
+                <p class="text-xs text-zinc-500 mt-2">Новые фото добавятся к существующим. До 1 МБ каждый.</p>
+                <div id="edit-news-files-preview" class="flex flex-wrap gap-2 mt-3"></div>
             </div>
         </div>
         <div class="flex gap-3 mt-6">
-            <button onclick="saveEditNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Сохранить</button>
+            <button id="edit-news-save-btn" onclick="saveEditNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Сохранить</button>
             <button onclick="hideEditNewsModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
         </div>
     </div>
@@ -195,15 +216,74 @@
 const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
 const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
 
 let currentUser = null;
 let gamesList = [];
 let currentGameId = null;
+let newsPostsCache = {}; // id -> post data for safe edit
+let pendingNewsFiles = [];
+let pendingEditNewsFiles = [];
+let currentEditImageUrls = [];
 
 function isFuckHub() {
     if (!currentUser) return false;
     const username = (currentUser.user_metadata && currentUser.user_metadata.username) || '';
     return username.toLowerCase() === 'fuckhub';
+}
+
+function getUsername() {
+    if (!currentUser) return 'Аноним';
+    return (currentUser.user_metadata && currentUser.user_metadata.username)
+        || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+}
+
+function getAvatarUrl() {
+    if (!currentUser) return null;
+    return (currentUser.user_metadata && currentUser.user_metadata.avatar_url) || null;
+}
+
+function parseImageUrls(imageUrlField) {
+    if (!imageUrlField) return [];
+    const raw = String(imageUrlField).trim();
+    if (!raw) return [];
+    try {
+        if (raw.startsWith('[')) {
+            const arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr.filter(Boolean) : [raw];
+        }
+    } catch (e) {}
+    // legacy single url or pipe-separated
+    if (raw.includes('|')) return raw.split('|').map(s => s.trim()).filter(Boolean);
+    return [raw];
+}
+
+function renderImageGallery(urls) {
+    if (!urls || urls.length === 0) return '';
+    if (urls.length === 1) {
+        return '<div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344] news-gallery">' +
+            '<img src="' + urls[0] + '" class="w-full" onerror="this.parentElement.style.display=\'none\'">' +
+            '</div>';
+    }
+    let html = '<div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2 news-gallery">';
+    for (let i = 0; i < urls.length; i++) {
+        html += '<div class="rounded-xl overflow-hidden border border-[#2a3344]">' +
+            '<img src="' + urls[i] + '" class="w-full h-48 object-cover" onerror="this.parentElement.style.display=\'none\'">' +
+            '</div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+async function uploadNewsFile(file) {
+    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    const fileName = 'news/' + (currentUser.id || 'admin') + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
+    const { error } = await supabaseClient.storage
+        .from('covers')
+        .upload(fileName, file, { cacheControl: '3600', upsert: false });
+    if (error) throw error;
+    const { data } = supabaseClient.storage.from('covers').getPublicUrl(fileName);
+    return data.publicUrl;
 }
 
 async function init() {
@@ -293,9 +373,25 @@ function openNews() {
     loadNews();
 }
 
+function renderCommentHTML(c) {
+    const avatar = c.avatar_url
+        ? '<img src="' + c.avatar_url + '" class="avatar-sm w-8 h-8 rounded-full shrink-0" onerror="this.style.display=\'none\'">'
+        : '<div class="w-8 h-8 rounded-full bg-[#2a3344] flex items-center justify-center text-xs shrink-0">' +
+            ((c.username || 'A').charAt(0).toUpperCase()) + '</div>';
+
+    return '<div class="flex gap-3 border-t border-[#2a3344] pt-3 mt-3">' +
+        avatar +
+        '<div class="min-w-0 flex-1">' +
+            '<span class="font-semibold text-orange-400 text-sm">' + (c.username || 'Аноним') + '</span>' +
+            '<p class="text-zinc-300 text-sm mt-0.5">' + (c.content || '') + '</p>' +
+        '</div>' +
+    '</div>';
+}
+
 async function loadNews() {
     const container = document.getElementById('news-container');
     container.innerHTML = '<p class="text-center py-12 text-zinc-500">Загрузка новостей...</p>';
+    newsPostsCache = {};
 
     const { data: posts, error } = await supabaseClient
         .from('community_posts')
@@ -318,11 +414,15 @@ async function loadNews() {
 
     for (let i = 0; i < newsPosts.length; i++) {
         const post = newsPosts[i];
-        const date = post.created_at ? new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
-        
+        newsPostsCache[post.id] = post;
+
+        const date = post.created_at
+            ? new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })
+            : '';
+
         let title = 'Новость';
         let content = post.description || '';
-        
+
         if (content.startsWith('[NEWS]')) {
             content = content.replace('[NEWS]', '').trim();
             const parts = content.split('|');
@@ -334,17 +434,9 @@ async function loadNews() {
             }
         }
 
-        // Картинка
-        let mediaHTML = '';
-        if (post.image_url && post.image_url.trim() !== '') {
-            mediaHTML = '<div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344]">' +
-                '<img src="' + post.image_url + '" class="w-full object-contain max-h-[500px] bg-[#11141c]" ' +
-                'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';">' +
-                '<p class="hidden text-center text-zinc-500 text-sm py-6">Не удалось загрузить изображение</p>' +
-                '</div>';
-        }
+        const imageUrls = parseImageUrls(post.image_url);
+        const mediaHTML = renderImageGallery(imageUrls);
 
-        // Реакции
         const reactions = post.reactions || {};
         const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
         let reactionsHTML = '';
@@ -356,7 +448,6 @@ async function loadNews() {
             '</button> ';
         }
 
-        // Комментарии
         const { data: comments } = await supabaseClient
             .from('post_comments')
             .select('*')
@@ -366,16 +457,12 @@ async function loadNews() {
         let commentsHTML = '';
         if (comments && comments.length > 0) {
             for (let c = 0; c < comments.length; c++) {
-                commentsHTML += '<div class="text-sm border-t border-[#2a3344] pt-3 mt-3">' +
-                    '<span class="font-semibold text-orange-400">' + (comments[c].username || 'Аноним') + '</span>' +
-                    '<p class="text-zinc-300 mt-1">' + (comments[c].content || '') + '</p>' +
-                '</div>';
+                commentsHTML += renderCommentHTML(comments[c]);
             }
         }
 
-        // Кнопка редактирования только для FuckHub
         const editBtn = isFuckHub()
-            ? '<button onclick="showEditNewsModal(\'' + post.id + '\', \'' + title.replace(/'/g, "\\'") + '\', \'' + content.replace(/'/g, "\\'").replace(/\n/g, '\\n') + '\', \'' + (post.image_url || '').replace(/'/g, "\\'") + '\')" class="text-xs text-zinc-400 hover:text-orange-400 transition-colors">Редактировать</button>'
+            ? '<button onclick="showEditNewsModal(\'' + post.id + '\')" class="text-xs text-zinc-400 hover:text-orange-400 transition-colors">Редактировать</button>'
             : '';
 
         const postDiv = document.createElement('div');
@@ -408,6 +495,64 @@ async function loadNews() {
     }
 }
 
+function previewNewsFiles(input) {
+    pendingNewsFiles = [];
+    const preview = document.getElementById('news-files-preview');
+    const status = document.getElementById('news-files-status');
+    preview.innerHTML = '';
+    status.textContent = '';
+
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
+
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/')) {
+            alert('Только изображения: ' + file.name);
+            continue;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+            alert('Файл слишком большой (макс 1 МБ): ' + file.name);
+            continue;
+        }
+        pendingNewsFiles.push(file);
+
+        const reader = new FileReader();
+        reader.onload = (function(f) {
+            return function(e) {
+                const div = document.createElement('div');
+                div.className = 'w-20 h-20 rounded-lg overflow-hidden border border-[#2a3344]';
+                div.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover" alt="">';
+                preview.appendChild(div);
+            };
+        })(file);
+        reader.readAsDataURL(file);
+    }
+    status.textContent = 'Выбрано файлов: ' + pendingNewsFiles.length;
+}
+
+function previewEditNewsFiles(input) {
+    pendingEditNewsFiles = [];
+    const preview = document.getElementById('edit-news-files-preview');
+    preview.innerHTML = '';
+
+    const files = input.files ? Array.from(input.files) : [];
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (!file.type.startsWith('image/') || file.size > MAX_FILE_SIZE) continue;
+        pendingEditNewsFiles.push(file);
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'w-20 h-20 rounded-lg overflow-hidden border border-[#2a3344]';
+            div.innerHTML = '<img src="' + e.target.result + '" class="w-full h-full object-cover" alt="">';
+            preview.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
 function showNewsUploadModal() {
     if (!isFuckHub()) {
         alert('Только FuckHub может публиковать новости');
@@ -415,7 +560,10 @@ function showNewsUploadModal() {
     }
     document.getElementById('news-title').value = '';
     document.getElementById('news-content').value = '';
-    document.getElementById('news-image').value = '';
+    document.getElementById('news-files').value = '';
+    document.getElementById('news-files-preview').innerHTML = '';
+    document.getElementById('news-files-status').textContent = '';
+    pendingNewsFiles = [];
     document.getElementById('news-upload-modal').classList.remove('hidden');
 }
 
@@ -423,16 +571,68 @@ function hideNewsUploadModal() {
     document.getElementById('news-upload-modal').classList.add('hidden');
 }
 
-function showEditNewsModal(id, title, content, imageUrl) {
+function showEditNewsModal(id) {
     if (!isFuckHub()) {
         alert('Нет прав');
         return;
     }
+    const post = newsPostsCache[id];
+    if (!post) {
+        alert('Новость не найдена');
+        return;
+    }
+
+    let title = 'Новость';
+    let content = post.description || '';
+    if (content.startsWith('[NEWS]')) {
+        content = content.replace('[NEWS]', '').trim();
+        const parts = content.split('|');
+        if (parts.length >= 2) {
+            title = parts[0].trim();
+            content = parts.slice(1).join('|').trim();
+        }
+    }
+
     document.getElementById('edit-news-id').value = id;
     document.getElementById('edit-news-title').value = title;
-    document.getElementById('edit-news-content').value = content.replace(/\\n/g, '\n');
-    document.getElementById('edit-news-image').value = imageUrl || '';
+    document.getElementById('edit-news-content').value = content;
+
+    currentEditImageUrls = parseImageUrls(post.image_url);
+    const currentBox = document.getElementById('edit-news-current-images');
+    currentBox.innerHTML = '';
+    if (currentEditImageUrls.length === 0) {
+        currentBox.innerHTML = '<span class="text-xs text-zinc-500">Нет фото</span>';
+    } else {
+        for (let i = 0; i < currentEditImageUrls.length; i++) {
+            const div = document.createElement('div');
+            div.className = 'relative w-20 h-20 rounded-lg overflow-hidden border border-[#2a3344]';
+            div.innerHTML = '<img src="' + currentEditImageUrls[i] + '" class="w-full h-full object-cover">' +
+                '<button type="button" data-idx="' + i + '" class="absolute top-0 right-0 bg-black/70 text-white text-xs px-1.5 py-0.5" onclick="removeEditImage(' + i + ')">×</button>';
+            currentBox.appendChild(div);
+        }
+    }
+
+    document.getElementById('edit-news-files').value = '';
+    document.getElementById('edit-news-files-preview').innerHTML = '';
+    pendingEditNewsFiles = [];
     document.getElementById('news-edit-modal').classList.remove('hidden');
+}
+
+function removeEditImage(idx) {
+    currentEditImageUrls.splice(idx, 1);
+    const currentBox = document.getElementById('edit-news-current-images');
+    currentBox.innerHTML = '';
+    if (currentEditImageUrls.length === 0) {
+        currentBox.innerHTML = '<span class="text-xs text-zinc-500">Нет фото</span>';
+        return;
+    }
+    for (let i = 0; i < currentEditImageUrls.length; i++) {
+        const div = document.createElement('div');
+        div.className = 'relative w-20 h-20 rounded-lg overflow-hidden border border-[#2a3344]';
+        div.innerHTML = '<img src="' + currentEditImageUrls[i] + '" class="w-full h-full object-cover">' +
+            '<button type="button" class="absolute top-0 right-0 bg-black/70 text-white text-xs px-1.5 py-0.5" onclick="removeEditImage(' + i + ')">×</button>';
+        currentBox.appendChild(div);
+    }
 }
 
 function hideEditNewsModal() {
@@ -448,29 +648,49 @@ async function saveEditNews() {
     const id = document.getElementById('edit-news-id').value;
     const title = document.getElementById('edit-news-title').value.trim();
     const content = document.getElementById('edit-news-content').value.trim();
-    const imageUrl = document.getElementById('edit-news-image').value.trim();
 
     if (!title || !content) {
         alert('Заполни заголовок и текст');
         return;
     }
 
-    const description = '[NEWS] ' + title + ' | ' + content;
+    const btn = document.getElementById('edit-news-save-btn');
+    const oldText = btn.textContent;
+    btn.textContent = 'Сохранение...';
+    btn.disabled = true;
 
-    const { error } = await supabaseClient
-        .from('community_posts')
-        .update({
-            description: description,
-            image_url: imageUrl || null
-        })
-        .eq('id', id);
+    try {
+        let imageUrls = currentEditImageUrls.slice();
 
-    if (error) {
-        alert('Ошибка: ' + error.message);
-    } else {
+        for (let i = 0; i < pendingEditNewsFiles.length; i++) {
+            const url = await uploadNewsFile(pendingEditNewsFiles[i]);
+            imageUrls.push(url);
+        }
+
+        const description = '[NEWS] ' + title + ' | ' + content;
+        const imageField = imageUrls.length === 0
+            ? null
+            : (imageUrls.length === 1 ? imageUrls[0] : JSON.stringify(imageUrls));
+
+        const { error } = await supabaseClient
+            .from('community_posts')
+            .update({
+                description: description,
+                image_url: imageField
+            })
+            .eq('id', id);
+
+        if (error) throw error;
+
         alert('Новость обновлена!');
         hideEditNewsModal();
         loadNews();
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка: ' + e.message);
+    } finally {
+        btn.textContent = oldText;
+        btn.disabled = false;
     }
 }
 
@@ -482,30 +702,50 @@ async function uploadNews() {
 
     const title = document.getElementById('news-title').value.trim();
     const content = document.getElementById('news-content').value.trim();
-    const imageUrl = document.getElementById('news-image').value.trim();
 
     if (!title || !content) {
         alert('Заполни заголовок и текст');
         return;
     }
 
-    const description = '[NEWS] ' + title + ' | ' + content;
+    const btn = document.getElementById('news-upload-btn');
+    const oldText = btn.textContent;
+    btn.textContent = 'Публикация...';
+    btn.disabled = true;
 
-    const data = {
-        description: description,
-        image_url: imageUrl || null,
-        user_id: currentUser.id,
-        username: 'FuckHub'
-    };
+    try {
+        const imageUrls = [];
+        for (let i = 0; i < pendingNewsFiles.length; i++) {
+            document.getElementById('news-files-status').textContent =
+                'Загрузка ' + (i + 1) + '/' + pendingNewsFiles.length + '...';
+            const url = await uploadNewsFile(pendingNewsFiles[i]);
+            imageUrls.push(url);
+        }
 
-    const { error } = await supabaseClient.from('community_posts').insert(data);
+        const description = '[NEWS] ' + title + ' | ' + content;
+        const imageField = imageUrls.length === 0
+            ? null
+            : (imageUrls.length === 1 ? imageUrls[0] : JSON.stringify(imageUrls));
 
-    if (error) {
-        alert('Ошибка: ' + error.message);
-    } else {
+        const data = {
+            description: description,
+            image_url: imageField,
+            user_id: currentUser.id,
+            username: 'FuckHub'
+        };
+
+        const { error } = await supabaseClient.from('community_posts').insert(data);
+        if (error) throw error;
+
         alert('Новость опубликована!');
         hideNewsUploadModal();
         loadNews();
+    } catch (e) {
+        console.error(e);
+        alert('Ошибка: ' + e.message);
+    } finally {
+        btn.textContent = oldText;
+        btn.disabled = false;
     }
 }
 
@@ -551,13 +791,17 @@ async function loadPosts(gameId) {
 
     for (let i = 0; i < posts.length; i++) {
         const post = posts[i];
+        // skip pure news posts if they somehow have game_id
+        if (post.description && post.description.startsWith('[NEWS]')) continue;
+
         const reactions = post.reactions || {};
 
         let mediaHTML = '';
         if (post.video_url) {
             mediaHTML = '<video controls class="w-full aspect-video bg-black rounded-xl"><source src="' + post.video_url + '"></video>';
         } else if (post.image_url) {
-            mediaHTML = '<img src="' + post.image_url + '" class="w-full rounded-xl object-cover" onerror="this.src=\'https://picsum.photos/800/450\'">';
+            const urls = parseImageUrls(post.image_url);
+            mediaHTML = renderImageGallery(urls).replace('mb-4', 'mb-0');
         }
 
         const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
@@ -579,22 +823,25 @@ async function loadPosts(gameId) {
         let commentsHTML = '';
         if (comments && comments.length > 0) {
             for (let c = 0; c < comments.length; c++) {
-                commentsHTML += '<div class="text-sm border-t border-[#2a3344] pt-3 mt-3">' +
-                    '<span class="font-semibold text-orange-400">' + (comments[c].username || 'Аноним') + '</span>' +
-                    '<p class="text-zinc-300 mt-1">' + (comments[c].content || '') + '</p>' +
-                '</div>';
+                commentsHTML += renderCommentHTML(comments[c]);
             }
         }
 
         const date = post.created_at ? new Date(post.created_at).toLocaleDateString('ru-RU') : '';
-        const author = post.username ? '<span class="text-orange-400 text-sm font-medium">' + post.username + '</span>' : '';
+        const authorAvatar = post.avatar_url
+            ? '<img src="' + post.avatar_url + '" class="avatar-sm w-7 h-7 rounded-full" onerror="this.style.display=\'none\'">'
+            : '';
+        const author = post.username
+            ? '<div class="flex items-center gap-2">' + authorAvatar +
+                '<span class="text-orange-400 text-sm font-medium">' + post.username + '</span></div>'
+            : '<span></span>';
 
         const postDiv = document.createElement('div');
         postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
         postDiv.innerHTML =
             '<div class="p-5">' +
-                '<div class="flex justify-between mb-3">' +
-                    (author ? author : '<span></span>') +
+                '<div class="flex justify-between mb-3 items-center">' +
+                    author +
                     '<span class="text-xs text-zinc-500">' + date + '</span>' +
                 '</div>' +
                 (post.description ? '<p class="mb-4 text-zinc-200">' + post.description + '</p>' : '') +
@@ -632,7 +879,7 @@ async function addReaction(postId, emoji, isNews = false) {
         const reactions = post.reactions || {};
         reactions[emoji] = (reactions[emoji] || 0) + 1;
         await supabaseClient.from('community_posts').update({ reactions: reactions }).eq('id', postId);
-        
+
         if (isNews) {
             loadNews();
         } else if (currentGameId) {
@@ -648,16 +895,25 @@ async function addComment(postId, isNews = false) {
     const content = (input.value || '').trim();
     if (!content) return;
 
-    const username = currentUser
-        ? (currentUser.user_metadata && currentUser.user_metadata.username) || (currentUser.email ? currentUser.email.split('@')[0] : 'User')
-        : 'Аноним';
+    const username = getUsername();
+    const avatarUrl = getAvatarUrl();
 
-    const { error } = await supabaseClient.from('post_comments').insert({
+    const payload = {
         post_id: postId,
         content: content,
         username: username,
         user_id: currentUser ? currentUser.id : null
-    });
+    };
+    if (avatarUrl) payload.avatar_url = avatarUrl;
+
+    let { error } = await supabaseClient.from('post_comments').insert(payload);
+
+    // fallback if avatar_url column doesn't exist yet
+    if (error && error.message && error.message.includes('avatar_url')) {
+        delete payload.avatar_url;
+        const res2 = await supabaseClient.from('post_comments').insert(payload);
+        error = res2.error;
+    }
 
     if (error) {
         alert('Ошибка: ' + error.message);
@@ -693,9 +949,8 @@ async function uploadPost() {
         return;
     }
 
-    const username = currentUser
-        ? (currentUser.user_metadata && currentUser.user_metadata.username) || (currentUser.email ? currentUser.email.split('@')[0] : 'User')
-        : null;
+    const username = getUsername();
+    const avatarUrl = getAvatarUrl();
 
     const data = {
         game_id: gameId,
@@ -703,10 +958,16 @@ async function uploadPost() {
         user_id: currentUser ? currentUser.id : null,
         username: username
     };
+    if (avatarUrl) data.avatar_url = avatarUrl;
     if (type === 'image') data.image_url = mediaUrl;
     else data.video_url = mediaUrl;
 
-    const { error } = await supabaseClient.from('community_posts').insert(data);
+    let { error } = await supabaseClient.from('community_posts').insert(data);
+    if (error && error.message && error.message.includes('avatar_url')) {
+        delete data.avatar_url;
+        const res2 = await supabaseClient.from('community_posts').insert(data);
+        error = res2.error;
+    }
 
     if (error) {
         alert('Ошибка: ' + error.message);
@@ -724,4 +985,4 @@ async function uploadPost() {
 window.onload = init;
 </script>
 </body>
-</html>
+    </html>
