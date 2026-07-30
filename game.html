@@ -10,9 +10,7 @@
         body { background: #0f1117; color: #c5d1e0; font-family: system-ui, -apple-system, sans-serif; }
         .game-card { transition: all 0.25s ease; background: #1a1f2e; }
         .game-card:hover { transform: translateY(-4px); border-color: #3a455a; }
-        .news-banner {
-            transition: all 0.3s ease;
-        }
+        .news-banner { transition: all 0.3s ease; }
         .news-banner:hover {
             transform: scale(1.01);
             box-shadow: 0 0 40px rgba(249, 115, 22, 0.25);
@@ -35,7 +33,7 @@
     <!-- ========== ГЛАВНЫЙ ВИД: НОВОСТИ + ИГРЫ ========== -->
     <div id="games-view">
 
-        <!-- БАННЕР НОВОСТЕЙ (самый верх) -->
+        <!-- БАННЕР НОВОСТЕЙ -->
         <div class="mb-10">
             <div onclick="openNews()" class="news-banner relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer border border-[#2a3344] group">
                 <img src="https://i.imgur.com/nz7hXID.jpg" 
@@ -50,9 +48,7 @@
                             <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">Official News</h2>
                             <p class="text-zinc-300 text-sm sm:text-base mt-1">Новости студии FuckFaz</p>
                         </div>
-                        <div class="hidden sm:block text-orange-400 font-semibold text-sm">
-                            Смотреть →
-                        </div>
+                        <div class="hidden sm:block text-orange-400 font-semibold text-sm">Смотреть →</div>
                     </div>
                 </div>
             </div>
@@ -112,7 +108,7 @@
     </div>
 </div>
 
-<!-- Модал загрузки обычного контента -->
+<!-- Модал обычного контента -->
 <div id="upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
         <h2 class="text-xl font-semibold mb-5">Выложить контент</h2>
@@ -144,7 +140,7 @@
     </div>
 </div>
 
-<!-- Модал публикации новости (только для FuckHub) -->
+<!-- Модал новости -->
 <div id="news-upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
         <h2 class="text-xl font-semibold mb-5">Опубликовать новость</h2>
@@ -158,13 +154,39 @@
                 <textarea id="news-content" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-32" placeholder="Что нового..."></textarea>
             </div>
             <div>
-                <label class="block text-sm text-zinc-400 mb-1">Ссылка на картинку (необязательно)</label>
-                <input id="news-image" type="text" placeholder="https://..." class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+                <label class="block text-sm text-zinc-400 mb-1">Ссылка на картинку (прямая!)</label>
+                <input id="news-image" type="text" placeholder="https://i.imgur.com/xxxx.jpg" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
             </div>
         </div>
         <div class="flex gap-3 mt-6">
             <button onclick="uploadNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Опубликовать</button>
             <button onclick="hideNewsUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модал редактирования новости -->
+<div id="news-edit-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-5">Редактировать новость</h2>
+        <input type="hidden" id="edit-news-id">
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-zinc-400 mb-1">Заголовок</label>
+                <input id="edit-news-title" type="text" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            </div>
+            <div>
+                <label class="block text-sm text-zinc-400 mb-1">Текст новости</label>
+                <textarea id="edit-news-content" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-32"></textarea>
+            </div>
+            <div>
+                <label class="block text-sm text-zinc-400 mb-1">Ссылка на картинку</label>
+                <input id="edit-news-image" type="text" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button onclick="saveEditNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Сохранить</button>
+            <button onclick="hideEditNewsModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
         </div>
     </div>
 </div>
@@ -178,7 +200,6 @@ let currentUser = null;
 let gamesList = [];
 let currentGameId = null;
 
-// Проверка, является ли текущий пользователь FuckHub
 function isFuckHub() {
     if (!currentUser) return false;
     const username = (currentUser.user_metadata && currentUser.user_metadata.username) || '';
@@ -262,7 +283,6 @@ function openNews() {
     document.getElementById('posts-view').classList.add('hidden');
     document.getElementById('news-view').classList.remove('hidden');
 
-    // Показываем кнопку публикации только FuckHub
     const btn = document.getElementById('news-publish-btn');
     if (isFuckHub()) {
         btn.classList.remove('hidden');
@@ -277,9 +297,6 @@ async function loadNews() {
     const container = document.getElementById('news-container');
     container.innerHTML = '<p class="text-center py-12 text-zinc-500">Загрузка новостей...</p>';
 
-    // Пока используем community_posts с особым маркером.
-    // В будущем лучше сделать отдельную таблицу news_posts.
-    // Сейчас ищем посты, где description начинается с [NEWS] или game_id = null и author = FuckHub
     const { data: posts, error } = await supabaseClient
         .from('community_posts')
         .select('*')
@@ -290,11 +307,7 @@ async function loadNews() {
         return;
     }
 
-    // Фильтруем только новости (посты с меткой [NEWS] в description или image_url начинается особым образом)
-    const newsPosts = (posts || []).filter(p => {
-        return (p.description && p.description.startsWith('[NEWS]')) || 
-               (p.username && p.username.toLowerCase() === 'fuckhub' && !p.game_id);
-    });
+    const newsPosts = (posts || []).filter(p => p.description && p.description.startsWith('[NEWS]'));
 
     if (newsPosts.length === 0) {
         container.innerHTML = '<p class="text-center py-16 text-zinc-500">Пока нет новостей. Скоро появятся.</p>';
@@ -302,6 +315,7 @@ async function loadNews() {
     }
 
     container.innerHTML = '';
+
     for (let i = 0; i < newsPosts.length; i++) {
         const post = newsPosts[i];
         const date = post.created_at ? new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
@@ -309,7 +323,6 @@ async function loadNews() {
         let title = 'Новость';
         let content = post.description || '';
         
-        // Парсим [NEWS] Заголовок | Текст
         if (content.startsWith('[NEWS]')) {
             content = content.replace('[NEWS]', '').trim();
             const parts = content.split('|');
@@ -321,10 +334,49 @@ async function loadNews() {
             }
         }
 
+        // Картинка
         let mediaHTML = '';
-        if (post.image_url) {
-            mediaHTML = '<img src="' + post.image_url + '" class="w-full rounded-xl object-cover max-h-96 mb-4" onerror="this.style.display=\'none\'">';
+        if (post.image_url && post.image_url.trim() !== '') {
+            mediaHTML = '<div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344]">' +
+                '<img src="' + post.image_url + '" class="w-full object-contain max-h-[500px] bg-[#11141c]" ' +
+                'onerror="this.style.display=\'none\'; this.nextElementSibling.style.display=\'block\';">' +
+                '<p class="hidden text-center text-zinc-500 text-sm py-6">Не удалось загрузить изображение</p>' +
+                '</div>';
         }
+
+        // Реакции
+        const reactions = post.reactions || {};
+        const reactionsList = ['❤️', '👍', '🔥', '😂', '😮'];
+        let reactionsHTML = '';
+        for (let r = 0; r < reactionsList.length; r++) {
+            const emoji = reactionsList[r];
+            const count = reactions[emoji] || 0;
+            reactionsHTML += '<button onclick="addReaction(\'' + post.id + '\', \'' + emoji + '\', true)" class="hover:scale-110 transition-transform text-2xl">' +
+                emoji + (count > 0 ? ' <span class="text-sm">' + count + '</span>' : '') +
+            '</button> ';
+        }
+
+        // Комментарии
+        const { data: comments } = await supabaseClient
+            .from('post_comments')
+            .select('*')
+            .eq('post_id', post.id)
+            .order('created_at', { ascending: true });
+
+        let commentsHTML = '';
+        if (comments && comments.length > 0) {
+            for (let c = 0; c < comments.length; c++) {
+                commentsHTML += '<div class="text-sm border-t border-[#2a3344] pt-3 mt-3">' +
+                    '<span class="font-semibold text-orange-400">' + (comments[c].username || 'Аноним') + '</span>' +
+                    '<p class="text-zinc-300 mt-1">' + (comments[c].content || '') + '</p>' +
+                '</div>';
+            }
+        }
+
+        // Кнопка редактирования только для FuckHub
+        const editBtn = isFuckHub()
+            ? '<button onclick="showEditNewsModal(\'' + post.id + '\', \'' + title.replace(/'/g, "\\'") + '\', \'' + content.replace(/'/g, "\\'").replace(/\n/g, '\\n') + '\', \'' + (post.image_url || '').replace(/'/g, "\\'") + '\')" class="text-xs text-zinc-400 hover:text-orange-400 transition-colors">Редактировать</button>'
+            : '';
 
         const postDiv = document.createElement('div');
         postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
@@ -332,11 +384,25 @@ async function loadNews() {
             '<div class="p-5 sm:p-6">' +
                 '<div class="flex justify-between items-start mb-3">' +
                     '<span class="text-xs font-semibold text-orange-400">FUCKFAZ</span>' +
-                    '<span class="text-xs text-zinc-500">' + date + '</span>' +
+                    '<div class="flex items-center gap-3">' +
+                        editBtn +
+                        '<span class="text-xs text-zinc-500">' + date + '</span>' +
+                    '</div>' +
                 '</div>' +
                 '<h3 class="text-lg sm:text-xl font-semibold mb-3">' + title + '</h3>' +
-                (mediaHTML ? mediaHTML : '') +
-                '<p class="text-zinc-300 whitespace-pre-wrap">' + content + '</p>' +
+                mediaHTML +
+                '<p class="text-zinc-300 whitespace-pre-wrap mb-5">' + content + '</p>' +
+                '<div class="flex gap-4 mb-5 text-2xl">' + reactionsHTML + '</div>' +
+                '<div>' +
+                    '<button onclick="toggleComments(this)" class="text-sm font-medium mb-2 text-zinc-400 hover:text-white">Комментарии (' + (comments ? comments.length : 0) + ') ▼</button>' +
+                    '<div class="comments-section hidden">' +
+                        (commentsHTML || '<p class="text-xs text-zinc-500 py-2">Комментариев нет</p>') +
+                    '</div>' +
+                    '<div class="flex gap-2 mt-3">' +
+                        '<input type="text" id="comment-input-' + post.id + '" placeholder="Комментарий..." class="flex-1 px-4 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm">' +
+                        '<button onclick="addComment(\'' + post.id + '\', true)" class="px-4 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm">Отправить</button>' +
+                    '</div>' +
+                '</div>' +
             '</div>';
         container.appendChild(postDiv);
     }
@@ -355,6 +421,57 @@ function showNewsUploadModal() {
 
 function hideNewsUploadModal() {
     document.getElementById('news-upload-modal').classList.add('hidden');
+}
+
+function showEditNewsModal(id, title, content, imageUrl) {
+    if (!isFuckHub()) {
+        alert('Нет прав');
+        return;
+    }
+    document.getElementById('edit-news-id').value = id;
+    document.getElementById('edit-news-title').value = title;
+    document.getElementById('edit-news-content').value = content.replace(/\\n/g, '\n');
+    document.getElementById('edit-news-image').value = imageUrl || '';
+    document.getElementById('news-edit-modal').classList.remove('hidden');
+}
+
+function hideEditNewsModal() {
+    document.getElementById('news-edit-modal').classList.add('hidden');
+}
+
+async function saveEditNews() {
+    if (!isFuckHub()) {
+        alert('Нет прав');
+        return;
+    }
+
+    const id = document.getElementById('edit-news-id').value;
+    const title = document.getElementById('edit-news-title').value.trim();
+    const content = document.getElementById('edit-news-content').value.trim();
+    const imageUrl = document.getElementById('edit-news-image').value.trim();
+
+    if (!title || !content) {
+        alert('Заполни заголовок и текст');
+        return;
+    }
+
+    const description = '[NEWS] ' + title + ' | ' + content;
+
+    const { error } = await supabaseClient
+        .from('community_posts')
+        .update({
+            description: description,
+            image_url: imageUrl || null
+        })
+        .eq('id', id);
+
+    if (error) {
+        alert('Ошибка: ' + error.message);
+    } else {
+        alert('Новость обновлена!');
+        hideEditNewsModal();
+        loadNews();
+    }
 }
 
 async function uploadNews() {
@@ -379,7 +496,6 @@ async function uploadNews() {
         image_url: imageUrl || null,
         user_id: currentUser.id,
         username: 'FuckHub'
-        // game_id специально не ставим — это новость
     };
 
     const { error } = await supabaseClient.from('community_posts').insert(data);
@@ -471,12 +587,16 @@ async function loadPosts(gameId) {
         }
 
         const date = post.created_at ? new Date(post.created_at).toLocaleDateString('ru-RU') : '';
+        const author = post.username ? '<span class="text-orange-400 text-sm font-medium">' + post.username + '</span>' : '';
 
         const postDiv = document.createElement('div');
         postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
         postDiv.innerHTML =
             '<div class="p-5">' +
-                '<div class="flex justify-between mb-3"><span class="text-xs text-zinc-500">' + date + '</span></div>' +
+                '<div class="flex justify-between mb-3">' +
+                    (author ? author : '<span></span>') +
+                    '<span class="text-xs text-zinc-500">' + date + '</span>' +
+                '</div>' +
                 (post.description ? '<p class="mb-4 text-zinc-200">' + post.description + '</p>' : '') +
                 (mediaHTML ? '<div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344]">' + mediaHTML + '</div>' : '') +
                 '<div class="flex gap-4 mb-5 text-2xl">' + reactionsHTML + '</div>' +
@@ -498,20 +618,32 @@ async function loadPosts(gameId) {
 function toggleComments(btn) {
     const section = btn.parentElement.querySelector('.comments-section');
     section.classList.toggle('hidden');
-    btn.textContent = section.classList.contains('hidden')
-        ? btn.textContent.replace('▼', '▶')
-        : btn.textContent.replace('▶', '▼');
+    const text = btn.textContent;
+    if (section.classList.contains('hidden')) {
+        btn.textContent = text.replace('▼', '▶');
+    } else {
+        btn.textContent = text.replace('▶', '▼');
+    }
 }
 
-async function addReaction(postId, emoji) {
-    const { data: post } = await supabaseClient.from('community_posts').select('reactions').eq('id', postId).single();
-    const reactions = post.reactions || {};
-    reactions[emoji] = (reactions[emoji] || 0) + 1;
-    await supabaseClient.from('community_posts').update({ reactions: reactions }).eq('id', postId);
-    if (currentGameId) loadPosts(currentGameId);
+async function addReaction(postId, emoji, isNews = false) {
+    try {
+        const { data: post } = await supabaseClient.from('community_posts').select('reactions').eq('id', postId).single();
+        const reactions = post.reactions || {};
+        reactions[emoji] = (reactions[emoji] || 0) + 1;
+        await supabaseClient.from('community_posts').update({ reactions: reactions }).eq('id', postId);
+        
+        if (isNews) {
+            loadNews();
+        } else if (currentGameId) {
+            loadPosts(currentGameId);
+        }
+    } catch (e) {
+        console.error(e);
+    }
 }
 
-async function addComment(postId) {
+async function addComment(postId, isNews = false) {
     const input = document.getElementById('comment-input-' + postId);
     const content = (input.value || '').trim();
     if (!content) return;
@@ -531,7 +663,11 @@ async function addComment(postId) {
         alert('Ошибка: ' + error.message);
     } else {
         input.value = '';
-        if (currentGameId) loadPosts(currentGameId);
+        if (isNews) {
+            loadNews();
+        } else if (currentGameId) {
+            loadPosts(currentGameId);
+        }
     }
 }
 
@@ -557,10 +693,15 @@ async function uploadPost() {
         return;
     }
 
+    const username = currentUser
+        ? (currentUser.user_metadata && currentUser.user_metadata.username) || (currentUser.email ? currentUser.email.split('@')[0] : 'User')
+        : null;
+
     const data = {
         game_id: gameId,
         description: description || null,
-        user_id: currentUser ? currentUser.id : null
+        user_id: currentUser ? currentUser.id : null,
+        username: username
     };
     if (type === 'image') data.image_url = mediaUrl;
     else data.video_url = mediaUrl;
