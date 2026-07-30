@@ -28,6 +28,10 @@
             object-fit: cover;
             background: #1f2533;
         }
+        .cover-preview {
+            object-fit: cover;
+            background: #11141c;
+        }
     </style>
 </head>
 <body>
@@ -71,7 +75,7 @@
         <!-- Кнопка публикации -->
         <div class="mb-8">
             <button onclick="showPublishModal()" 
-                    class="w-full sm:w-auto bg-white text-black font-semibold px-8 py-3.5 rounded-2xl hover:bg-zinc-100 transition-colors">
+                    class="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-black font-semibold px-8 py-3.5 rounded-2xl transition-colors">
                 + Опубликовать новую игру
             </button>
         </div>
@@ -110,9 +114,28 @@
         <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-2xl my-8">
             <h2 id="modal-title" class="text-xl sm:text-2xl font-semibold mb-6 text-center">Публикация игры</h2>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
+            <div class="mb-5">
                 <input id="game-title" placeholder="Название игры" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
-                <input id="game-cover" placeholder="Ссылка на обложку" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            </div>
+
+            <!-- Обложка: загрузка файла -->
+            <div class="mb-5">
+                <p class="mb-2 text-sm font-medium text-zinc-400">Обложка</p>
+                <div class="flex flex-col sm:flex-row gap-4 items-start">
+                    <div class="w-full sm:w-40 h-40 rounded-2xl overflow-hidden border border-[#2a3344] shrink-0 bg-[#11141c] flex items-center justify-center">
+                        <img id="cover-preview" src="" class="cover-preview w-full h-full hidden" alt="Превью">
+                        <span id="cover-placeholder" class="text-zinc-500 text-sm text-center px-3">Нет обложки</span>
+                    </div>
+                    <div class="flex-1 w-full">
+                        <input type="file" id="cover-file" accept="image/*" class="hidden" onchange="previewCover(this)">
+                        <button type="button" onclick="document.getElementById('cover-file').click()" 
+                                class="w-full sm:w-auto px-5 py-3 bg-zinc-800 hover:bg-zinc-700 rounded-2xl text-sm font-medium transition-colors">
+                            Выбрать файл
+                        </button>
+                        <p class="text-xs text-zinc-500 mt-2">JPG, PNG, WebP. Лучше горизонтальная.</p>
+                        <p id="cover-status" class="text-xs text-zinc-400 mt-1"></p>
+                    </div>
+                </div>
             </div>
             
             <textarea id="game-desc" placeholder="Описание игры" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl h-28 mb-5"></textarea>
@@ -146,7 +169,7 @@
             <input id="game-download" placeholder="Прямая ссылка на скачивание" class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-6">
 
             <div class="flex gap-3">
-                <button onclick="saveGame()" class="flex-1 bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Сохранить</button>
+                <button id="save-game-btn" onclick="saveGame()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3.5 rounded-2xl">Сохранить</button>
                 <button onclick="hidePublishModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3.5 rounded-2xl">Отмена</button>
             </div>
         </div>
@@ -162,19 +185,15 @@
         let selectedTags = [];
         let editingGameId = null;
         let gamesVisible = true;
+        let currentCoverUrl = null; // текущая/новая ссылка на обложку
 
         async function init() {
             try {
-                console.log('Profile init started');
                 supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
                 const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
                 
-                if (sessionError) {
-                    console.error('Session error:', sessionError);
-                }
-
-                console.log('Session:', session);
+                if (sessionError) console.error('Session error:', sessionError);
 
                 if (!session || !session.user) {
                     alert("Вы не авторизованы!");
@@ -183,20 +202,14 @@
                 }
 
                 currentUser = session.user;
-                console.log('Current user:', currentUser);
-                console.log('user_metadata:', currentUser.user_metadata);
 
-                // Ник
                 const username = (currentUser.user_metadata && currentUser.user_metadata.username) 
                     ? currentUser.user_metadata.username 
                     : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
                 
                 document.getElementById('profile-username').textContent = username;
-                
-                // Почта
                 document.getElementById('profile-email').textContent = currentUser.email || 'нет email';
 
-                // Аватар
                 const avatarUrl = currentUser.user_metadata && currentUser.user_metadata.avatar_url;
                 if (avatarUrl) {
                     document.getElementById('profile-avatar').src = avatarUrl;
@@ -287,6 +300,35 @@
             }
         }
 
+        function previewCover(input) {
+            const file = input.files && input.files[0];
+            const preview = document.getElementById('cover-preview');
+            const placeholder = document.getElementById('cover-placeholder');
+            const status = document.getElementById('cover-status');
+
+            if (!file) {
+                preview.classList.add('hidden');
+                placeholder.classList.remove('hidden');
+                status.textContent = '';
+                return;
+            }
+
+            if (!file.type.startsWith('image/')) {
+                alert('Выбери изображение');
+                input.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                preview.src = e.target.result;
+                preview.classList.remove('hidden');
+                placeholder.classList.add('hidden');
+                status.textContent = 'Файл выбран: ' + file.name;
+            };
+            reader.readAsDataURL(file);
+        }
+
         function showPublishModal(game = null) {
             document.getElementById('publish-modal').classList.remove('hidden');
             editingGameId = game ? game.id : null;
@@ -296,12 +338,27 @@
             selectedTags = [];
             document.querySelectorAll('.platform-btn, .tag-btn').forEach(el => el.classList.remove('active'));
 
+            // сброс обложки
+            currentCoverUrl = null;
+            document.getElementById('cover-file').value = '';
+            document.getElementById('cover-preview').classList.add('hidden');
+            document.getElementById('cover-placeholder').classList.remove('hidden');
+            document.getElementById('cover-status').textContent = '';
+
             if (game) {
                 document.getElementById('game-title').value = game.title || '';
-                document.getElementById('game-cover').value = game.cover || '';
                 document.getElementById('game-desc').value = game.description || '';
                 document.getElementById('game-download').value = game.download || '';
                 document.getElementById('game-nsfw').checked = !!game.is_nsfw;
+
+                currentCoverUrl = game.cover || null;
+                if (currentCoverUrl) {
+                    const preview = document.getElementById('cover-preview');
+                    preview.src = currentCoverUrl;
+                    preview.classList.remove('hidden');
+                    document.getElementById('cover-placeholder').classList.add('hidden');
+                    document.getElementById('cover-status').textContent = 'Текущая обложка';
+                }
 
                 if (game.platforms) {
                     selectedPlatforms = typeof game.platforms === 'string' 
@@ -324,7 +381,6 @@
                 });
             } else {
                 document.getElementById('game-title').value = '';
-                document.getElementById('game-cover').value = '';
                 document.getElementById('game-desc').value = '';
                 document.getElementById('game-download').value = '';
                 document.getElementById('game-nsfw').checked = false;
@@ -335,29 +391,65 @@
             document.getElementById('publish-modal').classList.add('hidden');
         }
 
+        async function uploadCover(file) {
+            const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
+            const fileName = (currentUser.id || 'user') + '/' + Date.now() + '.' + ext;
+
+            const { data, error } = await supabaseClient.storage
+                .from('covers')
+                .upload(fileName, file, {
+                    cacheControl: '3600',
+                    upsert: false
+                });
+
+            if (error) throw error;
+
+            const { data: publicData } = supabaseClient.storage
+                .from('covers')
+                .getPublicUrl(fileName);
+
+            return publicData.publicUrl;
+        }
+
         async function saveGame() {
             const title = document.getElementById('game-title').value.trim();
             if (!title) return alert("Название игры обязательно!");
 
             if (!currentUser) return alert("Нет пользователя");
 
-            const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
-                ? currentUser.user_metadata.username 
-                : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
-
-            const gameData = {
-                title: title,
-                cover: document.getElementById('game-cover').value.trim() || null,
-                description: document.getElementById('game-desc').value.trim() || null,
-                platforms: selectedPlatforms.join(', '),
-                tags: selectedTags,
-                download: document.getElementById('game-download').value.trim() || null,
-                is_nsfw: document.getElementById('game-nsfw').checked,
-                author: authorName,
-                user_id: currentUser.id
-            };
+            const btn = document.getElementById('save-game-btn');
+            const oldText = btn.textContent;
+            btn.textContent = 'Сохранение...';
+            btn.disabled = true;
 
             try {
+                const fileInput = document.getElementById('cover-file');
+                const file = fileInput.files && fileInput.files[0];
+
+                let coverUrl = currentCoverUrl;
+
+                if (file) {
+                    document.getElementById('cover-status').textContent = 'Загрузка обложки...';
+                    coverUrl = await uploadCover(file);
+                    document.getElementById('cover-status').textContent = 'Обложка загружена';
+                }
+
+                const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
+                    ? currentUser.user_metadata.username 
+                    : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+
+                const gameData = {
+                    title: title,
+                    cover: coverUrl || null,
+                    description: document.getElementById('game-desc').value.trim() || null,
+                    platforms: selectedPlatforms.join(', '),
+                    tags: selectedTags,
+                    download: document.getElementById('game-download').value.trim() || null,
+                    is_nsfw: document.getElementById('game-nsfw').checked,
+                    author: authorName,
+                    user_id: currentUser.id
+                };
+
                 if (editingGameId) {
                     const { error } = await supabaseClient.from('games').update(gameData).eq('id', editingGameId);
                     if (error) throw error;
@@ -372,6 +464,9 @@
             } catch (e) {
                 console.error(e);
                 alert("Ошибка: " + e.message);
+            } finally {
+                btn.textContent = oldText;
+                btn.disabled = false;
             }
         }
 
@@ -398,30 +493,23 @@
             }
 
             try {
-                console.log('Loading games for user_id:', currentUser.id);
-
                 const { data, error } = await supabaseClient
                     .from('games')
                     .select('*')
                     .eq('user_id', currentUser.id)
                     .order('created_at', { ascending: false });
 
-                console.log('Games response:', { data, error });
-
                 if (error) {
-                    console.error('Load games error:', error);
                     container.innerHTML = '<p class="text-red-400 py-6 text-center">Ошибка: ' + error.message + '</p>';
                     return;
                 }
 
                 if (!data || data.length === 0) {
-                    // Запасной поиск по author
                     const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
                         ? currentUser.user_metadata.username 
                         : (currentUser.email ? currentUser.email.split('@')[0] : null);
                     
                     if (authorName) {
-                        console.log('Trying by author:', authorName);
                         const { data: data2, error: err2 } = await supabaseClient
                             .from('games')
                             .select('*')
