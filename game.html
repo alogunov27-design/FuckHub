@@ -10,6 +10,13 @@
         body { background: #0f1117; color: #c5d1e0; font-family: system-ui, -apple-system, sans-serif; }
         .game-card { transition: all 0.25s ease; background: #1a1f2e; }
         .game-card:hover { transform: translateY(-4px); border-color: #3a455a; }
+        .news-banner {
+            transition: all 0.3s ease;
+        }
+        .news-banner:hover {
+            transform: scale(1.01);
+            box-shadow: 0 0 40px rgba(249, 115, 22, 0.25);
+        }
     </style>
 </head>
 <body>
@@ -25,23 +32,69 @@
 
 <div class="max-w-7xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
 
-    <!-- СПИСОК ИГР -->
+    <!-- ========== ГЛАВНЫЙ ВИД: НОВОСТИ + ИГРЫ ========== -->
     <div id="games-view">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+
+        <!-- БАННЕР НОВОСТЕЙ (самый верх) -->
+        <div class="mb-10">
+            <div onclick="openNews()" class="news-banner relative rounded-2xl sm:rounded-3xl overflow-hidden cursor-pointer border border-[#2a3344] group">
+                <img src="https://i.imgur.com/nz7hXID.jpg" 
+                     alt="Official News" 
+                     class="w-full h-48 sm:h-64 md:h-72 object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                     onerror="this.src='https://picsum.photos/1200/400?grayscale'">
+                <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-5 sm:p-8">
+                    <div class="flex items-end justify-between gap-4">
+                        <div>
+                            <span class="inline-block bg-orange-500 text-black text-xs font-bold px-3 py-1 rounded-full mb-2">OFFICIAL</span>
+                            <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-white tracking-tight">Official News</h2>
+                            <p class="text-zinc-300 text-sm sm:text-base mt-1">Новости студии FuckFaz</p>
+                        </div>
+                        <div class="hidden sm:block text-orange-400 font-semibold text-sm">
+                            Смотреть →
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Заголовок игр -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div>
-                <h1 class="text-2xl sm:text-3xl font-bold">Сообщество</h1>
+                <h1 class="text-xl sm:text-2xl font-bold">Игры сообщества</h1>
                 <p class="text-zinc-400 text-sm mt-1">Выбери игру — арты, видео и обсуждения</p>
             </div>
             <button onclick="showUploadModal()" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-5 py-3 rounded-2xl shrink-0">
                 + Выложить контент
             </button>
         </div>
+
         <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             <p class="col-span-full text-center py-16 text-zinc-500">Загрузка...</p>
         </div>
     </div>
 
-    <!-- ПОСТЫ ИГРЫ -->
+    <!-- ========== РАЗДЕЛ НОВОСТЕЙ ========== -->
+    <div id="news-view" class="hidden">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+            <div class="flex items-center gap-3 flex-wrap">
+                <button onclick="backToGames()" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm">← Назад</button>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-bold">Official News</h1>
+                    <p class="text-zinc-400 text-sm">Новости студии FuckFaz</p>
+                </div>
+            </div>
+            <button id="news-publish-btn" onclick="showNewsUploadModal()" 
+                    class="hidden bg-orange-500 hover:bg-orange-600 text-black font-semibold px-5 py-3 rounded-2xl shrink-0">
+                + Опубликовать новость
+            </button>
+        </div>
+        <div id="news-container" class="space-y-6">
+            <p class="text-center py-12 text-zinc-500">Загрузка новостей...</p>
+        </div>
+    </div>
+
+    <!-- ========== ПОСТЫ ИГРЫ ========== -->
     <div id="posts-view" class="hidden">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div class="flex items-center gap-3 flex-wrap">
@@ -59,7 +112,7 @@
     </div>
 </div>
 
-<!-- Модал -->
+<!-- Модал загрузки обычного контента -->
 <div id="upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
     <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
         <h2 class="text-xl font-semibold mb-5">Выложить контент</h2>
@@ -91,6 +144,31 @@
     </div>
 </div>
 
+<!-- Модал публикации новости (только для FuckHub) -->
+<div id="news-upload-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+    <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md">
+        <h2 class="text-xl font-semibold mb-5">Опубликовать новость</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-sm text-zinc-400 mb-1">Заголовок</label>
+                <input id="news-title" type="text" placeholder="Заголовок новости" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            </div>
+            <div>
+                <label class="block text-sm text-zinc-400 mb-1">Текст новости</label>
+                <textarea id="news-content" class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl h-32" placeholder="Что нового..."></textarea>
+            </div>
+            <div>
+                <label class="block text-sm text-zinc-400 mb-1">Ссылка на картинку (необязательно)</label>
+                <input id="news-image" type="text" placeholder="https://..." class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-2xl">
+            </div>
+        </div>
+        <div class="flex gap-3 mt-6">
+            <button onclick="uploadNews()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-black font-semibold py-3 rounded-2xl">Опубликовать</button>
+            <button onclick="hideNewsUploadModal()" class="flex-1 bg-zinc-700 hover:bg-zinc-600 py-3 rounded-2xl">Отмена</button>
+        </div>
+    </div>
+</div>
+
 <script>
 const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
@@ -99,6 +177,13 @@ const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 let currentUser = null;
 let gamesList = [];
 let currentGameId = null;
+
+// Проверка, является ли текущий пользователь FuckHub
+function isFuckHub() {
+    if (!currentUser) return false;
+    const username = (currentUser.user_metadata && currentUser.user_metadata.username) || '';
+    return username.toLowerCase() === 'fuckhub';
+}
 
 async function init() {
     try {
@@ -168,8 +253,147 @@ function backToGames() {
     currentGameId = null;
     document.getElementById('games-view').classList.remove('hidden');
     document.getElementById('posts-view').classList.add('hidden');
+    document.getElementById('news-view').classList.add('hidden');
 }
 
+// ========== NEWS ==========
+function openNews() {
+    document.getElementById('games-view').classList.add('hidden');
+    document.getElementById('posts-view').classList.add('hidden');
+    document.getElementById('news-view').classList.remove('hidden');
+
+    // Показываем кнопку публикации только FuckHub
+    const btn = document.getElementById('news-publish-btn');
+    if (isFuckHub()) {
+        btn.classList.remove('hidden');
+    } else {
+        btn.classList.add('hidden');
+    }
+
+    loadNews();
+}
+
+async function loadNews() {
+    const container = document.getElementById('news-container');
+    container.innerHTML = '<p class="text-center py-12 text-zinc-500">Загрузка новостей...</p>';
+
+    // Пока используем community_posts с особым маркером.
+    // В будущем лучше сделать отдельную таблицу news_posts.
+    // Сейчас ищем посты, где description начинается с [NEWS] или game_id = null и author = FuckHub
+    const { data: posts, error } = await supabaseClient
+        .from('community_posts')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) {
+        container.innerHTML = '<p class="text-center py-12 text-red-400">Ошибка: ' + error.message + '</p>';
+        return;
+    }
+
+    // Фильтруем только новости (посты с меткой [NEWS] в description или image_url начинается особым образом)
+    const newsPosts = (posts || []).filter(p => {
+        return (p.description && p.description.startsWith('[NEWS]')) || 
+               (p.username && p.username.toLowerCase() === 'fuckhub' && !p.game_id);
+    });
+
+    if (newsPosts.length === 0) {
+        container.innerHTML = '<p class="text-center py-16 text-zinc-500">Пока нет новостей. Скоро появятся.</p>';
+        return;
+    }
+
+    container.innerHTML = '';
+    for (let i = 0; i < newsPosts.length; i++) {
+        const post = newsPosts[i];
+        const date = post.created_at ? new Date(post.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        
+        let title = 'Новость';
+        let content = post.description || '';
+        
+        // Парсим [NEWS] Заголовок | Текст
+        if (content.startsWith('[NEWS]')) {
+            content = content.replace('[NEWS]', '').trim();
+            const parts = content.split('|');
+            if (parts.length >= 2) {
+                title = parts[0].trim();
+                content = parts.slice(1).join('|').trim();
+            } else {
+                title = content.substring(0, 60) + (content.length > 60 ? '...' : '');
+            }
+        }
+
+        let mediaHTML = '';
+        if (post.image_url) {
+            mediaHTML = '<img src="' + post.image_url + '" class="w-full rounded-xl object-cover max-h-96 mb-4" onerror="this.style.display=\'none\'">';
+        }
+
+        const postDiv = document.createElement('div');
+        postDiv.className = 'bg-[#1a1f2e] rounded-2xl border border-[#2a3344] overflow-hidden';
+        postDiv.innerHTML =
+            '<div class="p-5 sm:p-6">' +
+                '<div class="flex justify-between items-start mb-3">' +
+                    '<span class="text-xs font-semibold text-orange-400">FUCKFAZ</span>' +
+                    '<span class="text-xs text-zinc-500">' + date + '</span>' +
+                '</div>' +
+                '<h3 class="text-lg sm:text-xl font-semibold mb-3">' + title + '</h3>' +
+                (mediaHTML ? mediaHTML : '') +
+                '<p class="text-zinc-300 whitespace-pre-wrap">' + content + '</p>' +
+            '</div>';
+        container.appendChild(postDiv);
+    }
+}
+
+function showNewsUploadModal() {
+    if (!isFuckHub()) {
+        alert('Только FuckHub может публиковать новости');
+        return;
+    }
+    document.getElementById('news-title').value = '';
+    document.getElementById('news-content').value = '';
+    document.getElementById('news-image').value = '';
+    document.getElementById('news-upload-modal').classList.remove('hidden');
+}
+
+function hideNewsUploadModal() {
+    document.getElementById('news-upload-modal').classList.add('hidden');
+}
+
+async function uploadNews() {
+    if (!isFuckHub()) {
+        alert('Нет прав');
+        return;
+    }
+
+    const title = document.getElementById('news-title').value.trim();
+    const content = document.getElementById('news-content').value.trim();
+    const imageUrl = document.getElementById('news-image').value.trim();
+
+    if (!title || !content) {
+        alert('Заполни заголовок и текст');
+        return;
+    }
+
+    const description = '[NEWS] ' + title + ' | ' + content;
+
+    const data = {
+        description: description,
+        image_url: imageUrl || null,
+        user_id: currentUser.id,
+        username: 'FuckHub'
+        // game_id специально не ставим — это новость
+    };
+
+    const { error } = await supabaseClient.from('community_posts').insert(data);
+
+    if (error) {
+        alert('Ошибка: ' + error.message);
+    } else {
+        alert('Новость опубликована!');
+        hideNewsUploadModal();
+        loadNews();
+    }
+}
+
+// ========== ОБЫЧНЫЕ ПОСТЫ ==========
 async function openGame(gameId) {
     currentGameId = gameId;
     let title = 'Игра';
@@ -181,6 +405,7 @@ async function openGame(gameId) {
     }
     document.getElementById('game-title').textContent = title;
     document.getElementById('games-view').classList.add('hidden');
+    document.getElementById('news-view').classList.add('hidden');
     document.getElementById('posts-view').classList.remove('hidden');
     fillSelect();
     await loadPosts(gameId);
