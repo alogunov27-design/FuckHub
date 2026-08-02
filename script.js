@@ -1,92 +1,40 @@
-const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
+// ===== ОПТИМИЗИРОВАННЫЙ ЗАГРУЗЧИК (экономия памяти) =====
+const BUCKET_NAME = 'covers'; // Имя твоего бакета в Supabase
 
-let supabaseClient;
-let currentUser = null;
-
-function init() {
-    supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    console.log('%cFuckHub от FuckFaz запущен', 'color:orange; font-size:18px; font-weight:bold');
-}
-
-async function registerWithSupabase() {
-    const username = document.getElementById('reg-username').value.trim();
-    const email = document.getElementById('reg-email').value.trim();
-    const password = document.getElementById('reg-password').value.trim();
-
-    if (!email || !password || !username) {
-        alert("Заполните все поля!");
-        return;
+async function uploadFileToStorage(file, folder) {
+    if (!file) return null;
+    
+    // Проверка размера (1 МБ)
+    if (file.size > 1 * 1024 * 1024) {
+        alert('Файл слишком большой! Максимум 1 МБ.');
+        return null;
     }
+
+    // Генерируем уникальное имя файла: папка/айдишник_время.расширение
+    const ext = file.name.split('.').pop().toLowerCase();
+    const fileName = `${folder}/${currentUser.id}_${Date.now()}.${ext}`;
 
     try {
-        const { data, error } = await supabaseClient.auth.signUp({
-            email,
-            password,
-            options: { data: { username } }
-        });
+        // Загружаем в хранилище Supabase
+        const { error: uploadError } = await supabaseClient.storage
+            .from(BUCKET_NAME)
+            .upload(fileName, file, { 
+                cacheControl: '3600', 
+                upsert: false,
+                contentType: file.type 
+            });
 
-        if (error) throw error;
-        alert("✅ Регистрация прошла! Проверь почту для подтверждения.");
-        hideModal();
+        if (uploadError) throw uploadError;
+
+        // Получаем публичную ссылку (не храним base64, только строку URL)
+        const { data } = supabaseClient.storage
+            .from(BUCKET_NAME)
+            .getPublicUrl(fileName);
+
+        return data.publicUrl;
     } catch (e) {
-        alert("❌ Ошибка: " + e.message);
-        console.error(e);
+        console.error('Ошибка загрузки файла:', e);
+        alert('Не удалось загрузить файл на сервер: ' + e.message);
+        return null;
     }
 }
-
-async function loginWithSupabase() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value.trim();
-
-    try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
-        if (error) throw error;
-        
-        currentUser = data.user;
-        alert("✅ Вход выполнен!");
-        hideModal();
-    } catch (e) {
-        alert("❌ Ошибка входа: " + e.message);
-    }
-}
-
-function showRegisterModal() {
-    document.getElementById('auth-modal').classList.remove('hidden');
-    document.getElementById('register-form').classList.remove('hidden');
-    document.getElementById('login-form').classList.add('hidden');
-    document.getElementById('modal-title').textContent = 'РЕГИСТРАЦИЯ В FUCKHUB';
-    document.getElementById('switch-btn').textContent = 'Уже есть аккаунт? Войти';
-}
-
-function showLoginModal() {
-    document.getElementById('auth-modal').classList.remove('hidden');
-    document.getElementById('register-form').classList.add('hidden');
-    document.getElementById('login-form').classList.remove('hidden');
-    document.getElementById('modal-title').textContent = 'ВОЙТИ В FUCKHUB';
-    document.getElementById('switch-btn').textContent = 'Нет аккаунта? Зарегистрироваться';
-}
-
-function toggleForms() {
-    if (document.getElementById('register-form').classList.contains('hidden')) {
-        showRegisterModal();
-    } else {
-        showLoginModal();
-    }
-}
-
-function hideModal() {
-    document.getElementById('auth-modal').classList.add('hidden');
-}
-
-function showMyGames() {
-    if (!currentUser) {
-        alert("Сначала войдите в аккаунт!");
-        showLoginModal();
-        return;
-    }
-    alert("Раздел 'Мои Игры' — здесь будут твои опубликованные игры (в разработке)");
-}
-
-// Запуск
-window.onload = init;
