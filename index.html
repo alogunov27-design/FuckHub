@@ -6,6 +6,7 @@
     <title>FuckHub — Свободная платформа игр без цензуры</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
     <style>
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -231,44 +232,12 @@
         </div>
     </div>
 
+    <!-- Основной скрипт страницы -->
     <script>
-        const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
-        
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        let currentUser = null;
-        let allGames = [];
         let currentPlatformFilter = 'all';
+        let allGames = [];
 
-        // ===== DONATE =====
-        window.showDonateModal = function() {
-            document.getElementById('donate-modal').classList.remove('hidden');
-            document.getElementById('copy-success').classList.add('hidden');
-        };
-        window.hideDonateModal = function() {
-            document.getElementById('donate-modal').classList.add('hidden');
-        };
-        window.copyAddress = function() {
-            const addr = document.getElementById('donate-address').textContent.trim();
-            navigator.clipboard.writeText(addr).then(() => {
-                const el = document.getElementById('copy-success');
-                el.classList.remove('hidden');
-                setTimeout(() => el.classList.add('hidden'), 2000);
-            }).catch(() => {
-                // fallback
-                const textarea = document.createElement('textarea');
-                textarea.value = addr;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                const el = document.getElementById('copy-success');
-                el.classList.remove('hidden');
-                setTimeout(() => el.classList.add('hidden'), 2000);
-            });
-        };
-
-        // ===== AUTH =====
+        // Переопределяем функции аутентификации, используя глобальный supabaseClient из script.js
         window.showRegisterModal = function() { document.getElementById('register-modal').classList.remove('hidden'); };
         window.showLoginModal = function() { document.getElementById('login-modal').classList.remove('hidden'); };
         window.hideModals = function() {
@@ -282,9 +251,14 @@
             const password = document.getElementById('reg-password').value.trim();
             if (!username || !email || !password) return alert("Заполните все поля");
 
-            const { error } = await supabaseClient.auth.signUp({ email, password, options: { data: { username } } });
-            if (error) alert("Ошибка: " + error.message);
-            else { alert("Регистрация прошла!"); hideModals(); }
+            try {
+                // Используем функцию из script.js
+                await registerUser(email, password, username);
+                alert("Регистрация прошла! Проверьте почту.");
+                hideModals();
+            } catch (e) {
+                alert("Ошибка: " + e.message);
+            }
         };
 
         window.loginUser = async function() {
@@ -292,13 +266,19 @@
             const password = document.getElementById('login-password').value.trim();
             if (!email || !password) return alert("Заполните email и пароль");
 
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
-            if (error) alert("Ошибка: " + error.message);
-            else { alert("Успешный вход!"); hideModals(); location.reload(); }
+            try {
+                await loginUser(email, password);
+                alert("Успешный вход!");
+                hideModals();
+                location.reload();
+            } catch (e) {
+                alert("Ошибка: " + e.message);
+            }
         };
 
-        window.logout = function() { supabaseClient.auth.signOut(); location.reload(); };
-        // ===== конец AUTH =====
+        window.logout = async function() { 
+            await logout(); 
+        };
 
         function toggleMobileMenu() {
             const menu = document.getElementById('mobile-menu');
@@ -318,12 +298,13 @@
             }
         }
 
-        async function init() {
+        // Инициализация и загрузка игр
+        async function initIndex() {
             try {
-                const { data: { session } } = await supabaseClient.auth.getSession();
-                if (session) {
-                    currentUser = session.user;
-
+                await getSession();
+                
+                // Обновляем UI в зависимости от авторизации
+                if (currentUser) {
                     document.getElementById('auth-buttons').classList.add('hidden');
                     document.getElementById('auth-buttons').classList.remove('md:flex');
                     const userSec = document.getElementById('user-section');
@@ -339,31 +320,28 @@
                     document.getElementById('mobile-auth-buttons').classList.remove('hidden');
                     document.getElementById('mobile-user-section').classList.add('hidden');
                 }
-            } catch (e) {
-                console.error('Auth init error:', e);
-            }
 
-            await loadGames();
+                // Загружаем игры
+                await loadGamesForIndex();
+            } catch (e) {
+                console.error('Init error:', e);
+            }
         }
 
-        async function loadGames() {
+        async function loadGamesForIndex() {
             try {
                 const { data, error } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
-                if (error) {
-                    console.error('Load games error:', error);
-                    document.getElementById('fuckhub-games').innerHTML = '<p class="col-span-full text-center py-10 text-zinc-500">Ошибка загрузки игр</p>';
-                    document.getElementById('all-games').innerHTML = '';
-                    return;
-                }
+                if (error) throw error;
                 allGames = data || [];
-                console.log('Loaded games:', allGames.length);
-                renderGames(allGames);
+                renderGamesForIndex(allGames);
             } catch (e) {
                 console.error(e);
+                document.getElementById('fuckhub-games').innerHTML = '<p class="col-span-full text-center py-10 text-zinc-500">Ошибка загрузки игр</p>';
+                document.getElementById('all-games').innerHTML = '';
             }
         }
 
-        function renderGames(games) {
+        function renderGamesForIndex(games) {
             const fuckhubContainer = document.getElementById('fuckhub-games');
             const allContainer = document.getElementById('all-games');
 
@@ -487,7 +465,7 @@
                     .update({ download_count: newCount })
                     .eq('id', gameId);
 
-                setTimeout(() => loadGames(), 900);
+                setTimeout(() => loadGamesForIndex(), 900);
             } catch (e) {
                 console.error('Ошибка обновления счётчика:', e);
             }
@@ -498,14 +476,36 @@
             document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
             const activeBtn = document.querySelector(`.filter-btn[data-platform="${platform}"]`);
             if (activeBtn) activeBtn.classList.add('active');
-            renderGames(allGames);
+            renderGamesForIndex(allGames);
         };
 
         window.filterGames = function() {
-            renderGames(allGames);
+            renderGamesForIndex(allGames);
         };
 
-        window.onload = init;
+        // Обработчики доната
+        window.showDonateModal = function() { document.getElementById('donate-modal').classList.remove('hidden'); };
+        window.hideDonateModal = function() { document.getElementById('donate-modal').classList.add('hidden'); };
+        window.copyAddress = function() {
+            const addr = document.getElementById('donate-address').textContent.trim();
+            navigator.clipboard.writeText(addr).then(() => {
+                const el = document.getElementById('copy-success');
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 2000);
+            }).catch(() => {
+                const textarea = document.createElement('textarea');
+                textarea.value = addr;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                const el = document.getElementById('copy-success');
+                el.classList.remove('hidden');
+                setTimeout(() => el.classList.add('hidden'), 2000);
+            });
+        };
+
+        window.onload = initIndex;
     </script>
 </body>
 </html>
