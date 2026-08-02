@@ -6,52 +6,15 @@
     <title>Профиль • FuckHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
     <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            background: #0f1117;
-            color: #c5d1e0;
-        }
-        .game-card {
-            transition: all 0.3s ease;
-            background: #1a1f2e;
-        }
-        .platform-btn, .tag-btn {
-            transition: all 0.2s;
-        }
-        .platform-btn.active, .tag-btn.active {
-            background-color: #f97316;
-            color: black;
-            font-weight: 600;
-        }
-        .avatar-img {
-            object-fit: cover;
-            background: #1f2533;
-        }
-        .cover-preview {
-            object-fit: cover;
-            background: #11141c;
-        }
-        /* Явные стили инпутов — чтобы ничего не пропадало */
-        #publish-modal input[type="text"],
-        #publish-modal input[type="url"],
-        #publish-modal textarea,
-        #avatar-modal input[type="url"] {
-            color: #e5e7eb !important;
-            background-color: #11141c !important;
-            border: 1px solid #3a455a !important;
-            min-height: 48px;
-        }
-        #publish-modal input::placeholder,
-        #publish-modal textarea::placeholder {
-            color: #6b7280 !important;
-            opacity: 1;
-        }
-        #publish-modal label {
-            color: #a1a1aa !important;
-            display: block !important;
-            margin-bottom: 6px;
-        }
+        body { font-family: system-ui, sans-serif; background: #0f1117; color: #c5d1e0; }
+        .game-card { transition: all 0.3s ease; background: #1a1f2e; }
+        .platform-btn, .tag-btn { transition: all 0.2s; }
+        .platform-btn.active, .tag-btn.active { background-color: #f97316; color: black; font-weight: 600; }
+        .avatar-img { object-fit: cover; background: #1f2533; }
+        .cover-preview { object-fit: cover; background: #11141c; }
+        #publish-modal input, #publish-modal textarea, #avatar-modal input { color: #e5e7eb !important; background: #11141c !important; border: 1px solid #3a455a !important; }
     </style>
 </head>
 <body>
@@ -148,15 +111,12 @@
         <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-2xl my-8 max-h-[90vh] overflow-y-auto">
             <h2 id="modal-title" class="text-xl sm:text-2xl font-semibold mb-6 text-center">Публикация игры</h2>
             
-            <!-- Название — самое верхнее поле -->
             <div class="mb-5">
                 <label for="game-title" class="block text-sm font-medium text-zinc-300 mb-2">Название игры *</label>
                 <input id="game-title" type="text" placeholder="Например: Sweet Torment" 
-                       class="w-full px-4 py-3.5 bg-[#11141c] border border-[#3a455a] rounded-2xl text-white"
-                       style="color:#e5e7eb;background:#11141c;min-height:48px;">
+                       class="w-full px-4 py-3.5 bg-[#11141c] border border-[#3a455a] rounded-2xl text-white">
             </div>
 
-            <!-- Обложка -->
             <div class="mb-5">
                 <p class="mb-2 text-sm font-medium text-zinc-400">Обложка</p>
                 <div class="flex flex-col sm:flex-row gap-4 items-start">
@@ -176,14 +136,12 @@
                 </div>
             </div>
             
-            <!-- Описание -->
             <div class="mb-5">
                 <label class="block text-sm text-zinc-400 mb-1">Описание</label>
                 <textarea id="game-desc" placeholder="Кратко о чём игра..." 
                           class="w-full px-4 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl h-28"></textarea>
             </div>
             
-            <!-- Платформы -->
             <div class="mb-5">
                 <p class="mb-2 text-sm font-medium text-zinc-400">Платформы</p>
                 <div class="flex flex-wrap gap-2">
@@ -194,7 +152,6 @@
                 </div>
             </div>
 
-            <!-- Теги -->
             <div class="mb-5">
                 <p class="mb-2 text-sm font-medium text-zinc-400">Теги</p>
                 <div class="flex flex-wrap gap-2">
@@ -234,12 +191,6 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
-        const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
-        
-        let supabaseClient = null;
-        let currentUser = null;
         let selectedPlatforms = [];
         let selectedTags = [];
         let editingGameId = null;
@@ -249,41 +200,26 @@
 
         async function init() {
             try {
-                supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
-                if (sessionError) console.error('Session error:', sessionError);
-
-                if (!session || !session.user) {
+                await getSession();
+                if (!currentUser) {
                     alert("Вы не авторизованы!");
                     window.location.href = "index.html";
                     return;
                 }
 
-                currentUser = session.user;
-
-                const username = (currentUser.user_metadata && currentUser.user_metadata.username) 
-                    ? currentUser.user_metadata.username 
-                    : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
-                
+                const username = currentUser.user_metadata?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
                 document.getElementById('profile-username').textContent = username;
                 document.getElementById('profile-email').textContent = currentUser.email || 'нет email';
 
-                const avatarUrl = currentUser.user_metadata && currentUser.user_metadata.avatar_url;
-                if (avatarUrl) {
-                    document.getElementById('profile-avatar').src = avatarUrl;
-                } else {
-                    document.getElementById('profile-avatar').src = 
-                        'https://ui-avatars.com/api/?name=' + encodeURIComponent(username) + '&background=1f2533&color=c5d1e0&size=128';
-                }
+                const avatarUrl = currentUser.user_metadata?.avatar_url;
+                if (avatarUrl) document.getElementById('profile-avatar').src = avatarUrl;
+                else document.getElementById('profile-avatar').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(username)}&background=1f2533&color=c5d1e0&size=128`;
 
                 await loadMyGames();
             } catch (e) {
-                console.error('Init error:', e);
+                console.error(e);
                 document.getElementById('profile-username').textContent = 'Ошибка загрузки';
                 document.getElementById('profile-email').textContent = e.message || 'ошибка';
-                document.getElementById('my-games-list').innerHTML = 
-                    '<p class="text-red-400 py-6 text-center">Ошибка: ' + (e.message || e) + '</p>';
             }
         }
 
@@ -292,7 +228,7 @@
             document.getElementById('avatar-file').value = '';
             document.getElementById('avatar-status').textContent = '';
 
-            const current = (currentUser && currentUser.user_metadata && currentUser.user_metadata.avatar_url) || '';
+            const current = currentUser?.user_metadata?.avatar_url || '';
             const preview = document.getElementById('avatar-preview');
             const placeholder = document.getElementById('avatar-placeholder');
 
@@ -304,14 +240,10 @@
                 preview.classList.add('hidden');
                 placeholder.classList.remove('hidden');
             }
-
             document.getElementById('avatar-modal').classList.remove('hidden');
         }
 
-        function hideAvatarModal() {
-            document.getElementById('avatar-modal').classList.add('hidden');
-            pendingAvatarFile = null;
-        }
+        function hideAvatarModal() { document.getElementById('avatar-modal').classList.add('hidden'); pendingAvatarFile = null; }
 
         function previewAvatar(input) {
             const file = input.files && input.files[0];
@@ -326,69 +258,36 @@
                 pendingAvatarFile = null;
                 return;
             }
-
-            if (!file.type.startsWith('image/')) {
-                alert('Выбери изображение');
-                input.value = '';
-                return;
-            }
-
-            if (file.size > MAX_FILE_SIZE) {
-                alert('Файл слишком большой. Максимум 1 МБ');
-                input.value = '';
-                return;
-            }
+            if (!file.type.startsWith('image/')) { alert('Выбери изображение'); input.value = ''; return; }
+            if (file.size > MAX_FILE_SIZE) { alert('Файл слишком большой. Максимум 1 МБ'); input.value = ''; return; }
 
             pendingAvatarFile = file;
-
             const reader = new FileReader();
             reader.onload = function(e) {
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
                 placeholder.classList.add('hidden');
-                status.textContent = 'Файл выбран: ' + file.name + ' (' + Math.round(file.size / 1024) + ' КБ)';
+                status.textContent = `Файл выбран: ${file.name} (${Math.round(file.size / 1024)} КБ)`;
             };
             reader.readAsDataURL(file);
         }
 
         async function saveAvatar() {
-            if (!pendingAvatarFile) {
-                alert('Выбери файл');
-                return;
-            }
-
+            if (!pendingAvatarFile) { alert('Выбери файл'); return; }
             const btn = document.getElementById('save-avatar-btn');
             const oldText = btn.textContent;
-            btn.textContent = 'Загрузка...';
-            btn.disabled = true;
+            btn.textContent = 'Загрузка...'; btn.disabled = true;
 
             try {
-                const ext = pendingAvatarFile.name.split('.').pop().toLowerCase() || 'jpg';
-                const fileName = 'avatars/' + (currentUser.id || 'user') + '_' + Date.now() + '.' + ext;
+                // ЗАМЕНА: Используем uploadFileToStorage из script.js
+                const avatarUrl = await uploadFileToStorage(pendingAvatarFile, 'avatars');
+                if (!avatarUrl) throw new Error('Не удалось загрузить аватар');
 
-                const { error: uploadError } = await supabaseClient.storage
-                    .from('covers')
-                    .upload(fileName, pendingAvatarFile, {
-                        cacheControl: '3600',
-                        upsert: true
-                    });
-
-                if (uploadError) throw uploadError;
-
-                const { data: publicData } = supabaseClient.storage
-                    .from('covers')
-                    .getPublicUrl(fileName);
-
-                const avatarUrl = publicData.publicUrl;
-
-                const { data, error } = await supabaseClient.auth.updateUser({
-                    data: { avatar_url: avatarUrl }
-                });
+                const { data, error } = await supabaseClient.auth.updateUser({ data: { avatar_url: avatarUrl } });
                 if (error) throw error;
 
-                if (data && data.user) {
-                    currentUser = data.user;
-                } else if (currentUser) {
+                if (data?.user) currentUser = data.user;
+                else if (currentUser) {
                     if (!currentUser.user_metadata) currentUser.user_metadata = {};
                     currentUser.user_metadata.avatar_url = avatarUrl;
                 }
@@ -400,8 +299,7 @@
                 console.error(e);
                 alert('Ошибка: ' + e.message);
             } finally {
-                btn.textContent = oldText;
-                btn.disabled = false;
+                btn.textContent = oldText; btn.disabled = false;
             }
         }
 
@@ -409,33 +307,20 @@
             gamesVisible = !gamesVisible;
             const list = document.getElementById('my-games-list');
             const btn = document.getElementById('toggle-games-btn');
-            if (gamesVisible) {
-                list.classList.remove('hidden');
-                btn.textContent = 'Скрыть игры';
-            } else {
-                list.classList.add('hidden');
-                btn.textContent = 'Показать игры';
-            }
+            if (gamesVisible) { list.classList.remove('hidden'); btn.textContent = 'Скрыть игры'; } 
+            else { list.classList.add('hidden'); btn.textContent = 'Показать игры'; }
         }
 
         function togglePlatform(btn) {
             btn.classList.toggle('active');
             const platform = btn.getAttribute('data-platform');
-            if (selectedPlatforms.includes(platform)) {
-                selectedPlatforms = selectedPlatforms.filter(p => p !== platform);
-            } else {
-                selectedPlatforms.push(platform);
-            }
+            selectedPlatforms = selectedPlatforms.includes(platform) ? selectedPlatforms.filter(p => p !== platform) : [...selectedPlatforms, platform];
         }
 
         function toggleTag(btn) {
             btn.classList.toggle('active');
             const tag = btn.getAttribute('data-tag');
-            if (selectedTags.includes(tag)) {
-                selectedTags = selectedTags.filter(t => t !== tag);
-            } else {
-                selectedTags.push(tag);
-            }
+            selectedTags = selectedTags.includes(tag) ? selectedTags.filter(t => t !== tag) : [...selectedTags, tag];
         }
 
         function previewCover(input) {
@@ -444,31 +329,16 @@
             const placeholder = document.getElementById('cover-placeholder');
             const status = document.getElementById('cover-status');
 
-            if (!file) {
-                preview.classList.add('hidden');
-                placeholder.classList.remove('hidden');
-                status.textContent = '';
-                return;
-            }
-
-            if (!file.type.startsWith('image/')) {
-                alert('Выбери изображение');
-                input.value = '';
-                return;
-            }
-
-            if (file.size > MAX_FILE_SIZE) {
-                alert('Файл слишком большой. Максимум 1 МБ');
-                input.value = '';
-                return;
-            }
+            if (!file) { preview.classList.add('hidden'); placeholder.classList.remove('hidden'); status.textContent = ''; return; }
+            if (!file.type.startsWith('image/')) { alert('Выбери изображение'); input.value = ''; return; }
+            if (file.size > MAX_FILE_SIZE) { alert('Файл слишком большой'); input.value = ''; return; }
 
             const reader = new FileReader();
             reader.onload = function(e) {
                 preview.src = e.target.result;
                 preview.classList.remove('hidden');
                 placeholder.classList.add('hidden');
-                status.textContent = 'Файл выбран: ' + file.name + ' (' + Math.round(file.size / 1024) + ' КБ)';
+                status.textContent = `Файл выбран: ${file.name} (${Math.round(file.size / 1024)} КБ)`;
             };
             reader.readAsDataURL(file);
         }
@@ -478,8 +348,7 @@
             editingGameId = game ? game.id : null;
             document.getElementById('modal-title').textContent = game ? "Редактировать игру" : "Новая игра";
 
-            selectedPlatforms = [];
-            selectedTags = [];
+            selectedPlatforms = []; selectedTags = [];
             document.querySelectorAll('.platform-btn, .tag-btn').forEach(el => el.classList.remove('active'));
 
             currentCoverUrl = null;
@@ -504,24 +373,13 @@
                 }
 
                 if (game.platforms) {
-                    selectedPlatforms = typeof game.platforms === 'string' 
-                        ? game.platforms.split(',').map(p => p.trim()).filter(Boolean)
-                        : (Array.isArray(game.platforms) ? game.platforms : []);
+                    selectedPlatforms = typeof game.platforms === 'string' ? game.platforms.split(',').map(p => p.trim()).filter(Boolean) : (Array.isArray(game.platforms) ? game.platforms : []);
                 }
                 if (game.tags) {
                     selectedTags = Array.isArray(game.tags) ? game.tags.slice() : [];
                 }
-
-                document.querySelectorAll('.platform-btn').forEach(btn => {
-                    if (selectedPlatforms.indexOf(btn.getAttribute('data-platform')) !== -1) {
-                        btn.classList.add('active');
-                    }
-                });
-                document.querySelectorAll('.tag-btn').forEach(btn => {
-                    if (selectedTags.indexOf(btn.getAttribute('data-tag')) !== -1) {
-                        btn.classList.add('active');
-                    }
-                });
+                document.querySelectorAll('.platform-btn').forEach(btn => { if (selectedPlatforms.indexOf(btn.getAttribute('data-platform')) !== -1) btn.classList.add('active'); });
+                document.querySelectorAll('.tag-btn').forEach(btn => { if (selectedTags.indexOf(btn.getAttribute('data-tag')) !== -1) btn.classList.add('active'); });
             } else {
                 document.getElementById('game-title').value = '';
                 document.getElementById('game-desc').value = '';
@@ -530,60 +388,32 @@
             }
         }
 
-        function hidePublishModal() {
-            document.getElementById('publish-modal').classList.add('hidden');
-        }
-
-        async function uploadCover(file) {
-            const ext = file.name.split('.').pop().toLowerCase() || 'jpg';
-            const fileName = (currentUser.id || 'user') + '/' + Date.now() + '.' + ext;
-
-            const { error } = await supabaseClient.storage
-                .from('covers')
-                .upload(fileName, file, {
-                    cacheControl: '3600',
-                    upsert: false
-                });
-
-            if (error) throw error;
-
-            const { data: publicData } = supabaseClient.storage
-                .from('covers')
-                .getPublicUrl(fileName);
-
-            return publicData.publicUrl;
-        }
+        function hidePublishModal() { document.getElementById('publish-modal').classList.add('hidden'); }
 
         async function saveGame() {
             const title = document.getElementById('game-title').value.trim();
             if (!title) return alert("Название игры обязательно!");
-
             if (!currentUser) return alert("Нет пользователя");
 
             const btn = document.getElementById('save-game-btn');
             const oldText = btn.textContent;
-            btn.textContent = 'Сохранение...';
-            btn.disabled = true;
+            btn.textContent = 'Сохранение...'; btn.disabled = true;
 
             try {
                 const fileInput = document.getElementById('cover-file');
                 const file = fileInput.files && fileInput.files[0];
-
                 let coverUrl = currentCoverUrl;
 
                 if (file) {
-                    if (file.size > MAX_FILE_SIZE) {
-                        alert('Файл слишком большой. Максимум 1 МБ');
-                        return;
-                    }
+                    if (file.size > MAX_FILE_SIZE) { alert('Файл слишком большой'); return; }
                     document.getElementById('cover-status').textContent = 'Загрузка обложки...';
-                    coverUrl = await uploadCover(file);
-                    document.getElementById('cover-status').textContent = 'Обложка загружена';
+                    // ЗАМЕНА: Используем uploadFileToStorage из script.js
+                    coverUrl = await uploadFileToStorage(file, 'game_covers');
+                    document.getElementById('cover-status').textContent = coverUrl ? 'Обложка загружена' : 'Ошибка загрузки';
+                    if (!coverUrl) return;
                 }
 
-                const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
-                    ? currentUser.user_metadata.username 
-                    : (currentUser.email ? currentUser.email.split('@')[0] : 'User');
+                const authorName = currentUser.user_metadata?.username || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
 
                 const gameData = {
                     title: title,
@@ -609,122 +439,78 @@
                 hidePublishModal();
                 await loadMyGames();
             } catch (e) {
-                console.error(e);
-                alert("Ошибка: " + e.message);
+                console.error(e); alert("Ошибка: " + e.message);
             } finally {
-                btn.textContent = oldText;
-                btn.disabled = false;
+                btn.textContent = oldText; btn.disabled = false;
             }
         }
 
         async function deleteGame(gameId, title) {
             if (!confirm('Удалить игру «' + title + '»?\nЭто действие нельзя отменить.')) return;
-
             try {
                 const { error } = await supabaseClient.from('games').delete().eq('id', gameId);
                 if (error) throw error;
                 alert('Игра удалена');
                 await loadMyGames();
-            } catch (e) {
-                console.error(e);
-                alert('Ошибка удаления: ' + e.message);
-            }
+            } catch (e) { console.error(e); alert('Ошибка удаления: ' + e.message); }
         }
 
         async function loadMyGames() {
             const container = document.getElementById('my-games-list');
-            
-            if (!currentUser || !currentUser.id) {
-                container.innerHTML = '<p class="text-red-400 py-6 text-center">Нет ID пользователя</p>';
-                return;
-            }
+            if (!currentUser || !currentUser.id) { container.innerHTML = '<p class="text-red-400 py-6 text-center">Нет ID пользователя</p>'; return; }
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('games')
-                    .select('*')
-                    .eq('user_id', currentUser.id)
-                    .order('created_at', { ascending: false });
-
-                if (error) {
-                    container.innerHTML = '<p class="text-red-400 py-6 text-center">Ошибка: ' + error.message + '</p>';
-                    return;
-                }
+                const { data, error } = await supabaseClient.from('games').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+                if (error) { container.innerHTML = `<p class="text-red-400 py-6 text-center">Ошибка: ${error.message}</p>`; return; }
 
                 if (!data || data.length === 0) {
-                    const authorName = (currentUser.user_metadata && currentUser.user_metadata.username) 
-                        ? currentUser.user_metadata.username 
-                        : (currentUser.email ? currentUser.email.split('@')[0] : null);
-                    
+                    const authorName = currentUser.user_metadata?.username || (currentUser.email ? currentUser.email.split('@')[0] : null);
                     if (authorName) {
-                        const { data: data2, error: err2 } = await supabaseClient
-                            .from('games')
-                            .select('*')
-                            .eq('author', authorName)
-                            .order('created_at', { ascending: false });
-                        
-                        if (!err2 && data2 && data2.length > 0) {
-                            renderGamesList(data2);
-                            return;
-                        }
+                        const { data: data2, error: err2 } = await supabaseClient.from('games').select('*').eq('author', authorName).order('created_at', { ascending: false });
+                        if (!err2 && data2 && data2.length > 0) { renderGamesList(data2); return; }
                     }
-
                     container.innerHTML = '<p class="text-zinc-500 py-10 text-center">У вас пока нет опубликованных игр</p>';
                     return;
                 }
-
                 renderGamesList(data);
-            } catch (e) {
-                console.error(e);
-                container.innerHTML = '<p class="text-red-400 py-6 text-center">Ошибка: ' + e.message + '</p>';
-            }
+            } catch (e) { console.error(e); container.innerHTML = `<p class="text-red-400 py-6 text-center">Ошибка: ${e.message}</p>`; }
         }
 
         function renderGamesList(data) {
             const container = document.getElementById('my-games-list');
-            
             container.innerHTML = data.map(function(g) {
                 let tagsHTML = '';
                 if (g.tags) {
                     const tags = Array.isArray(g.tags) ? g.tags : [];
-                    tagsHTML = tags.map(function(tag) {
-                        return '<span class="inline-block bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">' + tag + '</span>';
-                    }).join('');
+                    tagsHTML = tags.map(tag => `<span class="inline-block bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">${tag}</span>`).join('');
                 }
-
                 const downloads = g.download_count || 0;
                 const safeTitle = (g.title || 'Без названия').replace(/'/g, "\\'");
                 const cover = g.cover || 'https://picsum.photos/200/200?grayscale';
 
-                return '' +
-                    '<div class="game-card rounded-2xl p-4 sm:p-5 border border-[#2a3344]">' +
-                        '<div class="flex flex-col sm:flex-row gap-4">' +
-                            '<img src="' + cover + '" class="w-full sm:w-28 h-40 sm:h-28 object-cover rounded-xl flex-shrink-0" onerror="this.src=\'https://picsum.photos/200/200?grayscale\'">' +
-                            '<div class="flex-1 min-w-0 flex flex-col">' +
-                                '<div class="flex justify-between items-start gap-2">' +
-                                    '<h3 class="font-semibold text-lg leading-tight">' + (g.title || 'Без названия') + '</h3>' +
-                                    (g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">18+</span>' : '') +
-                                '</div>' +
-                                '<p class="text-sm text-zinc-400 mt-1">Скачано: ' + downloads + '</p>' +
-                                (tagsHTML ? '<div class="mt-2 flex flex-wrap gap-1.5">' + tagsHTML + '</div>' : '') +
-                                '<div class="mt-4 flex flex-wrap gap-2">' +
-                                    '<button onclick=\'showPublishModal(' + JSON.stringify(g).replace(/'/g, "&#39;") + ')\' class="px-4 py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">Редактировать</button>' +
-                                    '<a href="' + (g.download || '#') + '" target="_blank" class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm transition-colors">Скачать</a>' +
-                                    '<button onclick="deleteGame(\'' + g.id + '\', \'' + safeTitle + '\')" class="px-4 py-2.5 bg-red-900/60 hover:bg-red-800 text-red-200 rounded-xl text-sm transition-colors">Удалить</button>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
+                return `<div class="game-card rounded-2xl p-4 sm:p-5 border border-[#2a3344]">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <img src="${cover}" class="w-full sm:w-28 h-40 sm:h-28 object-cover rounded-xl flex-shrink-0" onerror="this.src='https://picsum.photos/200/200?grayscale'">
+                            <div class="flex-1 min-w-0 flex flex-col">
+                                <div class="flex justify-between items-start gap-2">
+                                    <h3 class="font-semibold text-lg leading-tight">${g.title || 'Без названия'}</h3>
+                                    ${g.is_nsfw ? '<span class="bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shrink-0">18+</span>' : ''}
+                                </div>
+                                <p class="text-sm text-zinc-400 mt-1">Скачано: ${downloads}</p>
+                                ${tagsHTML ? `<div class="mt-2 flex flex-wrap gap-1.5">${tagsHTML}</div>` : ''}
+                                <div class="mt-4 flex flex-wrap gap-2">
+                                    <button onclick='showPublishModal(${JSON.stringify(g).replace(/'/g, "&#39;")})' class="px-4 py-2.5 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">Редактировать</button>
+                                    <a href="${g.download || '#'}" target="_blank" class="px-4 py-2.5 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl text-sm transition-colors">Скачать</a>
+                                    <button onclick="deleteGame('${g.id}', '${safeTitle}')" class="px-4 py-2.5 bg-red-900/60 hover:bg-red-800 text-red-200 rounded-xl text-sm transition-colors">Удалить</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
             }).join('');
-
-            if (!gamesVisible) {
-                container.classList.add('hidden');
-            } else {
-                container.classList.remove('hidden');
-            }
+            if (!gamesVisible) container.classList.add('hidden'); else container.classList.remove('hidden');
         }
 
         window.onload = init;
     </script>
 </body>
-                                                                                                                                                                     </html>
+</html>
