@@ -6,6 +6,7 @@
     <title>Сообщество • FuckHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
     <style>
         body { background: #0f1117; color: #c5d1e0; font-family: system-ui, -apple-system, sans-serif; }
         .game-card { transition: all 0.25s ease; background: #1a1f2e; }
@@ -213,12 +214,9 @@
 </div>
 
 <script>
-const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
-const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
+// Теперь используем глобальные переменные из script.js
+// SUPABASE_URL, SUPABASE_ANON_KEY, supabaseClient, currentUser, getUsername, getAvatarUrl, uploadFileToStorage, parseImageUrls, renderImageGallery, renderCommentHTML
 
-let currentUser = null;
 let gamesList = [];
 let currentGameId = null;
 let newsPostsCache = {}; // id -> post data for safe edit
@@ -232,64 +230,9 @@ function isFuckHub() {
     return username.toLowerCase() === 'fuckhub';
 }
 
-function getUsername() {
-    if (!currentUser) return 'Аноним';
-    return (currentUser.user_metadata && currentUser.user_metadata.username)
-        || (currentUser.email ? currentUser.email.split('@')[0] : 'User');
-}
-
-function getAvatarUrl() {
-    if (!currentUser) return null;
-    return (currentUser.user_metadata && currentUser.user_metadata.avatar_url) || null;
-}
-
-function parseImageUrls(imageUrlField) {
-    if (!imageUrlField) return [];
-    const raw = String(imageUrlField).trim();
-    if (!raw) return [];
-    try {
-        if (raw.startsWith('[')) {
-            const arr = JSON.parse(raw);
-            return Array.isArray(arr) ? arr.filter(Boolean) : [raw];
-        }
-    } catch (e) {}
-    // legacy single url or pipe-separated
-    if (raw.includes('|')) return raw.split('|').map(s => s.trim()).filter(Boolean);
-    return [raw];
-}
-
-function renderImageGallery(urls) {
-    if (!urls || urls.length === 0) return '';
-    if (urls.length === 1) {
-        return '<div class="mb-4 rounded-xl overflow-hidden border border-[#2a3344] news-gallery">' +
-            '<img src="' + urls[0] + '" class="w-full" onerror="this.parentElement.style.display=\'none\'">' +
-            '</div>';
-    }
-    let html = '<div class="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2 news-gallery">';
-    for (let i = 0; i < urls.length; i++) {
-        html += '<div class="rounded-xl overflow-hidden border border-[#2a3344]">' +
-            '<img src="' + urls[i] + '" class="w-full h-48 object-cover" onerror="this.parentElement.style.display=\'none\'">' +
-            '</div>';
-    }
-    html += '</div>';
-    return html;
-}
-
-async function uploadNewsFile(file) {
-    const ext = (file.name.split('.').pop() || 'jpg').toLowerCase();
-    const fileName = 'news/' + (currentUser.id || 'admin') + '/' + Date.now() + '_' + Math.random().toString(36).slice(2, 8) + '.' + ext;
-    const { error } = await supabaseClient.storage
-        .from('covers')
-        .upload(fileName, file, { cacheControl: '3600', upsert: false });
-    if (error) throw error;
-    const { data } = supabaseClient.storage.from('covers').getPublicUrl(fileName);
-    return data.publicUrl;
-}
-
 async function init() {
     try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) currentUser = session.user;
+        await getSession(); // Загружаем currentUser из script.js
         await loadGames();
     } catch (e) {
         document.getElementById('games-grid').innerHTML =
@@ -371,21 +314,6 @@ function openNews() {
     }
 
     loadNews();
-}
-
-function renderCommentHTML(c) {
-    const avatar = c.avatar_url
-        ? '<img src="' + c.avatar_url + '" class="avatar-sm w-8 h-8 rounded-full shrink-0" onerror="this.style.display=\'none\'">'
-        : '<div class="w-8 h-8 rounded-full bg-[#2a3344] flex items-center justify-center text-xs shrink-0">' +
-            ((c.username || 'A').charAt(0).toUpperCase()) + '</div>';
-
-    return '<div class="flex gap-3 border-t border-[#2a3344] pt-3 mt-3">' +
-        avatar +
-        '<div class="min-w-0 flex-1">' +
-            '<span class="font-semibold text-orange-400 text-sm">' + (c.username || 'Аноним') + '</span>' +
-            '<p class="text-zinc-300 text-sm mt-0.5">' + (c.content || '') + '</p>' +
-        '</div>' +
-    '</div>';
 }
 
 async function loadNews() {
@@ -662,9 +590,10 @@ async function saveEditNews() {
     try {
         let imageUrls = currentEditImageUrls.slice();
 
+        // ЗАМЕНА: Используем uploadFileToStorage из script.js
         for (let i = 0; i < pendingEditNewsFiles.length; i++) {
-            const url = await uploadNewsFile(pendingEditNewsFiles[i]);
-            imageUrls.push(url);
+            const url = await uploadFileToStorage(pendingEditNewsFiles[i], 'news');
+            if (url) imageUrls.push(url);
         }
 
         const description = '[NEWS] ' + title + ' | ' + content;
@@ -715,11 +644,12 @@ async function uploadNews() {
 
     try {
         const imageUrls = [];
+        // ЗАМЕНА: Используем uploadFileToStorage из script.js
         for (let i = 0; i < pendingNewsFiles.length; i++) {
             document.getElementById('news-files-status').textContent =
                 'Загрузка ' + (i + 1) + '/' + pendingNewsFiles.length + '...';
-            const url = await uploadNewsFile(pendingNewsFiles[i]);
-            imageUrls.push(url);
+            const url = await uploadFileToStorage(pendingNewsFiles[i], 'news');
+            if (url) imageUrls.push(url);
         }
 
         const description = '[NEWS] ' + title + ' | ' + content;
@@ -791,7 +721,6 @@ async function loadPosts(gameId) {
 
     for (let i = 0; i < posts.length; i++) {
         const post = posts[i];
-        // skip pure news posts if they somehow have game_id
         if (post.description && post.description.startsWith('[NEWS]')) continue;
 
         const reactions = post.reactions || {};
@@ -904,11 +833,12 @@ async function addComment(postId, isNews = false) {
         username: username,
         user_id: currentUser ? currentUser.id : null
     };
+    
+    // ВАЖНО: ДОБАВЛЯЕМ АВАТАРКУ В КОММЕНТ
     if (avatarUrl) payload.avatar_url = avatarUrl;
 
     let { error } = await supabaseClient.from('post_comments').insert(payload);
 
-    // fallback if avatar_url column doesn't exist yet
     if (error && error.message && error.message.includes('avatar_url')) {
         delete payload.avatar_url;
         const res2 = await supabaseClient.from('post_comments').insert(payload);
@@ -985,4 +915,4 @@ async function uploadPost() {
 window.onload = init;
 </script>
 </body>
-    </html>
+</html>
