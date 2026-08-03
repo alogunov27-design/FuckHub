@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Создать персонажа • FuckHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    <style>
+        body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
+        .input-field { background: #1a1f2e; border: 1px solid #2a3344; color: white; }
+        .input-field:focus { border-color: #f97316; outline: none; }
+    </style>
+</head>
+<body>
+
+<nav class="bg-[#0f1117] border-b border-[#1f2533] sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center h-14">
+        <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
+            ← <span>FUCK</span><span class="text-orange-500">HUB</span>
+        </a>
+        <span class="font-semibold text-orange-500">Создать персонажа</span>
+    </div>
+</nav>
+
+<div class="max-w-3xl mx-auto px-4 sm:px-8 py-10">
+    <h1 class="text-3xl font-bold mb-6">Создать AI-персонажа</h1>
+
+    <form id="character-form" class="space-y-5">
+        <!-- Имя -->
+        <div>
+            <label class="block text-sm font-medium text-zinc-400 mb-1">Имя персонажа *</label>
+            <input id="char-name" type="text" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="Например: Loona" required>
+        </div>
+
+        <!-- Описание -->
+        <div>
+            <label class="block text-sm font-medium text-zinc-400 mb-1">Описание (внешность + характер) *</label>
+            <textarea id="char-desc" rows="5" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="Опиши внешность, фигуру, одежду, характер, манеру речи..." required></textarea>
+        </div>
+
+        <!-- Сценарий -->
+        <div>
+            <label class="block text-sm font-medium text-zinc-400 mb-1">Сценарий (Scenario)</label>
+            <textarea id="char-scenario" rows="4" class="input-field w-full px-4 py-3 rounded-2xl" placeholder="Где происходит действие? Какая ситуация?"></textarea>
+        </div>
+
+        <!-- Примеры диалогов -->
+        <div>
+            <label class="block text-sm font-medium text-zinc-400 mb-1">Примеры диалогов (Chat Logs)</label>
+            <textarea id="char-logs" rows="6" class="input-field w-full px-4 py-3 rounded-2xl" placeholder='Пример:
+Ты: Привет
+Персонаж: Здарова, че надо?'></textarea>
+        </div>
+
+        <!-- Аватар (картинка) -->
+        <div>
+            <label class="block text-sm font-medium text-zinc-400 mb-1">Аватар (картинка)</label>
+            <input id="char-avatar" type="file" accept="image/*" class="input-field w-full px-4 py-3 rounded-2xl">
+            <p class="text-xs text-zinc-500 mt-1">Максимум 1 МБ. JPG, PNG, WebP.</p>
+            <div id="avatar-preview" class="mt-2 hidden">
+                <img id="avatar-img" src="#" class="w-32 h-32 object-cover rounded-xl border border-[#2a3344]">
+            </div>
+        </div>
+
+        <button type="submit" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-4 rounded-2xl transition-all">
+            Создать персонажа
+        </button>
+    </form>
+</div>
+
+<script>
+    const form = document.getElementById('character-form');
+    const avatarInput = document.getElementById('char-avatar');
+    const avatarPreview = document.getElementById('avatar-preview');
+    const avatarImg = document.getElementById('avatar-img');
+
+    // Превью аватарки
+    avatarInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                avatarImg.src = ev.target.result;
+                avatarPreview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Отправка формы
+    form.addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Проверка авторизации
+        await getSession();
+        if (!currentUser) {
+            alert('Ты должен быть авторизован!');
+            return;
+        }
+
+        const name = document.getElementById('char-name').value.trim();
+        const description = document.getElementById('char-desc').value.trim();
+        const scenario = document.getElementById('char-scenario').value.trim();
+        const logs = document.getElementById('char-logs').value.trim();
+        const avatarFile = document.getElementById('char-avatar').files[0];
+
+        if (!name || !description) {
+            alert('Имя и описание — обязательны!');
+            return;
+        }
+
+        // Загружаем аватар, если есть
+        let avatarUrl = null;
+        if (avatarFile) {
+            if (avatarFile.size > MAX_FILE_SIZE) {
+                alert('Файл больше 1 МБ!');
+                return;
+            }
+            avatarUrl = await uploadFileToStorage(avatarFile, 'ai_avatars');
+            if (!avatarUrl) {
+                alert('Ошибка загрузки аватарки');
+                return;
+            }
+        }
+
+        // Сохраняем в БД
+        const { data, error } = await supabaseClient
+            .from('ai_characters')
+            .insert({
+                name: name,
+                description: description,
+                scenario: scenario || null,
+                chat_logs: logs || null,
+                avatar_url: avatarUrl,
+                is_public: true,
+                created_by: currentUser.id
+            })
+            .select();
+
+        if (error) {
+            alert('Ошибка сохранения: ' + error.message);
+            return;
+        }
+
+        alert('Персонаж "' + name + '" создан!');
+        form.reset();
+        avatarPreview.classList.add('hidden');
+    });
+</script>
+
+</body>
+</html>

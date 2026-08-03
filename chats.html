@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои чаты • FuckHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    <style>
+        body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
+        .chat-card { transition: all 0.3s ease; background: #1a1f2e; border: 1px solid #2a3344; }
+        .chat-card:hover { border-color: #f97316; transform: translateY(-3px); box-shadow: 0 10px 30px -10px rgba(249, 115, 22, 0.15); }
+        .avatar-img { object-fit: cover; background: #1f2533; }
+        .empty-state { background: #1a1f2e; border: 1px dashed #2a3344; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="bg-[#0f1117]/90 backdrop-blur-md border-b border-[#1f2533] sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-14">
+            <a href="index.html" class="flex items-center gap-1.5 shrink-0">
+                <span class="text-2xl sm:text-3xl font-bold tracking-tighter">FUCK</span>
+                <span class="text-2xl sm:text-3xl font-bold tracking-tighter text-orange-500">HUB</span>
+            </a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="index.html" class="hover:text-white transition-colors">Магазин</a>
+                <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
+                <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
+                <span class="text-orange-400 font-semibold">Мои чаты</span>
+                <a href="ai.html" class="hover:text-white transition-colors">AI Тянки</a>
+            </div>
+            <div id="auth-buttons" class="hidden md:flex items-center gap-3">
+                <button onclick="showRegisterModal()" class="px-5 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">Регистрация</button>
+                <button onclick="showLoginModal()" class="px-5 py-2 text-sm font-semibold border border-zinc-700 hover:bg-zinc-800 rounded-xl transition-colors">Войти</button>
+            </div>
+            <div id="user-section" class="hidden items-center gap-4 text-sm">
+                <span id="username-display" class="text-zinc-400"></span>
+                <a href="profile.html" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors">Профиль</a>
+                <button onclick="logout()" class="text-red-400 hover:text-red-500 transition-colors">Выйти</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10">
+    <div class="rounded-2xl sm:rounded-3xl h-[160px] sm:h-[200px] flex items-center relative overflow-hidden border border-[#1f2533]"
+         style="background: linear-gradient(135deg, rgba(15,17,23,0.75) 0%, rgba(15,17,23,0.9) 100%), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
+        <div class="px-6 sm:px-10 relative z-10">
+            <h1 class="text-2xl sm:text-4xl font-bold tracking-tighter">Мои диалоги</h1>
+            <p class="text-sm sm:text-base text-zinc-300">Все твои разговоры с AI-тянками</p>
+        </div>
+    </div>
+</div>
+
+<!-- КОНТЕНТ -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+        <div>
+            <h2 class="text-xl font-semibold">Активные чаты</h2>
+            <p class="text-sm text-zinc-400">Продолжи диалог с любой из них</p>
+        </div>
+        <a href="ai.html" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-5 py-2.5 rounded-2xl text-sm transition-colors shrink-0">
+            + Новая тянка
+        </a>
+    </div>
+
+    <div id="chats-list" class="space-y-3">
+        <div class="text-center py-16 text-zinc-500">Загрузка чатов...</div>
+    </div>
+</div>
+
+<script>
+    async function init() {
+        await getSession();
+        updateUI();
+
+        if (!currentUser) {
+            document.getElementById('chats-list').innerHTML = `
+                <div class="text-center py-16 text-zinc-400">
+                    <p class="text-lg mb-2">🔒 Авторизуйся</p>
+                    <p class="text-sm">Чтобы видеть свои диалоги</p>
+                </div>
+            `;
+            return;
+        }
+
+        await loadChats();
+    }
+
+    function updateUI() {
+        if (currentUser) {
+            document.getElementById('auth-buttons').classList.add('hidden');
+            document.getElementById('user-section').classList.remove('hidden');
+            document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+        } else {
+            document.getElementById('auth-buttons').classList.remove('hidden');
+            document.getElementById('user-section').classList.add('hidden');
+        }
+    }
+
+    async function loadChats() {
+        const container = document.getElementById('chats-list');
+
+        const { data: sessions, error } = await supabaseClient
+            .from('ai_chat_sessions')
+            .select(`
+                id,
+                title,
+                updated_at,
+                created_at,
+                character:ai_characters (
+                    id,
+                    name,
+                    avatar_url,
+                    description
+                )
+            `)
+            .eq('user_id', currentUser.id)
+            .order('updated_at', { ascending: false });
+
+        if (error) {
+            container.innerHTML = `<p class="text-red-400 text-center py-10">Ошибка: ${error.message}</p>`;
+            return;
+        }
+
+        if (!sessions || sessions.length === 0) {
+            container.innerHTML = `
+                <div class="empty-state rounded-2xl p-10 text-center">
+                    <p class="text-zinc-400 text-lg mb-2">🤖 У тебя пока нет диалогов</p>
+                    <p class="text-zinc-500 text-sm mb-4">Создай персонажа и начни общение</p>
+                    <a href="ai.html" class="inline-block bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-2.5 rounded-2xl text-sm transition-colors">
+                        Выбрать тянку
+                    </a>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        for (const session of sessions) {
+            const char = session.character;
+            const name = char?.name || 'Неизвестный';
+            const avatar = char?.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(name) + '&background=1f2533&color=c5d1e0&size=64';
+            const desc = char?.description ? char.description.slice(0, 60) + (char.description.length > 60 ? '...' : '') : 'Без описания';
+            const lastMsg = session.title || 'Новый чат';
+            const date = session.updated_at
+                ? new Date(session.updated_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+                : '';
+
+            html += `
+                <div class="chat-card rounded-2xl p-4 flex items-center gap-4 cursor-pointer" onclick="openChat('${session.id}')">
+                    <img src="${avatar}" class="avatar-img w-14 h-14 rounded-full shrink-0" onerror="this.src='https://ui-avatars.com/api/?name=AI&background=1f2533&color=c5d1e0&size=64'">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-semibold text-base truncate">${name}</h3>
+                            <span class="text-xs text-zinc-500 shrink-0">${date}</span>
+                        </div>
+                        <p class="text-sm text-zinc-400 truncate">${lastMsg}</p>
+                        <p class="text-xs text-zinc-500 truncate">${desc}</p>
+                    </div>
+                    <div class="shrink-0 text-orange-400 text-sm font-medium">
+                        Продолжить →
+                    </div>
+                </div>
+            `;
+        }
+
+        container.innerHTML = html;
+    }
+
+    function openChat(sessionId) {
+        window.location.href = 'chat.html?session=' + sessionId;
+    }
+
+    // Заглушки для модалок
+    window.showRegisterModal = function() { alert('Регистрация доступна на главной странице'); };
+    window.showLoginModal = function() { alert('Вход доступен на главной странице'); };
+    window.logout = function() { supabaseClient.auth.signOut(); window.location.reload(); };
+
+    window.onload = init;
+</script>
+
+</body>
+</html>

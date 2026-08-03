@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Тянки • FuckHub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="script.js"></script>
+    <style>
+        body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
+        .card-ai { transition: all 0.3s ease; background: #1a1f2e; border: 1px solid #2a3344; }
+        .card-ai:hover { transform: translateY(-6px); border-color: #f97316; box-shadow: 0 20px 40px -12px rgba(249, 115, 22, 0.2); }
+        .card-img { transition: transform 0.4s ease; }
+        .card-ai:hover .card-img { transform: scale(1.05); }
+        .filter-btn.active { background: #f97316 !important; color: #000 !important; font-weight: 600; }
+        .filter-btn { background: #1a1f2e; }
+        .filter-btn:hover { background: #2a3344; }
+    </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="bg-[#0f1117]/90 backdrop-blur-md border-b border-[#1f2533] sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-14">
+            <a href="index.html" class="flex items-center gap-1.5 shrink-0">
+                <span class="text-2xl sm:text-3xl font-bold tracking-tighter">FUCK</span>
+                <span class="text-2xl sm:text-3xl font-bold tracking-tighter text-orange-500">HUB</span>
+            </a>
+            <div class="hidden md:flex items-center gap-6 text-sm font-medium">
+                <a href="index.html" class="hover:text-white transition-colors">Магазин</a>
+                <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
+                <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
+                <a href="chats.html" class="hover:text-white transition-colors">Мои чаты</a>
+                <span class="text-orange-400 font-semibold">AI Тянки</span>
+            </div>
+            <div id="auth-buttons" class="hidden md:flex items-center gap-3">
+                <button onclick="showRegisterModal()" class="px-5 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">Регистрация</button>
+                <button onclick="showLoginModal()" class="px-5 py-2 text-sm font-semibold border border-zinc-700 hover:bg-zinc-800 rounded-xl transition-colors">Войти</button>
+            </div>
+            <div id="user-section" class="hidden items-center gap-4 text-sm">
+                <span id="username-display" class="text-zinc-400"></span>
+                <a href="profile.html" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors">Профиль</a>
+                <button onclick="logout()" class="text-red-400 hover:text-red-500 transition-colors">Выйти</button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- HERO -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10">
+    <div class="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[260px] flex items-center relative overflow-hidden border border-[#1f2533]"
+         style="background: linear-gradient(135deg, rgba(15,17,23,0.75) 0%, rgba(15,17,23,0.9) 100%), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
+        <div class="px-6 sm:px-10 relative z-10">
+            <h1 class="text-3xl sm:text-5xl font-bold tracking-tighter mb-2">AI Тянки</h1>
+            <p class="text-base sm:text-xl text-zinc-300 max-w-lg leading-snug">
+                Фурри · Эльфийки · Демоницы — <br class="hidden sm:block">любые твои фантазии
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- КОНТЕНТ -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+
+    <!-- Поиск + Кнопка создания -->
+    <div class="flex flex-col sm:flex-row gap-4 mb-8">
+        <input id="search-input" onkeyup="filterCharacters()" placeholder="Поиск по имени или описанию..."
+               class="flex-1 px-5 py-3.5 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/30 transition-all text-sm sm:text-base">
+        <a href="create_character.html" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3.5 rounded-2xl text-center transition-all shrink-0">
+            + Создать тянку
+        </a>
+    </div>
+
+    <!-- Грид карточек -->
+    <div id="characters-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <p class="col-span-full text-center py-16 text-zinc-500">Загрузка...</p>
+    </div>
+</div>
+
+<!-- Модалки (копируем из index.html, если нужны) -->
+
+<script>
+    let allCharacters = [];
+
+    async function init() {
+        await getSession();
+        updateUI();
+        await loadCharacters();
+    }
+
+    function updateUI() {
+        if (currentUser) {
+            document.getElementById('auth-buttons').classList.add('hidden');
+            document.getElementById('auth-buttons').classList.remove('md:flex');
+            const userSec = document.getElementById('user-section');
+            userSec.classList.remove('hidden');
+            userSec.classList.add('flex');
+            document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
+        } else {
+            document.getElementById('auth-buttons').classList.remove('hidden');
+            document.getElementById('user-section').classList.add('hidden');
+        }
+    }
+
+    async function loadCharacters() {
+        const grid = document.getElementById('characters-grid');
+        grid.innerHTML = '<p class="col-span-full text-center py-16 text-zinc-500">Загрузка...</p>';
+
+        const { data, error } = await supabaseClient
+            .from('ai_characters')
+            .select('*')
+            .eq('is_public', true)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            grid.innerHTML = '<p class="col-span-full text-center py-16 text-red-400">Ошибка: ' + error.message + '</p>';
+            return;
+        }
+
+        allCharacters = data || [];
+
+        if (allCharacters.length === 0) {
+            grid.innerHTML = `
+                <div class="col-span-full text-center py-16">
+                    <p class="text-zinc-500 mb-4">Пока нет созданных персонажей</p>
+                    <a href="create_character.html" class="text-orange-500 hover:underline">Создай свою первую тянку!</a>
+                </div>
+            `;
+            return;
+        }
+
+        renderCharacters(allCharacters);
+    }
+
+    function renderCharacters(list) {
+        const grid = document.getElementById('characters-grid');
+        const searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
+
+        let filtered = list;
+        if (searchTerm) {
+            filtered = filtered.filter(c =>
+                (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+                (c.description && c.description.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        if (filtered.length === 0) {
+            grid.innerHTML = '<p class="col-span-full text-center py-16 text-zinc-500">Ничего не найдено</p>';
+            return;
+        }
+
+        let html = '';
+        for (const char of filtered) {
+            const avatar = char.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(char.name || 'AI') + '&background=1f2533&color=c5d1e0&size=128';
+            const date = char.created_at
+                ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
+                : '';
+
+            // Обрезаем описание для карточки
+            const shortDesc = char.description ? char.description.slice(0, 80) + (char.description.length > 80 ? '...' : '') : '';
+
+            html += `
+                <div class="card-ai rounded-2xl overflow-hidden flex flex-col">
+                    <div class="relative overflow-hidden">
+                        <img src="${avatar}" loading="lazy" class="card-img w-full h-56 object-cover" alt="${char.name || 'Персонаж'}">
+                    </div>
+                    <div class="p-4 flex flex-col flex-1">
+                        <h3 class="font-semibold text-lg leading-tight mb-1">${char.name || 'Без имени'}</h3>
+                        <p class="text-sm text-zinc-400 line-clamp-2 flex-1 mb-3">${shortDesc}</p>
+                        <div class="flex justify-between items-center text-xs text-zinc-500 mb-3">
+                            <span>${date}</span>
+                            <span>${char.created_by ? '🔥' : ''}</span>
+                        </div>
+                        <button onclick="startChat('${char.id}')" 
+                                class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-black font-semibold py-2.5 rounded-xl text-sm transition-all">
+                            Начать чат
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        grid.innerHTML = html;
+    }
+
+    function filterCharacters() {
+        renderCharacters(allCharacters);
+    }
+
+    async function startChat(characterId) {
+        if (!currentUser) {
+            alert('Авторизуйся, чтобы начать чат');
+            return;
+        }
+
+        // Создаём новую сессию
+        const { data, error } = await supabaseClient
+            .from('ai_chat_sessions')
+            .insert({
+                character_id: characterId,
+                user_id: currentUser.id,
+                title: 'Новый чат'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            alert('Ошибка создания чата: ' + error.message);
+            return;
+        }
+
+        window.location.href = 'chat.html?session=' + data.id;
+    }
+
+    // Прокси функций для модалок (если есть)
+    window.showRegisterModal = function() { alert('Регистрация: перейди на главную страницу'); };
+    window.showLoginModal = function() { alert('Вход: перейди на главную страницу'); };
+    window.logout = function() { supabaseClient.auth.signOut(); window.location.reload(); };
+
+    window.onload = init;
+</script>
+</body>
+</html>
