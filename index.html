@@ -79,7 +79,8 @@
                 <div class="hidden md:flex items-center gap-7 text-sm font-medium">
                     <a href="index.html" class="text-white">Магазин</a>
                     <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
-                    <a href="index_ai.html" class="hover:text-white transition-colors">AI Сучки</a>
+                    <!-- AI Сучки — видны только FuckHub -->
+                    <a id="ai-link-desktop" href="index_ai.html" class="hover:text-white transition-colors hidden">AI Сучки</a>
                     <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
                     <button onclick="showDonateModal()" class="donate-btn text-black font-semibold px-4 py-1.5 rounded-xl text-sm transition-all hover:scale-105">
                         Монетка в киску
@@ -114,7 +115,8 @@
                 <div class="py-4 space-y-1 border-t border-[#1f2533]">
                     <a href="index.html" class="block px-3 py-2.5 rounded-xl text-white bg-zinc-800/60 font-medium">Магазин</a>
                     <a href="game.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Сообщество</a>
-                    <a href="index_ai.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">AI Сучки</a>
+                    <!-- AI Сучки — видны только FuckHub -->
+                    <a id="ai-link-mobile" href="index_ai.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors hidden">AI Сучки</a>
                     <a href="profile.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Мои Игры</a>
                     <button onclick="showDonateModal(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-xl donate-btn text-black font-semibold mt-1">
                         Монетка в киску
@@ -299,11 +301,34 @@
             }
         }
 
+        // Функция проверки, является ли пользователь FuckHub
+        function isFuckHub(user) {
+            if (!user) return false;
+            const username = user.user_metadata?.username || '';
+            return username.toLowerCase() === 'fuckhub';
+        }
+
+        // Функция обновления видимости AI-ссылок
+        function updateAIVisibility() {
+            const isAdmin = isFuckHub(currentUser);
+            const desktopLink = document.getElementById('ai-link-desktop');
+            const mobileLink = document.getElementById('ai-link-mobile');
+            
+            if (desktopLink) {
+                desktopLink.classList.toggle('hidden', !isAdmin);
+                desktopLink.classList.toggle('inline', isAdmin);
+            }
+            if (mobileLink) {
+                mobileLink.classList.toggle('hidden', !isAdmin);
+            }
+        }
+
         // Инициализация и загрузка игр
         async function initIndex() {
             try {
                 await getSession();
                 
+                // Обновляем UI в зависимости от авторизации
                 if (currentUser) {
                     document.getElementById('auth-buttons').classList.add('hidden');
                     document.getElementById('auth-buttons').classList.remove('md:flex');
@@ -320,6 +345,9 @@
                     document.getElementById('mobile-auth-buttons').classList.remove('hidden');
                     document.getElementById('mobile-user-section').classList.add('hidden');
                 }
+
+                // Обновляем видимость AI-ссылок
+                updateAIVisibility();
 
                 await loadGamesForIndex();
             } catch (e) {
@@ -507,4 +535,4 @@
         window.onload = initIndex;
     </script>
 </body>
-    </html>
+</html>
