@@ -11,46 +11,53 @@
         body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
         .message-user { background: #1a1f2e; border: 1px solid #2a3344; }
         .message-assistant { background: #1f2533; border: 1px solid #3a455a; }
-        .chat-container { max-height: 70vh; overflow-y: auto; }
+        .chat-container { max-height: 70vh; overflow-y: auto; scroll-behavior: smooth; }
         .avatar-img { object-fit: cover; background: #1f2533; }
+        .delete-btn { transition: opacity 0.2s ease; }
+        .delete-btn:hover { color: #f87171; }
     </style>
 </head>
 <body>
 
-<nav class="bg-[#0f1117] border-b border-[#1f2533] sticky top-0 z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-8 flex justify-between items-center h-14">
-        <a href="index.html" class="flex items-center gap-2 text-xl font-bold">
-            ← <span>FUCK</span><span class="text-orange-500">HUB</span>
-        </a>
-        <span class="font-semibold text-orange-500">AI Чат</span>
+<!-- NAVBAR -->
+<nav class="bg-[#0f1117]/90 backdrop-blur-md border-b border-[#1f2533] sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-14">
+            <a href="index.html" class="flex items-center gap-1.5 shrink-0">
+                <span class="text-2xl sm:text-3xl font-bold tracking-tighter">FUCK</span>
+                <span class="text-2xl sm:text-3xl font-bold tracking-tighter text-orange-500">HUB</span>
+            </a>
+            <div class="flex items-center gap-4">
+                <span id="chat-title" class="text-sm font-medium text-zinc-300 hidden sm:block">Чат</span>
+                <button onclick="deleteCurrentChat()" class="delete-btn text-red-400 hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-xl hover:bg-red-900/30 transition-colors">
+                    ✕ Удалить чат
+                </button>
+                <a href="chats.html" class="text-orange-400 hover:text-orange-300 text-sm font-medium transition-colors">
+                    Мои чаты
+                </a>
+            </div>
+        </div>
     </div>
 </nav>
 
-<div class="max-w-4xl mx-auto px-4 sm:px-8 py-8">
-
-    <!-- Выбор персонажа (скрывается, если уже есть session_id) -->
-    <div id="character-selector" class="mb-6">
-        <label class="block text-sm font-medium text-zinc-400 mb-2">Выбери персонажа:</label>
-        <select id="character-select" class="w-full px-4 py-3 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl text-white">
-            <option value="">Загрузка...</option>
-        </select>
-    </div>
+<!-- ЧАТ -->
+<div class="max-w-4xl mx-auto px-4 sm:px-8 py-6">
 
     <!-- Окно чата -->
-    <div id="chat-window" class="chat-container space-y-4 mb-4 p-4 bg-[#11141c] rounded-2xl border border-[#2a3344] min-h-[400px]">
+    <div id="chat-window" class="chat-container space-y-4 mb-4 p-4 bg-[#11141c] rounded-2xl border border-[#2a3344] min-h-[400px] max-h-[70vh] overflow-y-auto">
         <p class="text-center text-zinc-500 py-16">Загрузка сообщений...</p>
     </div>
 
     <!-- Форма ввода -->
     <div class="flex flex-col gap-2">
         <textarea id="message-input" rows="2" placeholder="Твоё сообщение..." 
-                  class="w-full px-4 py-3 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl text-white resize-none"></textarea>
+                  class="w-full px-4 py-3 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl text-white resize-none focus:outline-none focus:border-orange-500/60"></textarea>
         <div class="flex flex-col sm:flex-row gap-2">
             <input id="action-input" type="text" placeholder="*действия* (опционально)" 
-                   class="flex-1 px-4 py-2 bg-[#1a1f2e] border border-[#2a3344] rounded-xl text-sm text-white">
+                   class="flex-1 px-4 py-2 bg-[#1a1f2e] border border-[#2a3344] rounded-xl text-sm text-white focus:outline-none focus:border-orange-500/60">
             <input id="image-input" type="text" placeholder="(команда на картинку)" 
-                   class="flex-1 px-4 py-2 bg-[#1a1f2e] border border-[#2a3344] rounded-xl text-sm text-white">
-            <button id="send-btn" class="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl shrink-0">
+                   class="flex-1 px-4 py-2 bg-[#1a1f2e] border border-[#2a3344] rounded-xl text-sm text-white focus:outline-none focus:border-orange-500/60">
+            <button id="send-btn" class="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl shrink-0 transition-colors">
                 Отправить
             </button>
         </div>
@@ -62,11 +69,9 @@
     let currentSessionId = null;
     let currentUserId = null;
 
-    // Получаем session_id из URL
     const urlParams = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = urlParams.get('session');
 
-    // Инициализация
     async function init() {
         await getSession();
         if (!currentUser) {
@@ -76,22 +81,19 @@
         }
         currentUserId = currentUser.id;
 
-        // Если есть session_id — загружаем историю, иначе показываем список персонажей
         if (sessionIdFromUrl) {
             currentSessionId = sessionIdFromUrl;
-            document.getElementById('character-selector').style.display = 'none';
             await loadSessionInfo(sessionIdFromUrl);
             await loadHistory(sessionIdFromUrl);
         } else {
-            await loadCharacters();
+            document.getElementById('chat-window').innerHTML = '<p class="text-center text-zinc-500 py-16">Не выбрана сессия</p>';
         }
     }
 
-    // Загрузка информации о сессии (персонаж)
     async function loadSessionInfo(sessionId) {
         const { data, error } = await supabaseClient
             .from('ai_chat_sessions')
-            .select('character_id, title')
+            .select('character_id, title, character:ai_characters(name)')
             .eq('id', sessionId)
             .single();
 
@@ -101,10 +103,10 @@
         }
 
         currentCharacterId = data.character_id;
-        document.querySelector('nav span.font-semibold').textContent = data.title || 'Чат';
+        const charName = data.character?.name || 'Персонаж';
+        document.getElementById('chat-title').textContent = charName + ' • ' + (data.title || 'Чат');
     }
 
-    // Загрузка истории сообщений
     async function loadHistory(sessionId) {
         const window = document.getElementById('chat-window');
         window.innerHTML = '<p class="text-center text-zinc-500 py-16">Загрузка сообщений...</p>';
@@ -131,99 +133,6 @@
         }
     }
 
-    // Загрузка списка персонажей
-    async function loadCharacters() {
-        const select = document.getElementById('character-select');
-        const { data, error } = await supabaseClient
-            .from('ai_characters')
-            .select('id, name')
-            .eq('is_public', true)
-            .order('name');
-
-        if (error) {
-            select.innerHTML = '<option value="">Ошибка загрузки</option>';
-            return;
-        }
-
-        if (!data || data.length === 0) {
-            select.innerHTML = '<option value="">Нет персонажей</option>';
-            return;
-        }
-
-        select.innerHTML = '<option value="">Выбери персонажа</option>';
-        data.forEach(char => {
-            const opt = document.createElement('option');
-            opt.value = char.id;
-            opt.textContent = char.name;
-            select.appendChild(opt);
-        });
-
-        select.onchange = function() {
-            currentCharacterId = this.value;
-            currentSessionId = null;
-            document.getElementById('chat-window').innerHTML = '<p class="text-center text-zinc-500 py-16">Выбери персонажа и начни общение</p>';
-        };
-    }
-
-    // Отправка сообщения
-    document.getElementById('send-btn').onclick = async function() {
-        const message = document.getElementById('message-input').value.trim();
-        const action = document.getElementById('action-input').value.trim();
-        const imageCmd = document.getElementById('image-input').value.trim();
-
-        if (!currentCharacterId && !currentSessionId) {
-            alert('Выбери персонажа!');
-            return;
-        }
-        if (!message) {
-            alert('Напиши сообщение!');
-            return;
-        }
-
-        // Добавляем сообщение пользователя в чат
-        addMessage('user', message, action);
-
-        // Очищаем поля
-        document.getElementById('message-input').value = '';
-        document.getElementById('action-input').value = '';
-        document.getElementById('image-input').value = '';
-
-        // Показываем индикатор загрузки
-        const loadingId = addLoadingMessage();
-
-        try {
-            // Вызываем SQL-функцию через RPC
-            const { data, error } = await supabaseClient.rpc('chat_process', {
-                p_character_id: currentCharacterId,
-                p_user_id: currentUserId,
-                p_user_message: message,
-                p_session_id: currentSessionId || null,
-                p_action_text: action || null,
-                p_image_command: imageCmd || null
-            });
-
-            if (error) throw error;
-
-            // Обновляем session_id
-            if (data.session_id) {
-                currentSessionId = data.session_id;
-                // Обновляем заголовок
-                document.querySelector('nav span.font-semibold').textContent = data.message?.slice(0, 30) || 'Чат';
-            }
-
-            // Удаляем индикатор загрузки
-            removeLoadingMessage(loadingId);
-
-            // Добавляем ответ ассистента
-            addMessage('assistant', data.message || '...', null, data.image_url);
-
-        } catch (err) {
-            removeLoadingMessage(loadingId);
-            alert('Ошибка: ' + err.message);
-        }
-    };
-
-    // Добавление сообщения в чат
     function addMessage(role, content, action, imageUrl) {
         const window = document.getElementById('chat-window');
         const div = document.createElement('div');
@@ -242,7 +151,52 @@
         window.scrollTop = window.scrollHeight;
     }
 
-    // Индикатор загрузки
+    document.getElementById('send-btn').onclick = async function() {
+        const message = document.getElementById('message-input').value.trim();
+        const action = document.getElementById('action-input').value.trim();
+        const imageCmd = document.getElementById('image-input').value.trim();
+
+        if (!currentCharacterId && !currentSessionId) {
+            alert('Ошибка: нет сессии');
+            return;
+        }
+        if (!message) {
+            alert('Напиши сообщение!');
+            return;
+        }
+
+        addMessage('user', message, action);
+        document.getElementById('message-input').value = '';
+        document.getElementById('action-input').value = '';
+        document.getElementById('image-input').value = '';
+
+        const loadingId = addLoadingMessage();
+
+        try {
+            const { data, error } = await supabaseClient.rpc('chat_process', {
+                p_character_id: currentCharacterId,
+                p_user_id: currentUserId,
+                p_user_message: message,
+                p_session_id: currentSessionId || null,
+                p_action_text: action || null,
+                p_image_command: imageCmd || null
+            });
+
+            if (error) throw error;
+
+            if (data.session_id) {
+                currentSessionId = data.session_id;
+            }
+
+            removeLoadingMessage(loadingId);
+            addMessage('assistant', data.message || '...', null, data.image_url);
+
+        } catch (err) {
+            removeLoadingMessage(loadingId);
+            alert('Ошибка: ' + err.message);
+        }
+    };
+
     function addLoadingMessage() {
         const window = document.getElementById('chat-window');
         const div = document.createElement('div');
@@ -259,7 +213,33 @@
         if (el) el.remove();
     }
 
-    // Enter для отправки
+    async function deleteCurrentChat() {
+        if (!currentSessionId) return;
+        if (!confirm('Точно удалить этот чат? Все сообщения сотрутся нахуй.')) return;
+
+        try {
+            const { error: msgsError } = await supabaseClient
+                .from('ai_messages')
+                .delete()
+                .eq('session_id', currentSessionId);
+
+            if (msgsError) throw msgsError;
+
+            const { error: sessionError } = await supabaseClient
+                .from('ai_chat_sessions')
+                .delete()
+                .eq('id', currentSessionId);
+
+            if (sessionError) throw sessionError;
+
+            alert('Чат удалён.');
+            window.location.href = 'chats.html';
+        } catch (e) {
+            console.error('Ошибка удаления:', e);
+            alert('Не удалось удалить чат: ' + e.message);
+        }
+    }
+
     document.getElementById('message-input').addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -269,6 +249,5 @@
 
     window.onload = init;
 </script>
-
 </body>
 </html>
