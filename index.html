@@ -45,7 +45,7 @@
             overflow: hidden;
         }
         #mobile-menu.open {
-            max-height: 520px;
+            max-height: 600px;
             opacity: 1;
         }
 
@@ -79,6 +79,7 @@
                 <div class="hidden md:flex items-center gap-7 text-sm font-medium">
                     <a href="index.html" class="text-white">Магазин</a>
                     <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
+                    <a href="index_ai.html" class="hover:text-white transition-colors">AI Сучки</a>
                     <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
                     <button onclick="showDonateModal()" class="donate-btn text-black font-semibold px-4 py-1.5 rounded-xl text-sm transition-all hover:scale-105">
                         Монетка в киску
@@ -113,6 +114,7 @@
                 <div class="py-4 space-y-1 border-t border-[#1f2533]">
                     <a href="index.html" class="block px-3 py-2.5 rounded-xl text-white bg-zinc-800/60 font-medium">Магазин</a>
                     <a href="game.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Сообщество</a>
+                    <a href="index_ai.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">AI Сучки</a>
                     <a href="profile.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Мои Игры</a>
                     <button onclick="showDonateModal(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-xl donate-btn text-black font-semibold mt-1">
                         Монетка в киску
@@ -252,7 +254,6 @@
             if (!username || !email || !password) return alert("Заполните все поля");
 
             try {
-                // Используем функцию из script.js
                 await registerUser(email, password, username);
                 alert("Регистрация прошла! Проверьте почту.");
                 hideModals();
@@ -303,7 +304,6 @@
             try {
                 await getSession();
                 
-                // Обновляем UI в зависимости от авторизации
                 if (currentUser) {
                     document.getElementById('auth-buttons').classList.add('hidden');
                     document.getElementById('auth-buttons').classList.remove('md:flex');
@@ -321,7 +321,6 @@
                     document.getElementById('mobile-user-section').classList.add('hidden');
                 }
 
-                // Загружаем игры
                 await loadGamesForIndex();
             } catch (e) {
                 console.error('Init error:', e);
@@ -508,4 +507,4 @@
         window.onload = initIndex;
     </script>
 </body>
-</html>
+    </html>
