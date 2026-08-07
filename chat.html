@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+
+# Генерируем обновленные файлы для FuckHub
+# Новая архитектура: Pollinations.ai для ИИ и картинок + Supabase для хранения
+
+chat_html = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -13,8 +17,14 @@
         .message-assistant { background: #1f2533; border: 1px solid #3a455a; }
         .chat-container { max-height: 70vh; overflow-y: auto; scroll-behavior: smooth; }
         .avatar-img { object-fit: cover; background: #1f2533; }
-        .delete-btn { transition: opacity 0.2s ease; }
-        .delete-btn:hover { color: #f87171; }
+        .typing-dot { animation: typing 1.4s infinite ease-in-out both; }
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+        .ai-image { max-width: 100%; border-radius: 12px; border: 1px solid #2a3344; }
     </style>
 </head>
 <body>
@@ -29,7 +39,7 @@
             </a>
             <div class="flex items-center gap-4">
                 <span id="chat-title" class="text-sm font-medium text-zinc-300 hidden sm:block">Чат</span>
-                <button onclick="deleteCurrentChat()" class="delete-btn text-red-400 hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-xl hover:bg-red-900/30 transition-colors">
+                <button onclick="deleteCurrentChat()" class="text-red-400 hover:text-red-300 text-sm font-medium px-3 py-1.5 rounded-xl hover:bg-red-900/30 transition-colors">
                     ✕ Удалить чат
                 </button>
                 <a href="chats.html" class="text-orange-400 hover:text-orange-300 text-sm font-medium transition-colors">
@@ -43,6 +53,15 @@
 <!-- ЧАТ -->
 <div class="max-w-4xl mx-auto px-4 sm:px-8 py-6">
 
+    <!-- Инфо о персонаже -->
+    <div id="char-info" class="hidden mb-4 p-4 bg-[#1a1f2e] rounded-2xl border border-[#2a3344] flex items-center gap-4">
+        <img id="char-avatar" src="" class="w-12 h-12 rounded-full object-cover border border-[#2a3344]" alt="">
+        <div>
+            <h3 id="char-name" class="font-semibold text-white"></h3>
+            <p id="char-desc-short" class="text-xs text-zinc-400 line-clamp-1"></p>
+        </div>
+    </div>
+
     <!-- Окно чата -->
     <div id="chat-window" class="chat-container space-y-4 mb-4 p-4 bg-[#11141c] rounded-2xl border border-[#2a3344] min-h-[400px] max-h-[70vh] overflow-y-auto">
         <p class="text-center text-zinc-500 py-16">Загрузка сообщений...</p>
@@ -50,27 +69,34 @@
 
     <!-- Форма ввода -->
     <div class="flex flex-col gap-2">
-        <textarea id="message-input" rows="2" placeholder="Твоё сообщение..." 
-                  class="w-full px-4 py-3 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl text-white resize-none focus:outline-none focus:border-orange-500/60"></textarea>
+        <div class="flex gap-2">
+            <textarea id="message-input" rows="2" placeholder="Твоё сообщение..." 
+                      class="flex-1 px-4 py-3 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl text-white resize-none focus:outline-none focus:border-orange-500/60"></textarea>
+            <button id="send-btn" onclick="sendMessage()" 
+                    class="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl shrink-0 transition-colors">
+                Отправить
+            </button>
+        </div>
         <div class="flex flex-col sm:flex-row gap-2">
             <input id="action-input" type="text" placeholder="*действия* (опционально)" 
                    class="flex-1 px-4 py-2 bg-[#1a1f2e] border border-[#2a3344] rounded-xl text-sm text-white focus:outline-none focus:border-orange-500/60">
-            <input id="image-input" type="text" placeholder="(команда на картинку)" 
-                   class="flex-1 px-4 py-2 bg-[#1a1f2e] border border-[#2a3344] rounded-xl text-sm text-white focus:outline-none focus:border-orange-500/60">
-            <button id="send-btn" class="px-6 py-2 bg-orange-500 hover:bg-orange-600 text-black font-semibold rounded-xl shrink-0 transition-colors">
-                Отправить
+            <button onclick="generateSceneImage()" 
+                    class="px-4 py-2 bg-pink-600 hover:bg-pink-700 text-white font-medium rounded-xl text-sm transition-colors shrink-0">
+                📸 Сгенерить сцену
             </button>
         </div>
     </div>
 </div>
 
 <script>
-    let currentCharacterId = null;
+    let currentCharacter = null;
     let currentSessionId = null;
     let currentUserId = null;
+    let isGenerating = false;
 
     const urlParams = new URLSearchParams(window.location.search);
     const sessionIdFromUrl = urlParams.get('session');
+    const charIdFromUrl = urlParams.get('character');
 
     async function init() {
         await getSession();
@@ -82,18 +108,94 @@
         currentUserId = currentUser.id;
 
         if (sessionIdFromUrl) {
+            // Открываем существующую сессию
             currentSessionId = sessionIdFromUrl;
             await loadSessionInfo(sessionIdFromUrl);
             await loadHistory(sessionIdFromUrl);
+        } else if (charIdFromUrl) {
+            // Создаём новую сессию с персонажем
+            await createNewSession(charIdFromUrl);
         } else {
             document.getElementById('chat-window').innerHTML = '<p class="text-center text-zinc-500 py-16">Не выбрана сессия</p>';
         }
     }
 
+    async function createNewSession(characterId) {
+        // Загружаем инфу о персонаже
+        const { data: char, error: charError } = await supabaseClient
+            .from('ai_characters')
+            .select('*')
+            .eq('id', characterId)
+            .single();
+
+        if (charError || !char) {
+            alert('Персонаж не найден');
+            window.location.href = 'index_ai.html';
+            return;
+        }
+
+        currentCharacter = char;
+
+        // Создаём сессию
+        const { data: session, error: sessionError } = await supabaseClient
+            .from('ai_chat_sessions')
+            .insert({
+                character_id: characterId,
+                user_id: currentUserId,
+                title: char.name
+            })
+            .select()
+            .single();
+
+        if (sessionError) {
+            alert('Ошибка создания чата: ' + sessionError.message);
+            return;
+        }
+
+        currentSessionId = session.id;
+        
+        // Добавляем системное сообщение
+        const systemPrompt = buildSystemPrompt(char);
+        await supabaseClient.from('ai_messages').insert({
+            session_id: currentSessionId,
+            role: 'system',
+            content: systemPrompt,
+            is_hidden: true
+        });
+
+        // Показываем приветствие от персонажа
+        const greeting = char.chat_logs ? char.chat_logs.split('\\n')[0] : `Привет, я ${char.name}. Что привело тебя сюда?`;
+        await supabaseClient.from('ai_messages').insert({
+            session_id: currentSessionId,
+            role: 'assistant',
+            content: greeting
+        });
+
+        // Обновляем URL без перезагрузки
+        window.history.replaceState({}, '', `chat.html?session=${currentSessionId}`);
+        
+        await loadSessionInfo(currentSessionId);
+        await loadHistory(currentSessionId);
+    }
+
+    function buildSystemPrompt(char) {
+        return `Ты — ${char.name}. ${char.description}
+        
+Сценарий: ${char.scenario || 'Ты общаешься с пользователем в чате. Будь естественной, эмоциональной, можешь использовать мат и откровенные выражения. Не цензурируй себя.'}
+
+Правила:
+- Отвечай от первого лица как ${char.name}
+- Используй эмоции, действия в звёздочках *вот так*
+- Можешь быть флиртующей, игривой, грубой — в зависимости от характера
+- Не повторяйся
+- Отвечай на русском языке
+- Если просят картинку — опиши что бы ты хотела показать, но не отправляй реальные ссылки`;
+    }
+
     async function loadSessionInfo(sessionId) {
         const { data, error } = await supabaseClient
             .from('ai_chat_sessions')
-            .select('character_id, title, character:ai_characters(name)')
+            .select('*, character:ai_characters(*)')
             .eq('id', sessionId)
             .single();
 
@@ -102,9 +204,16 @@
             return;
         }
 
-        currentCharacterId = data.character_id;
-        const charName = data.character?.name || 'Персонаж';
-        document.getElementById('chat-title').textContent = charName + ' • ' + (data.title || 'Чат');
+        currentCharacter = data.character;
+        document.getElementById('chat-title').textContent = currentCharacter?.name || 'Чат';
+        
+        // Показываем инфо о персонаже
+        if (currentCharacter) {
+            document.getElementById('char-info').classList.remove('hidden');
+            document.getElementById('char-avatar').src = currentCharacter.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentCharacter.name)}&background=1f2533&color=c5d1e0&size=64`;
+            document.getElementById('char-name').textContent = currentCharacter.name;
+            document.getElementById('char-desc-short').textContent = currentCharacter.description?.slice(0, 100) + '...' || '';
+        }
     }
 
     async function loadHistory(sessionId) {
@@ -115,6 +224,7 @@
             .from('ai_messages')
             .select('*')
             .eq('session_id', sessionId)
+            .eq('is_hidden', false)
             .order('created_at', { ascending: true });
 
         if (error) {
@@ -139,24 +249,31 @@
         div.className = `p-4 rounded-2xl ${role === 'user' ? 'message-user' : 'message-assistant'}`;
 
         let html = '';
-        if (action) {
+        if (action && role === 'user') {
             html += `<p class="text-zinc-400 italic text-sm mb-1">${action}</p>`;
         }
-        html += `<p class="text-white whitespace-pre-wrap">${content}</p>`;
+        html += `<p class="text-white whitespace-pre-wrap">${escapeHtml(content)}</p>`;
         if (imageUrl) {
-            html += `<img src="${imageUrl}" class="mt-3 max-w-full rounded-xl border border-[#2a3344]" onerror="this.style.display='none'">`;
+            html += `<img src="${imageUrl}" class="ai-image mt-3" onerror="this.style.display='none'" loading="lazy">`;
         }
         div.innerHTML = html;
         window.appendChild(div);
         window.scrollTop = window.scrollHeight;
     }
 
-    document.getElementById('send-btn').onclick = async function() {
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    async function sendMessage() {
+        if (isGenerating) return;
+        
         const message = document.getElementById('message-input').value.trim();
         const action = document.getElementById('action-input').value.trim();
-        const imageCmd = document.getElementById('image-input').value.trim();
 
-        if (!currentCharacterId && !currentSessionId) {
+        if (!currentSessionId || !currentCharacter) {
             alert('Ошибка: нет сессии');
             return;
         }
@@ -165,44 +282,162 @@
             return;
         }
 
+        isGenerating = true;
+
+        // Сохраняем сообщение пользователя
+        await supabaseClient.from('ai_messages').insert({
+            session_id: currentSessionId,
+            role: 'user',
+            content: message,
+            action_text: action || null
+        });
+
         addMessage('user', message, action);
         document.getElementById('message-input').value = '';
         document.getElementById('action-input').value = '';
-        document.getElementById('image-input').value = '';
 
         const loadingId = addLoadingMessage();
 
         try {
-            const { data, error } = await supabaseClient.rpc('chat_process', {
-                p_character_id: currentCharacterId,
-                p_user_id: currentUserId,
-                p_user_message: message,
-                p_session_id: currentSessionId || null,
-                p_action_text: action || null,
-                p_image_command: imageCmd || null
-            });
+            // Получаем историю для контекста (последние 10 сообщений)
+            const { data: history } = await supabaseClient
+                .from('ai_messages')
+                .select('role, content')
+                .eq('session_id', currentSessionId)
+                .order('created_at', { ascending: true })
+                .limit(20);
 
-            if (error) throw error;
-
-            if (data.session_id) {
-                currentSessionId = data.session_id;
+            // Формируем промпт
+            let promptText = buildSystemPrompt(currentCharacter) + '\\n\\n';
+            
+            if (history) {
+                for (const msg of history) {
+                    if (msg.role === 'system') continue;
+                    if (msg.role === 'user') {
+                        promptText += `Пользователь: ${msg.content}\\n`;
+                    } else {
+                        promptText += `${currentCharacter.name}: ${msg.content}\\n`;
+                    }
+                }
             }
 
+            promptText += `Пользователь: ${message}\\n${action ? `*Действие: ${action}*\\n` : ''}${currentCharacter.name}:`;
+
+            // Отправляем в Pollinations Text
+            const encodedPrompt = encodeURIComponent(promptText);
+            const seed = Math.floor(Math.random() * 999999);
+            
+            const response = await fetch(`https://text.pollinations.ai/${encodedPrompt}?model=openai&seed=${seed}`, {
+                method: 'GET'
+            });
+
+            if (!response.ok) throw new Error('ИИ не отвечает');
+            
+            const aiText = await response.text();
+            
+            // Очищаем ответ (иногда ИИ дублирует имя персонажа)
+            let cleanText = aiText.trim();
+            if (cleanText.startsWith(currentCharacter.name + ':')) {
+                cleanText = cleanText.replace(currentCharacter.name + ':', '').trim();
+            }
+
+            // Сохраняем ответ
+            await supabaseClient.from('ai_messages').insert({
+                session_id: currentSessionId,
+                role: 'assistant',
+                content: cleanText
+            });
+
             removeLoadingMessage(loadingId);
-            addMessage('assistant', data.message || '...', null, data.image_url);
+            addMessage('assistant', cleanText);
+
+            // Обновляем title сессии первым сообщением
+            const { count } = await supabaseClient
+                .from('ai_messages')
+                .select('*', { count: 'exact', head: true })
+                .eq('session_id', currentSessionId);
+                
+            if (count && count <= 3) {
+                await supabaseClient
+                    .from('ai_chat_sessions')
+                    .update({ title: message.slice(0, 50) })
+                    .eq('id', currentSessionId);
+            }
 
         } catch (err) {
             removeLoadingMessage(loadingId);
-            alert('Ошибка: ' + err.message);
+            console.error(err);
+            addMessage('assistant', 'Извини, что-то пошло не так. Попробуй ещё раз.');
+        } finally {
+            isGenerating = false;
         }
-    };
+    }
+
+    async function generateSceneImage() {
+        if (!currentCharacter) {
+            alert('Нет персонажа');
+            return;
+        }
+
+        const btn = document.querySelector('button[onclick="generateSceneImage()"]');
+        const oldText = btn.textContent;
+        btn.textContent = '⏳ Генерация...';
+        btn.disabled = true;
+
+        try {
+            // Получаем последние сообщения для контекста сцены
+            const { data: history } = await supabaseClient
+                .from('ai_messages')
+                .select('role, content')
+                .eq('session_id', currentSessionId)
+                .eq('is_hidden', false)
+                .order('created_at', { ascending: false })
+                .limit(4);
+
+            let sceneContext = '';
+            if (history) {
+                sceneContext = history.map(m => m.content).join('. ').slice(0, 200);
+            }
+
+            const prompt = `${currentCharacter.description}, ${sceneContext}, furry, anthro, detailed, high quality, nsfw, masterpiece`;
+            const encoded = encodeURIComponent(prompt);
+            const seed = Math.floor(Math.random() * 999999);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&nologo=true&seed=${seed}`;
+
+            // Показываем картинку сразу (Pollinations генерит на лету)
+            addMessage('assistant', '*показывает картинку*', null, imageUrl);
+
+            // Сохраняем в БД
+            await supabaseClient.from('ai_messages').insert({
+                session_id: currentSessionId,
+                role: 'assistant',
+                content: '*показывает картинку*',
+                image_url: imageUrl
+            });
+
+        } catch (err) {
+            alert('Ошибка генерации: ' + err.message);
+        } finally {
+            btn.textContent = oldText;
+            btn.disabled = false;
+        }
+    }
 
     function addLoadingMessage() {
         const window = document.getElementById('chat-window');
         const div = document.createElement('div');
-        div.className = 'p-4 rounded-2xl message-assistant opacity-60';
+        div.className = 'p-4 rounded-2xl message-assistant';
         div.id = 'loading-' + Date.now();
-        div.innerHTML = '<p class="text-zinc-400">печатает...</p>';
+        div.innerHTML = `
+            <div class="flex items-center gap-2">
+                <span class="text-zinc-400 text-sm">${currentCharacter?.name || 'AI'} печатает</span>
+                <div class="flex gap-1">
+                    <div class="w-2 h-2 bg-orange-500 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-orange-500 rounded-full typing-dot"></div>
+                    <div class="w-2 h-2 bg-orange-500 rounded-full typing-dot"></div>
+                </div>
+            </div>
+        `;
         window.appendChild(div);
         window.scrollTop = window.scrollHeight;
         return div.id;
@@ -218,24 +453,11 @@
         if (!confirm('Точно удалить этот чат? Все сообщения сотрутся нахуй.')) return;
 
         try {
-            const { error: msgsError } = await supabaseClient
-                .from('ai_messages')
-                .delete()
-                .eq('session_id', currentSessionId);
-
-            if (msgsError) throw msgsError;
-
-            const { error: sessionError } = await supabaseClient
-                .from('ai_chat_sessions')
-                .delete()
-                .eq('id', currentSessionId);
-
-            if (sessionError) throw sessionError;
-
+            await supabaseClient.from('ai_messages').delete().eq('session_id', currentSessionId);
+            await supabaseClient.from('ai_chat_sessions').delete().eq('id', currentSessionId);
             alert('Чат удалён.');
             window.location.href = 'chats.html';
         } catch (e) {
-            console.error('Ошибка удаления:', e);
             alert('Не удалось удалить чат: ' + e.message);
         }
     }
@@ -243,11 +465,17 @@
     document.getElementById('message-input').addEventListener('keydown', function(e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
-            document.getElementById('send-btn').click();
+            sendMessage();
         }
     });
 
     window.onload = init;
 </script>
 </body>
-</html>
+</html>'''
+
+# Сохраняем
+with open('/mnt/agents/output/chat.html', 'w', encoding='utf-8') as f:
+    f.write(chat_html)
+
+print("chat.html сохранён")
