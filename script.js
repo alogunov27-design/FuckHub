@@ -1,5 +1,4 @@
-
-script_js = '''const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
+const SUPABASE_URL = 'https://nuyeqiiopptdykxvurrk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_6YKf0lc-mTAB0FdVhQQzcQ_DFttxToY';
 const BUCKET_NAME = 'covers';
 const MAX_FILE_SIZE = 1 * 1024 * 1024; // 1 MB
@@ -29,6 +28,7 @@ function getAvatarUrl() {
 }
 
 async function registerUser(email, password, username) {
+    // Проверка на уникальность ника сделается сама через триггер SQL, который я дал выше
     const { data, error } = await supabaseClient.auth.signUp({
         email, password,
         options: { data: { username } }
@@ -49,7 +49,7 @@ async function logout() {
     window.location.reload();
 }
 
-// ===== ЗАГРУЗЧИК ФАЙЛОВ =====
+// ===== ЗАГРУЗЧИК ФАЙЛОВ (Экономия памяти) =====
 async function uploadFileToStorage(file, folder) {
     if (!file) return null;
     if (file.size > MAX_FILE_SIZE) {
@@ -120,9 +120,4 @@ function renderCommentHTML(c) {
 }
 
 // Инициализация
-initSupabase();'''
-
-with open('/mnt/agents/output/script.js', 'w', encoding='utf-8') as f:
-    f.write(script_js)
-
-print("script.js сохранён — оригинальный код + AI-утилиты")
+initSupabase();
