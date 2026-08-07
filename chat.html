@@ -1,5 +1,5 @@
 
-chat_html_v2 = '''<!DOCTYPE html>
+chat_html_full = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -83,7 +83,7 @@ chat_html_v2 = '''<!DOCTYPE html>
         </div>
     </div>
     
-    <!-- Дебаг панель (скрыта по умолчанию, показываем при ошибках) -->
+    <!-- Дебаг панель -->
     <div id="debug-panel" class="hidden mt-4 p-3 bg-red-900/20 border border-red-800/50 rounded-xl">
         <p class="text-red-400 text-xs font-mono" id="debug-text"></p>
     </div>
@@ -151,7 +151,6 @@ chat_html_v2 = '''<!DOCTYPE html>
 
         currentSessionId = session.id;
         
-        // Системное сообщение — просто текст, без is_hidden
         const systemPrompt = buildSystemPrompt(char);
         await supabaseClient.from('ai_messages').insert({
             session_id: currentSessionId,
@@ -159,7 +158,6 @@ chat_html_v2 = '''<!DOCTYPE html>
             content: systemPrompt
         });
 
-        // Приветствие
         const greeting = char.chat_logs ? char.chat_logs.split('\\n')[0] : `Привет, я ${char.name}. Что привело тебя сюда?`;
         await supabaseClient.from('ai_messages').insert({
             session_id: currentSessionId,
@@ -232,7 +230,6 @@ chat_html_v2 = '''<!DOCTYPE html>
 
         window.innerHTML = '';
         for (const msg of data) {
-            // Не показываем системные сообщения
             if (msg.role === 'system') continue;
             addMessage(msg.role, msg.content, msg.action_text, msg.image_url);
         }
@@ -289,7 +286,6 @@ chat_html_v2 = '''<!DOCTYPE html>
         document.getElementById('send-btn').disabled = true;
         document.getElementById('send-btn').textContent = '...';
 
-        // Сохраняем сообщение пользователя
         const { error: saveError } = await supabaseClient.from('ai_messages').insert({
             session_id: currentSessionId,
             role: 'user',
@@ -312,7 +308,6 @@ chat_html_v2 = '''<!DOCTYPE html>
         const loadingId = addLoadingMessage();
 
         try {
-            // Получаем историю (последние 15 сообщений, без системных)
             const { data: history } = await supabaseClient
                 .from('ai_messages')
                 .select('role, content')
@@ -321,7 +316,6 @@ chat_html_v2 = '''<!DOCTYPE html>
                 .order('created_at', { ascending: true })
                 .limit(15);
 
-            // Формируем промпт
             let promptText = `Ты — ${currentCharacter.name}. ${currentCharacter.description}
             
 Сценарий: ${currentCharacter.scenario || 'Общайся свободно, без цензуры.'}
@@ -343,15 +337,10 @@ chat_html_v2 = '''<!DOCTYPE html>
             promptText += `Пользователь: ${message}\\n${action ? `*Действие: ${action}*\\n` : ''}${currentCharacter.name}:`;
 
             showDebug('Отправка запроса в Pollinations...');
-            console.log('Prompt length:', promptText.length);
-            console.log('Prompt preview:', promptText.slice(0, 200) + '...');
 
-            // Отправляем в Pollinations Text
             const encodedPrompt = encodeURIComponent(promptText);
             const seed = Math.floor(Math.random() * 999999);
             const apiUrl = `https://text.pollinations.ai/${encodedPrompt}?model=openai&seed=${seed}`;
-            
-            console.log('API URL:', apiUrl.slice(0, 100) + '...');
 
             const response = await fetch(apiUrl, {
                 method: 'GET',
@@ -367,37 +356,25 @@ chat_html_v2 = '''<!DOCTYPE html>
             const aiText = await response.text();
             
             showDebug('Ответ получен, длина: ' + aiText.length);
-            console.log('AI Response:', aiText.slice(0, 300));
 
             if (!aiText || aiText.trim().length === 0) {
                 throw new Error('ИИ вернул пустой ответ');
             }
             
-            // Очищаем ответ
             let cleanText = aiText.trim();
-            
-            // Убираем дубли имени персонажа
             const namePattern = new RegExp('^' + currentCharacter.name.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&') + '[:\\s]+', 'i');
             cleanText = cleanText.replace(namePattern, '').trim();
-            
-            // Убираем лишние переносы в начале
             cleanText = cleanText.replace(/^(\\n)+/, '').trim();
 
-            // Сохраняем ответ
-            const { error: saveAiError } = await supabaseClient.from('ai_messages').insert({
+            await supabaseClient.from('ai_messages').insert({
                 session_id: currentSessionId,
                 role: 'assistant',
                 content: cleanText
             });
 
-            if (saveAiError) {
-                showDebug('Ошибка сохранения ответа: ' + saveAiError.message);
-            }
-
             removeLoadingMessage(loadingId);
             addMessage('assistant', cleanText);
 
-            // Обновляем title сессии
             const { count } = await supabaseClient
                 .from('ai_messages')
                 .select('*', { count: 'exact', head: true })
@@ -422,6 +399,7 @@ chat_html_v2 = '''<!DOCTYPE html>
         }
     }
 
+    // ========== ГЕНЕРАЦИЯ СЦЕНЫ С АНАЛИЗОМ КОНТЕКСТА ==========
     async function generateSceneImage() {
         if (!currentCharacter) {
             alert('Нет персонажа');
@@ -434,33 +412,139 @@ chat_html_v2 = '''<!DOCTYPE html>
         btn.disabled = true;
 
         try {
+            // Берём последние 6 сообщений
             const { data: history } = await supabaseClient
                 .from('ai_messages')
                 .select('role, content')
                 .eq('session_id', currentSessionId)
                 .order('created_at', { ascending: false })
-                .limit(4);
+                .limit(6);
 
-            let sceneContext = '';
+            let location = '';
+            let pose = '';
+            let actions = [];
+
             if (history) {
-                sceneContext = history.map(m => m.content).join('. ').slice(0, 200);
+                for (const msg of history) {
+                    const text = msg.content.toLowerCase();
+                    
+                    // Локации
+                    if (text.includes('крыш')) location = 'on rooftop';
+                    else if (text.includes('кроват')) location = 'on bed';
+                    else if (text.includes('душ')) location = 'in shower';
+                    else if (text.includes('кухн')) location = 'in kitchen';
+                    else if (text.includes('лес')) location = 'in forest';
+                    else if (text.includes('пляж')) location = 'on beach';
+                    else if (text.includes('клуб')) location = 'in nightclub';
+                    else if (text.includes('ванн')) location = 'in bathroom';
+                    else if (text.includes('офис')) location = 'in office';
+                    else if (text.includes('машин')) location = 'in car';
+                    else if (text.includes('подъезд')) location = 'in hallway';
+                    else if (text.includes('парк')) location = 'in park at night';
+                    
+                    // Позы и действия
+                    if (text.includes('анал') || text.includes('задниц') || text.includes('попк') || text.includes('жоп')) {
+                        pose = 'anal sex, doggystyle, from behind';
+                        actions.push('anal penetration, gaping');
+                    }
+                    if (text.includes('минет') || text.includes('сос') || text.includes('рот') || text.includes('глубок')) {
+                        pose = 'blowjob, on knees, mouth open';
+                        actions.push('blowjob, deepthroat');
+                    }
+                    if (text.includes('куни') || text.includes('лиж') || text.includes('клит')) {
+                        pose = 'cunnilingus, lying on back, legs spread';
+                        actions.push('cunnilingus, pussy licking');
+                    }
+                    if (text.includes('верх') || text.includes('сид') || text.includes('наездниц') || text.includes('скач')) {
+                        pose = 'cowgirl position, riding, bouncing breasts';
+                        actions.push('cowgirl, grinding');
+                    }
+                    if (text.includes('миссионерск') || text.includes('леж') || text.includes('спин') || text.includes('смотрит в глаза')) {
+                        pose = 'missionary position, lying on back, legs wrapped around';
+                        actions.push('missionary, passionate kissing');
+                    }
+                    if (text.includes('раком') || text.includes('рачком') || text.includes('сзад') || text.includes('сзади')) {
+                        pose = 'doggystyle, from behind, bent over, arched back';
+                        actions.push('doggystyle, rough pounding');
+                    }
+                    if (text.includes('сто') || text.includes('стен') || text.includes('прижал')) {
+                        pose = 'standing sex against wall, lifted leg';
+                        actions.push('standing penetration');
+                    }
+                    if (text.includes('впервые') || text.includes('девственниц') || text.includes('разрыв')) {
+                        actions.push('first time, virgin, tight, crying');
+                    }
+                    if (text.includes('жестк') || text.includes('груб') || text.includes('домин') || text.includes('шлеп') || text.includes('боли')) {
+                        actions.push('rough, dominant, bdsm, choking, spanking');
+                    }
+                    if (text.includes('нежн') || text.includes('медлен') || text.includes('ласк') || text.includes('целу')) {
+                        actions.push('gentle, passionate, romantic, caressing');
+                    }
+                    if (text.includes('групп') || text.includes('толп') || text.includes('несколько')) {
+                        actions.push('gangbang, multiple partners');
+                    }
+                    if (text.includes('связ') || text.includes('веревк') || text.includes('наручник')) {
+                        actions.push('bondage, tied up, restrained');
+                    }
+                    if (text.includes('кремпай') || text.includes('конч') || text.includes('сперм')) {
+                        actions.push('creampie, cum dripping, facial');
+                    }
+                    if (text.includes('тентакл') || text.includes('щупал')) {
+                        actions.push('tentacles, multiple penetration');
+                    }
+                    if (text.includes('футанар') || text.includes('хуй') || text.includes('член') || text.includes('страпон')) {
+                        actions.push('futanari, huge cock, futa on female');
+                    }
+                    if (text.includes('массаж') || text.includes('массир')) {
+                        pose = 'erotic massage, oiled body, lying on stomach';
+                        actions.push('oiled body, sensual massage');
+                    }
+                    if (text.includes('ванн') || text.includes('вод') || text.includes('мокр')) {
+                        actions.push('wet, water droplets, steam, bath foam');
+                    }
+                }
             }
 
-            const prompt = `${currentCharacter.description}, ${sceneContext}, furry, anthro, detailed, high quality, nsfw, masterpiece`;
-            const encoded = encodeURIComponent(prompt);
+            const baseDesc = currentCharacter.description;
+            const charName = currentCharacter.name;
+            
+            // Собираем промпт
+            let scenePrompt = `${baseDesc}, `;
+            
+            if (pose) scenePrompt += `${pose}, `;
+            if (location) scenePrompt += `${location}, `;
+            if (actions.length > 0) scenePrompt += `${actions.join(', ')}, `;
+            
+            // Последнее сообщение как контекст сцены
+            const lastUserMsg = history ? history.find(m => m.role === 'user') : null;
+            if (lastUserMsg) {
+                scenePrompt += `scene context: ${lastUserMsg.content.slice(0, 120)}, `;
+            }
+            
+            // Стандартные теги качества
+            scenePrompt += `furry, anthro, nsfw, explicit, detailed, high quality, masterpiece, cinematic lighting, volumetric light, sweat, blush, seductive expression, looking at viewer`;
+
+            console.log('=== SCENE PROMPT ===');
+            console.log(scenePrompt);
+            console.log('====================');
+
+            const encoded = encodeURIComponent(scenePrompt);
             const seed = Math.floor(Math.random() * 999999);
             const imageUrl = `https://image.pollinations.ai/prompt/${encoded}?width=1024&height=1024&nologo=true&seed=${seed}`;
 
-            addMessage('assistant', '*показывает картинку*', null, imageUrl);
+            // Показываем картинку
+            addMessage('assistant', `*${charName} показывает, что происходит...*`, null, imageUrl);
 
+            // Сохраняем в БД
             await supabaseClient.from('ai_messages').insert({
                 session_id: currentSessionId,
                 role: 'assistant',
-                content: '*показывает картинку*',
+                content: `*${charName} показывает сцену...*`,
                 image_url: imageUrl
             });
 
         } catch (err) {
+            console.error(err);
             alert('Ошибка генерации: ' + err.message);
         } finally {
             btn.textContent = oldText;
@@ -520,6 +604,7 @@ chat_html_v2 = '''<!DOCTYPE html>
 </html>'''
 
 with open('/mnt/agents/output/chat.html', 'w', encoding='utf-8') as f:
-    f.write(chat_html_v2)
+    f.write(chat_html_full)
 
-print("chat.html v2 сохранён — убран is_hidden, добавлено логирование")
+print("chat.html v3 (полный) сохранён")
+print(f"Размер: {len(chat_html_full)} символов")
