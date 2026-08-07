@@ -1,4 +1,4 @@
-index_ai_generator = '''<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -199,7 +199,7 @@ index_ai_generator = '''<!DOCTYPE html>
                         <button onclick="selectOpt(this, 'clothes')" data-val="lingerie" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Бельё</button>
                         <button onclick="selectOpt(this, 'clothes')" data-val="bikini" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Бикини</button>
                         <button onclick="selectOpt(this, 'clothes')" data-val="uniform" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Униформа</button>
-                        <button onclick="selectOpt(this, 'clothes')" data-val="torn" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Рваная</option>
+                        <button onclick="selectOpt(this, 'clothes')" data-val="torn" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Рваная</button>
                         <button onclick="selectOpt(this, 'clothes')" data-val="dress" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Платье</button>
                     </div>
                 </div>
@@ -315,7 +315,7 @@ index_ai_generator = '''<!DOCTYPE html>
     function buildPollinationsUrl(prompt, size, seed) {
         const [w, h] = size.split('x');
         const encoded = encodeURIComponent(prompt);
-        return `https://image.pollinations.ai/prompt/${encoded}?width=${w}&height=${h}&nologo=true&seed=${seed}`;
+        return `https://image.pollinations.ai/prompt/\( {encoded}?width= \){w}&height=\( {h}&nologo=true&seed= \){seed}`;
     }
 
     function showLoading() {
@@ -358,7 +358,7 @@ index_ai_generator = '''<!DOCTYPE html>
             return;
         }
         list.innerHTML = generationHistory.map((h, i) => `
-            <img src="${h.url}" onclick="loadFromHistory(${i})" class="history-thumb w-16 h-16 rounded-lg object-cover border border-[#2a3344] cursor-pointer" alt="" loading="lazy">
+            <img src="\( {h.url}" onclick="loadFromHistory( \){i})" class="history-thumb w-16 h-16 rounded-lg object-cover border border-[#2a3344] cursor-pointer" alt="" loading="lazy">
         `).join('');
     }
 
@@ -406,7 +406,7 @@ index_ai_generator = '''<!DOCTYPE html>
         img.src = url;
     }
 
-    // ===== БЫСТРЫЙ =====
+    // ===== БЫСТРЫЙ (полностью переписан) =====
     function generateQuick() {
         const gender = getSelected('gender');
         const race = getSelected('race');
@@ -418,94 +418,92 @@ index_ai_generator = '''<!DOCTYPE html>
         const size = document.getElementById('q-size').value;
         const seed = Math.floor(Math.random() * 999999);
 
-        // Собираем промпт
-        let prompt = '';
-
-        // Раса
+        // === СУБЪЕКТ ===
         const raceMap = {
-            wolf: 'anthropomorphic wolf girl, furry, canine',
-            fox: 'anthropomorphic fox girl, furry, vulpine',
-            cat: 'anthropomorphic cat girl, furry, feline',
-            bunny: 'anthropomorphic bunny girl, furry, rabbit ears',
-            dragon: 'anthropomorphic dragon girl, furry, scales, horns',
-            elf: 'elf girl, pointed ears, fantasy',
-            demon: 'demon girl, horns, tail, red skin',
-            human: 'human girl'
+            wolf: 'anthropomorphic white wolf girl, fluffy pure white fur, soft fluffy wolf ears, long fluffy white tail, pink hair, bright pink eyes',
+            fox: 'anthropomorphic fox girl, soft orange and white fur, fluffy fox ears, long fluffy fox tail, detailed fur',
+            cat: 'anthropomorphic cat girl, soft fluffy fur, cat ears, long tail, detailed fur texture',
+            bunny: 'anthropomorphic bunny girl, soft white fur, long fluffy rabbit ears, fluffy tail, detailed fur',
+            dragon: 'anthropomorphic dragon girl, smooth scales mixed with soft fur, horns, long tail, detailed scales',
+            elf: 'beautiful elf girl, pointed ears, long hair, flawless skin',
+            demon: 'demon girl, horns, pointed ears, long demon tail, reddish skin tones',
+            human: 'beautiful human girl, detailed skin'
         };
-        prompt += (raceMap[race] || raceMap.wolf) + ', ';
+
+        let prompt = (raceMap[race] || raceMap.wolf) + ', ';
 
         // Пол
         if (gender === 'futa') {
-            prompt += 'futanari, huge penis, balls, ';
+            prompt += 'futanari, thick cock, heavy balls, ';
         } else if (gender === 'male') {
-            prompt += 'male, muscular, ';
+            prompt += 'male, muscular body, ';
         }
 
-        // Телосложение
+        // === ТЕЛО ===
         const bodyMap = {
-            curvy: 'voluptuous hourglass body, thick thighs',
-            slim: 'slim body, petite',
-            muscular: 'muscular body, abs, toned',
-            chubby: 'chubby body, soft belly, plump'
+            curvy: 'extremely voluptuous hourglass figure, thick thighs, soft belly',
+            slim: 'slim elegant body, narrow waist',
+            muscular: 'athletic muscular body, defined abs, toned muscles',
+            chubby: 'soft chubby body, plush belly, thick soft thighs'
         };
         prompt += (bodyMap[body] || bodyMap.curvy) + ', ';
 
         // Грудь
         const breastMap = {
-            small: 'small breasts, flat chest',
-            medium: 'medium breasts',
-            large: 'large breasts, big cleavage',
-            huge: 'enormous breasts, massive cleavage, huge bust'
+            small: 'small perky breasts',
+            medium: 'full medium breasts, soft cleavage',
+            large: 'large heavy breasts, deep cleavage, soft underboob',
+            huge: 'enormous heavy breasts, massive soft cleavage, huge hanging tits'
         };
         prompt += (breastMap[breasts] || breastMap.medium) + ', ';
 
-        // Ягодицы
+        // Жопа
         const assMap = {
-            small: 'small butt',
-            medium: 'medium butt',
-            large: 'big butt, wide hips',
-            huge: 'huge ass, massive butt, wide hips'
+            small: 'small round butt',
+            medium: 'round medium butt, wide hips',
+            large: 'big soft butt, wide hips, thick thighs',
+            huge: 'huge fat ass, massive cheeks, extremely wide hips, thick juicy thighs'
         };
         prompt += (assMap[ass] || assMap.medium) + ', ';
 
-        // Поза
+        // === ПОЗА ===
         const poseMap = {
-            portrait: 'portrait, looking at viewer, seductive expression',
-            standing: 'standing pose, full body',
-            sitting: 'sitting pose, spread legs',
-            lying: 'lying on back, on bed, legs spread',
-            doggystyle: 'doggystyle, from behind, bent over, ass up',
-            cowgirl: 'cowgirl position, riding, straddling, top view',
-            blowjob: 'blowjob, on knees, mouth open, looking up',
-            spreading: 'spreading legs, presenting pussy, close-up',
-            shower: 'in shower, wet body, water droplets, steam',
-            bed: 'on bed, sheets, intimate, bedroom'
+            portrait: 'close-up portrait, looking at viewer, seductive half-lidded eyes, slight smile',
+            standing: 'full body standing pose, weight on one leg, looking over shoulder',
+            sitting: 'sitting with legs spread, presenting, looking at viewer',
+            lying: 'lying on back, legs spread wide, inviting pose',
+            doggystyle: 'doggystyle, bent over, ass up high, looking back over shoulder',
+            cowgirl: 'cowgirl position, straddling, bouncing, looking down at viewer',
+            blowjob: 'on her knees, giving blowjob, looking up with teary eyes, saliva',
+            spreading: 'close-up, spreading her pussy with both hands, detailed labia',
+            shower: 'in the shower, water cascading down her body, steam, wet fur and skin',
+            bed: 'on messy bed, sheets tangled, intimate lighting, looking at viewer'
         };
         prompt += (poseMap[pose] || poseMap.portrait) + ', ';
 
-        // Одежда
+        // === ОДЕЖДА ===
         const clothesMap = {
-            nude: 'nude, naked, no clothes',
-            lingerie: 'lingerie, lace bra, panties, garter belt',
-            bikini: 'bikini, micro bikini, swimsuit',
-            uniform: 'school uniform, short skirt, unbuttoned shirt',
-            torn: 'torn clothes, ripped dress, exposed',
-            dress: 'tight dress, short skirt, cleavage'
+            nude: 'completely nude, no clothes, detailed nipples, detailed pussy',
+            lingerie: 'sexy lingerie, lace bra pulled down, matching panties aside',
+            bikini: 'tiny micro bikini, barely covering, wet fabric',
+            uniform: 'revealing school uniform, unbuttoned shirt, short skirt hiked up',
+            torn: 'torn clothes, ripped open, exposed breasts and body',
+            dress: 'tight short dress pulled up, deep cleavage'
         };
         prompt += (clothesMap[clothes] || clothesMap.nude) + ', ';
 
-        // Экстры
-        if (selectedExtras.has('wet')) prompt += 'wet skin, water droplets, glistening, ';
-        if (selectedExtras.has('sweat')) prompt += 'sweaty, sweat drops, shiny skin, ';
-        if (selectedExtras.has('blush')) prompt += 'blushing, embarrassed, shy, ';
-        if (selectedExtras.has('ahegao')) prompt += 'ahegao face, tongue out, rolling eyes, drooling, ';
-        if (selectedExtras.has('bondage')) prompt += 'bondage, tied up, ropes, bdsm, ';
-        if (selectedExtras.has('tentacles')) prompt += 'tentacles, restrained by tentacles, multiple penetration, ';
-        if (selectedExtras.has('cum')) prompt += 'creampie, cum dripping, facial, covered in cum, ';
-        if (selectedExtras.has('pov')) prompt += 'pov, first person view, looking at viewer, ';
+        // === ЭКСТРЫ ===
+        if (selectedExtras.has('wet')) prompt += 'completely wet, water droplets all over fur and skin, glistening wetness, ';
+        if (selectedExtras.has('sweat')) prompt += 'covered in sweat, shiny sweaty skin and fur, ';
+        if (selectedExtras.has('blush')) prompt += 'heavy blush, embarrassed expression, averted eyes, ';
+        if (selectedExtras.has('ahegao')) prompt += 'ahegao face, eyes rolled back, tongue out, drooling, fucked silly expression, ';
+        if (selectedExtras.has('bondage')) prompt += 'tied up with ropes, bondage, restrained, ';
+        if (selectedExtras.has('tentacles')) prompt += 'tentacles wrapping around body, tentacles penetrating, ';
+        if (selectedExtras.has('cum')) prompt += 'creampie, cum dripping from pussy, cum on breasts and face, ';
+        if (selectedExtras.has('pov')) prompt += 'pov shot, looking directly at viewer, ';
 
-        // Финальные теги качества
-        prompt += 'detailed, high quality, masterpiece, nsfw, explicit, furry, anthro, cinematic lighting, volumetric light';
+        // === ФИНАЛЬНЫЕ ДЕТАЛИ ===
+        prompt += 'highly detailed fluffy fur texture, individual fur strands visible, soft volumetric lighting, strong rim light, wet skin and fur glistening, realistic skin folds, detailed anatomy, masterpiece, best quality, extremely detailed, nsfw, explicit';
 
         const url = buildPollinationsUrl(prompt, size, seed);
         
@@ -556,7 +554,6 @@ index_ai_generator = '''<!DOCTYPE html>
     }
 
     window.showRegisterModal = function() { 
-        // Редирект на главную для регистрации
         window.location.href = 'index.html#register'; 
     };
     window.showLoginModal = function() { 
@@ -569,9 +566,4 @@ index_ai_generator = '''<!DOCTYPE html>
     window.onload = init;
 </script>
 </body>
-</html>'''
-
-with open('/mnt/agents/output/index_ai.html', 'w', encoding='utf-8') as f:
-    f.write(index_ai_generator)
-
-print(f"index_ai.html сохранён ({len(index_ai_generator)} символов)")
+</html>
