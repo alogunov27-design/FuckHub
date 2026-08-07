@@ -1,4 +1,8 @@
-<!DOCTYPE html>
+
+# Также обновим index_ai.html — кнопка "Начать чат" должна вести на chat.html?character=ID
+# и chats.html — ссылка на chat.html?session=ID
+
+index_ai_updated = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -155,19 +159,19 @@
             html += `
                 <div class="card-ai rounded-2xl overflow-hidden flex flex-col">
                     <div class="relative overflow-hidden">
-                        <img src="${avatar}" loading="lazy" class="card-img w-full h-56 object-cover" alt="${char.name || 'Персонаж'}">
+                        <img src="${avatar}" loading="lazy" class="card-img w-full h-56 object-cover" alt="${char.name || 'Персонаж'}"
+                             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(char.name || 'AI')}&background=1f2533&color=c5d1e0&size=128'">
                     </div>
                     <div class="p-4 flex flex-col flex-1">
                         <h3 class="font-semibold text-lg leading-tight mb-1">${char.name || 'Без имени'}</h3>
                         <p class="text-sm text-zinc-400 line-clamp-2 flex-1 mb-3">${shortDesc}</p>
                         <div class="flex justify-between items-center text-xs text-zinc-500 mb-3">
                             <span>${date}</span>
-                            <span>${char.created_by ? '🔥' : ''}</span>
                         </div>
-                        <button onclick="startChat('${char.id}')" 
-                                class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-black font-semibold py-2.5 rounded-xl text-sm transition-all">
+                        <a href="chat.html?character=${char.id}" 
+                           class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-black font-semibold py-2.5 rounded-xl text-sm transition-all text-center">
                             Начать чат
-                        </button>
+                        </a>
                     </div>
                 </div>
             `;
@@ -180,31 +184,6 @@
         renderCharacters(allCharacters);
     }
 
-    async function startChat(characterId) {
-        if (!currentUser) {
-            alert('Авторизуйся, чтобы начать чат');
-            return;
-        }
-
-        // Создаём новую сессию
-        const { data, error } = await supabaseClient
-            .from('ai_chat_sessions')
-            .insert({
-                character_id: characterId,
-                user_id: currentUser.id,
-                title: 'Новый чат'
-            })
-            .select()
-            .single();
-
-        if (error) {
-            alert('Ошибка создания чата: ' + error.message);
-            return;
-        }
-
-        window.location.href = 'chat.html?session=' + data.id;
-    }
-
     window.showRegisterModal = function() { alert('Регистрация: перейди на главную страницу'); };
     window.showLoginModal = function() { alert('Вход: перейди на главную страницу'); };
     window.logout = function() { supabaseClient.auth.signOut(); window.location.reload(); };
@@ -212,4 +191,9 @@
     window.onload = init;
 </script>
 </body>
-</html>
+</html>'''
+
+with open('/mnt/agents/output/index_ai.html', 'w', encoding='utf-8') as f:
+    f.write(index_ai_updated)
+
+print("index_ai.html сохранён")
