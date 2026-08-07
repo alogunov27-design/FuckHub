@@ -1,22 +1,28 @@
-
-# Также обновим index_ai.html — кнопка "Начать чат" должна вести на chat.html?character=ID
-# и chats.html — ссылка на chat.html?session=ID
-
-index_ai_updated = '''<!DOCTYPE html>
+index_ai_generator = '''<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Тянки • FuckHub</title>
+    <title>AI Генератор • FuckHub</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="script.js"></script>
     <style>
         body { background: #0f1117; color: #c5d1e0; font-family: system-ui, sans-serif; }
-        .card-ai { transition: all 0.3s ease; background: #1a1f2e; border: 1px solid #2a3344; }
-        .card-ai:hover { transform: translateY(-6px); border-color: #f97316; box-shadow: 0 20px 40px -12px rgba(249, 115, 22, 0.2); }
-        .card-img { transition: transform 0.4s ease; }
-        .card-ai:hover .card-img { transform: scale(1.05); }
+        .tab-btn { transition: all 0.3s; }
+        .tab-btn.active { background: #f97316; color: #000; font-weight: 700; }
+        .option-btn { transition: all 0.2s; border: 2px solid transparent; }
+        .option-btn:hover { border-color: #f97316; }
+        .option-btn.selected { background: #f97316; color: #000; border-color: #f97316; font-weight: 600; }
+        .generating { animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .result-img { transition: transform 0.3s; }
+        .result-img:hover { transform: scale(1.02); }
+        .history-thumb { transition: all 0.2s; }
+        .history-thumb:hover { border-color: #f97316; transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -32,9 +38,8 @@ index_ai_updated = '''<!DOCTYPE html>
             <div class="hidden md:flex items-center gap-6 text-sm font-medium">
                 <a href="index.html" class="hover:text-white transition-colors">Магазин</a>
                 <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
-                <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
-                <a href="chats.html" class="hover:text-white transition-colors">Мои чаты</a>
-                <span class="text-orange-400 font-semibold">AI Тянки</span>
+                <a href="profile.html" class="hover:text-white transition-colors">Профиль</a>
+                <span class="text-orange-400 font-semibold">AI Генератор</span>
             </div>
             <div id="auth-buttons" class="hidden md:flex items-center gap-3">
                 <button onclick="showRegisterModal()" class="px-5 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">Регистрация</button>
@@ -50,43 +55,493 @@ index_ai_updated = '''<!DOCTYPE html>
 </nav>
 
 <!-- HERO -->
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-10">
-    <div class="rounded-2xl sm:rounded-3xl h-[200px] sm:h-[260px] flex items-center relative overflow-hidden border border-[#1f2533]"
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8">
+    <div class="rounded-2xl sm:rounded-3xl h-[180px] sm:h-[220px] flex items-center relative overflow-hidden border border-[#1f2533]"
          style="background: linear-gradient(135deg, rgba(15,17,23,0.75) 0%, rgba(15,17,23,0.9) 100%), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
         <div class="px-6 sm:px-10 relative z-10">
-            <h1 class="text-3xl sm:text-5xl font-bold tracking-tighter mb-2">AI Тянки</h1>
+            <h1 class="text-3xl sm:text-5xl font-bold tracking-tighter mb-2">AI Генератор</h1>
             <p class="text-base sm:text-xl text-zinc-300 max-w-lg leading-snug">
-                Фурри · Эльфийки · Демоницы — <br class="hidden sm:block">любые твои фантазии
+                Без цензуры. Без лимитов. Создавай что угодно.
             </p>
         </div>
     </div>
 </div>
 
-<!-- КОНТЕНТ -->
+<!-- MAIN -->
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
 
-    <!-- Поиск + Кнопка создания -->
-    <div class="flex flex-col sm:flex-row gap-4 mb-8">
-        <input id="search-input" onkeyup="filterCharacters()" placeholder="Поиск по имени или описанию..."
-               class="flex-1 px-5 py-3.5 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/30 transition-all text-sm sm:text-base">
-        <a href="create_character.html" class="bg-orange-500 hover:bg-orange-600 text-black font-semibold px-6 py-3.5 rounded-2xl text-center transition-all shrink-0">
-            + Создать тянку
-        </a>
+    <!-- Табы -->
+    <div class="flex gap-2 mb-8">
+        <button onclick="switchTab('advanced')" id="tab-advanced" class="tab-btn active px-6 py-3 bg-[#1a1f2e] rounded-2xl text-sm font-medium transition-all">
+            ✨ Продвинутый
+        </button>
+        <button onclick="switchTab('quick')" id="tab-quick" class="tab-btn px-6 py-3 bg-[#1a1f2e] rounded-2xl text-sm font-medium transition-all">
+            ⚡ Быстрый
+        </button>
     </div>
 
-    <!-- Грид карточек -->
-    <div id="characters-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-        <p class="col-span-full text-center py-16 text-zinc-500">Загрузка...</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Левая колонка: настройки -->
+        <div class="lg:col-span-1 space-y-6">
+            
+            <!-- === ПРОДВИНУТЫЙ РЕЖИМ === -->
+            <div id="panel-advanced" class="bg-[#1a1f2e] rounded-2xl p-5 border border-[#2a3344]">
+                <h3 class="font-semibold mb-4 text-orange-400">Продвинутый режим</h3>
+                <textarea id="adv-prompt" rows="6" placeholder="Опиши что хочешь видеть... Например: white wolf girl, pink hair, enormous breasts, wide hips, anal sex on rooftop, nsfw, masterpiece"
+                          class="w-full px-4 py-3 bg-[#11141c] border border-[#2a3344] rounded-xl text-white resize-none focus:outline-none focus:border-orange-500/60 mb-4"></textarea>
+                
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div>
+                        <label class="text-xs text-zinc-500 mb-1 block">Размер</label>
+                        <select id="adv-size" class="w-full px-3 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm text-white">
+                            <option value="1024x1024">1024×1024 (1:1)</option>
+                            <option value="1024x1536">1024×1536 (2:3)</option>
+                            <option value="1536x1024">1536×1024 (3:2)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-xs text-zinc-500 mb-1 block">Сид (случайный)</label>
+                        <input id="adv-seed" type="number" placeholder="авто" 
+                               class="w-full px-3 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm text-white">
+                    </div>
+                </div>
+                
+                <button onclick="generateAdvanced()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-xl transition-all active:scale-[0.98]">
+                    🎨 Сгенерировать
+                </button>
+            </div>
+
+            <!-- === БЫСТРЫЙ РЕЖИМ === -->
+            <div id="panel-quick" class="hidden bg-[#1a1f2e] rounded-2xl p-5 border border-[#2a3344]">
+                <h3 class="font-semibold mb-4 text-orange-400">Быстрый режим</h3>
+                
+                <!-- Пол -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Персонаж</label>
+                    <div class="flex flex-wrap gap-2" id="q-gender">
+                        <button onclick="selectOpt(this, 'gender')" data-val="female" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">♀️ Женщина</button>
+                        <button onclick="selectOpt(this, 'gender')" data-val="futa" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">⚧ Футанари</button>
+                        <button onclick="selectOpt(this, 'gender')" data-val="male" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">♂️ Мужчина</button>
+                    </div>
+                </div>
+
+                <!-- Раса -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Раса / Тип</label>
+                    <div class="flex flex-wrap gap-2" id="q-race">
+                        <button onclick="selectOpt(this, 'race')" data-val="wolf" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🐺 Волчица</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="fox" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🦊 Лисица</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="cat" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🐱 Кошка</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="bunny" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🐰 Кролик</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="dragon" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🐲 Дракониха</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="elf" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🧝 Эльфийка</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="demon" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">😈 Демоница</button>
+                        <button onclick="selectOpt(this, 'race')" data-val="human" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">👩 Человек</button>
+                    </div>
+                </div>
+
+                <!-- Телосложение -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Телосложение</label>
+                    <div class="flex flex-wrap gap-2" id="q-body">
+                        <button onclick="selectOpt(this, 'body')" data-val="curvy" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Пышное</button>
+                        <button onclick="selectOpt(this, 'body')" data-val="slim" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Стройное</button>
+                        <button onclick="selectOpt(this, 'body')" data-val="muscular" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Мускулистое</button>
+                        <button onclick="selectOpt(this, 'body')" data-val="chubby" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Полное</button>
+                    </div>
+                </div>
+
+                <!-- Размер груди -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Грудь</label>
+                    <div class="flex flex-wrap gap-2" id="q-breasts">
+                        <button onclick="selectOpt(this, 'breasts')" data-val="small" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Маленькая</button>
+                        <button onclick="selectOpt(this, 'breasts')" data-val="medium" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Средняя</button>
+                        <button onclick="selectOpt(this, 'breasts')" data-val="large" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Большая</button>
+                        <button onclick="selectOpt(this, 'breasts')" data-val="huge" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Огромная</button>
+                    </div>
+                </div>
+
+                <!-- Размер ягодиц -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Ягодицы</label>
+                    <div class="flex flex-wrap gap-2" id="q-ass">
+                        <button onclick="selectOpt(this, 'ass')" data-val="small" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Маленькие</button>
+                        <button onclick="selectOpt(this, 'ass')" data-val="medium" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Средние</button>
+                        <button onclick="selectOpt(this, 'ass')" data-val="large" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Большие</button>
+                        <button onclick="selectOpt(this, 'ass')" data-val="huge" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Огромные</button>
+                    </div>
+                </div>
+
+                <!-- Поза / Действие -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Поза / Действие</label>
+                    <div class="flex flex-wrap gap-2" id="q-pose">
+                        <button onclick="selectOpt(this, 'pose')" data-val="portrait" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Портрет</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="standing" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Стоит</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="sitting" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Сидит</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="lying" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Лежит</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="doggystyle" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Раком</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="cowgirl" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Наездница</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="blowjob" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Минет</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="spreading" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Раздвигает</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="shower" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">В душе</button>
+                        <button onclick="selectOpt(this, 'pose')" data-val="bed" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">На кровати</button>
+                    </div>
+                </div>
+
+                <!-- Одежда -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Одежда</label>
+                    <div class="flex flex-wrap gap-2" id="q-clothes">
+                        <button onclick="selectOpt(this, 'clothes')" data-val="nude" class="option-btn selected px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Голая</button>
+                        <button onclick="selectOpt(this, 'clothes')" data-val="lingerie" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Бельё</button>
+                        <button onclick="selectOpt(this, 'clothes')" data-val="bikini" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Бикини</button>
+                        <button onclick="selectOpt(this, 'clothes')" data-val="uniform" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Униформа</button>
+                        <button onclick="selectOpt(this, 'clothes')" data-val="torn" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Рваная</option>
+                        <button onclick="selectOpt(this, 'clothes')" data-val="dress" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">Платье</button>
+                    </div>
+                </div>
+
+                <!-- Дополнительно -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-2 block">Дополнительно</label>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="toggleExtra(this)" data-val="wet" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">💦 Влажная</button>
+                        <button onclick="toggleExtra(this)" data-val="sweat" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">😓 Потная</button>
+                        <button onclick="toggleExtra(this)" data-val="blush" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">😳 Смущение</button>
+                        <button onclick="toggleExtra(this)" data-val="ahegao" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🤪 Ахегао</button>
+                        <button onclick="toggleExtra(this)" data-val="bondage" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">⛓️ Бондаж</button>
+                        <button onclick="toggleExtra(this)" data-val="tentacles" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">🐙 Тентакли</button>
+                        <button onclick="toggleExtra(this)" data-val="cum" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">💧 Кремпай</button>
+                        <button onclick="toggleExtra(this)" data-val="pov" class="option-btn px-3 py-1.5 bg-[#11141c] rounded-lg text-sm">👁️ POV</button>
+                    </div>
+                </div>
+
+                <!-- Размер -->
+                <div class="mb-4">
+                    <label class="text-xs text-zinc-500 mb-1 block">Размер картинки</label>
+                    <select id="q-size" class="w-full px-3 py-2 bg-[#11141c] border border-[#2a3344] rounded-xl text-sm text-white">
+                        <option value="1024x1024">1024×1024 (Квадрат)</option>
+                        <option value="1024x1536">1024×1536 (Вертикаль)</option>
+                        <option value="1536x1024">1536×1024 (Горизонталь)</option>
+                    </select>
+                </div>
+
+                <button onclick="generateQuick()" class="w-full bg-orange-500 hover:bg-orange-600 text-black font-bold py-3 rounded-xl transition-all active:scale-[0.98]">
+                    ⚡ Сгенерировать
+                </button>
+            </div>
+
+            <!-- История -->
+            <div class="bg-[#1a1f2e] rounded-2xl p-5 border border-[#2a3344]">
+                <h3 class="font-semibold mb-3 text-sm">История</h3>
+                <div id="history-list" class="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                    <p class="text-zinc-500 text-xs">Пока пусто</p>
+                </div>
+                <button onclick="clearHistory()" class="mt-3 text-xs text-red-400 hover:text-red-300 transition-colors">Очистить историю</button>
+            </div>
+        </div>
+
+        <!-- Правая колонка: результат -->
+        <div class="lg:col-span-2">
+            <div class="bg-[#1a1f2e] rounded-2xl p-5 border border-[#2a3344] min-h-[600px] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold">Результат</h3>
+                    <div class="flex gap-2">
+                        <button onclick="downloadResult()" id="btn-download" class="hidden px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs transition-colors">💾 Скачать</button>
+                        <button onclick="regenerate()" id="btn-regen" class="hidden px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 rounded-lg text-xs transition-colors">🔄 Ещё раз</button>
+                    </div>
+                </div>
+
+                <div id="result-area" class="flex-1 flex items-center justify-center bg-[#11141c] rounded-xl border border-[#2a3344] min-h-[500px]">
+                    <div class="text-center">
+                        <p class="text-zinc-500 text-lg mb-2">🎨</p>
+                        <p class="text-zinc-500">Выбери параметры и нажми "Сгенерировать"</p>
+                    </div>
+                </div>
+
+                <!-- Промпт который был использован -->
+                <div id="used-prompt-box" class="hidden mt-4 p-3 bg-[#11141c] rounded-xl border border-[#2a3344]">
+                    <p class="text-xs text-zinc-500 mb-1">Использованный промпт:</p>
+                    <p id="used-prompt-text" class="text-xs text-zinc-300 font-mono break-all"></p>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <script>
-    let allCharacters = [];
+    let currentTab = 'advanced';
+    let currentImageUrl = null;
+    let generationHistory = JSON.parse(localStorage.getItem('fh_gen_history') || '[]');
+    let selectedExtras = new Set();
 
+    // ===== UI =====
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('tab-' + tab).classList.add('active');
+        
+        document.getElementById('panel-advanced').classList.toggle('hidden', tab !== 'advanced');
+        document.getElementById('panel-quick').classList.toggle('hidden', tab !== 'quick');
+    }
+
+    function selectOpt(btn, group) {
+        const container = document.getElementById('q-' + group);
+        container.querySelectorAll('.option-btn').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+    }
+
+    function toggleExtra(btn) {
+        const val = btn.dataset.val;
+        if (selectedExtras.has(val)) {
+            selectedExtras.delete(val);
+            btn.classList.remove('selected');
+        } else {
+            selectedExtras.add(val);
+            btn.classList.add('selected');
+        }
+    }
+
+    function getSelected(group) {
+        const container = document.getElementById('q-' + group);
+        const selected = container.querySelector('.option-btn.selected');
+        return selected ? selected.dataset.val : null;
+    }
+
+    // ===== ГЕНЕРАЦИЯ =====
+    function buildPollinationsUrl(prompt, size, seed) {
+        const [w, h] = size.split('x');
+        const encoded = encodeURIComponent(prompt);
+        return `https://image.pollinations.ai/prompt/${encoded}?width=${w}&height=${h}&nologo=true&seed=${seed}`;
+    }
+
+    function showLoading() {
+        const area = document.getElementById('result-area');
+        area.innerHTML = `
+            <div class="text-center generating">
+                <p class="text-orange-400 text-2xl mb-2">🎨</p>
+                <p class="text-zinc-400">FuckFaz Studios рисует...</p>
+                <p class="text-zinc-600 text-xs mt-2">Это может занять 5-15 секунд</p>
+            </div>
+        `;
+    }
+
+    function showResult(url, prompt) {
+        currentImageUrl = url;
+        const area = document.getElementById('result-area');
+        area.innerHTML = `<img src="${url}" class="result-img max-w-full max-h-full rounded-xl" alt="generated" onerror="this.src=''; this.parentElement.innerHTML='<p class=text-red-400>Ошибка загрузки</p>'">`;
+        
+        document.getElementById('btn-download').classList.remove('hidden');
+        document.getElementById('btn-regen').classList.remove('hidden');
+        
+        document.getElementById('used-prompt-box').classList.remove('hidden');
+        document.getElementById('used-prompt-text').textContent = prompt;
+        
+        // Сохраняем в историю
+        addToHistory(url, prompt);
+    }
+
+    function addToHistory(url, prompt) {
+        generationHistory.unshift({ url, prompt, time: Date.now() });
+        if (generationHistory.length > 20) generationHistory.pop();
+        localStorage.setItem('fh_gen_history', JSON.stringify(generationHistory));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = document.getElementById('history-list');
+        if (generationHistory.length === 0) {
+            list.innerHTML = '<p class="text-zinc-500 text-xs">Пока пусто</p>';
+            return;
+        }
+        list.innerHTML = generationHistory.map((h, i) => `
+            <img src="${h.url}" onclick="loadFromHistory(${i})" class="history-thumb w-16 h-16 rounded-lg object-cover border border-[#2a3344] cursor-pointer" alt="" loading="lazy">
+        `).join('');
+    }
+
+    function loadFromHistory(index) {
+        const h = generationHistory[index];
+        if (h) {
+            currentImageUrl = h.url;
+            document.getElementById('result-area').innerHTML = `<img src="${h.url}" class="result-img max-w-full max-h-full rounded-xl" alt="">`;
+            document.getElementById('used-prompt-text').textContent = h.prompt;
+            document.getElementById('used-prompt-box').classList.remove('hidden');
+            document.getElementById('btn-download').classList.remove('hidden');
+            document.getElementById('btn-regen').classList.remove('hidden');
+        }
+    }
+
+    function clearHistory() {
+        generationHistory = [];
+        localStorage.removeItem('fh_gen_history');
+        renderHistory();
+    }
+
+    // ===== ПРОДВИНУТЫЙ =====
+    function generateAdvanced() {
+        const prompt = document.getElementById('adv-prompt').value.trim();
+        if (!prompt) {
+            alert('Введи промпт!');
+            return;
+        }
+        
+        const size = document.getElementById('adv-size').value;
+        const seedInput = document.getElementById('adv-seed').value;
+        const seed = seedInput ? parseInt(seedInput) : Math.floor(Math.random() * 999999);
+        
+        const fullPrompt = prompt + ', detailed, high quality, masterpiece, nsfw, explicit';
+        const url = buildPollinationsUrl(fullPrompt, size, seed);
+        
+        showLoading();
+        
+        // Предзагрузка
+        const img = new Image();
+        img.onload = () => showResult(url, fullPrompt);
+        img.onerror = () => {
+            document.getElementById('result-area').innerHTML = '<p class="text-red-400">Ошибка генерации. Попробуй другой промпт.</p>';
+        };
+        img.src = url;
+    }
+
+    // ===== БЫСТРЫЙ =====
+    function generateQuick() {
+        const gender = getSelected('gender');
+        const race = getSelected('race');
+        const body = getSelected('body');
+        const breasts = getSelected('breasts');
+        const ass = getSelected('ass');
+        const pose = getSelected('pose');
+        const clothes = getSelected('clothes');
+        const size = document.getElementById('q-size').value;
+        const seed = Math.floor(Math.random() * 999999);
+
+        // Собираем промпт
+        let prompt = '';
+
+        // Раса
+        const raceMap = {
+            wolf: 'anthropomorphic wolf girl, furry, canine',
+            fox: 'anthropomorphic fox girl, furry, vulpine',
+            cat: 'anthropomorphic cat girl, furry, feline',
+            bunny: 'anthropomorphic bunny girl, furry, rabbit ears',
+            dragon: 'anthropomorphic dragon girl, furry, scales, horns',
+            elf: 'elf girl, pointed ears, fantasy',
+            demon: 'demon girl, horns, tail, red skin',
+            human: 'human girl'
+        };
+        prompt += (raceMap[race] || raceMap.wolf) + ', ';
+
+        // Пол
+        if (gender === 'futa') {
+            prompt += 'futanari, huge penis, balls, ';
+        } else if (gender === 'male') {
+            prompt += 'male, muscular, ';
+        }
+
+        // Телосложение
+        const bodyMap = {
+            curvy: 'voluptuous hourglass body, thick thighs',
+            slim: 'slim body, petite',
+            muscular: 'muscular body, abs, toned',
+            chubby: 'chubby body, soft belly, plump'
+        };
+        prompt += (bodyMap[body] || bodyMap.curvy) + ', ';
+
+        // Грудь
+        const breastMap = {
+            small: 'small breasts, flat chest',
+            medium: 'medium breasts',
+            large: 'large breasts, big cleavage',
+            huge: 'enormous breasts, massive cleavage, huge bust'
+        };
+        prompt += (breastMap[breasts] || breastMap.medium) + ', ';
+
+        // Ягодицы
+        const assMap = {
+            small: 'small butt',
+            medium: 'medium butt',
+            large: 'big butt, wide hips',
+            huge: 'huge ass, massive butt, wide hips'
+        };
+        prompt += (assMap[ass] || assMap.medium) + ', ';
+
+        // Поза
+        const poseMap = {
+            portrait: 'portrait, looking at viewer, seductive expression',
+            standing: 'standing pose, full body',
+            sitting: 'sitting pose, spread legs',
+            lying: 'lying on back, on bed, legs spread',
+            doggystyle: 'doggystyle, from behind, bent over, ass up',
+            cowgirl: 'cowgirl position, riding, straddling, top view',
+            blowjob: 'blowjob, on knees, mouth open, looking up',
+            spreading: 'spreading legs, presenting pussy, close-up',
+            shower: 'in shower, wet body, water droplets, steam',
+            bed: 'on bed, sheets, intimate, bedroom'
+        };
+        prompt += (poseMap[pose] || poseMap.portrait) + ', ';
+
+        // Одежда
+        const clothesMap = {
+            nude: 'nude, naked, no clothes',
+            lingerie: 'lingerie, lace bra, panties, garter belt',
+            bikini: 'bikini, micro bikini, swimsuit',
+            uniform: 'school uniform, short skirt, unbuttoned shirt',
+            torn: 'torn clothes, ripped dress, exposed',
+            dress: 'tight dress, short skirt, cleavage'
+        };
+        prompt += (clothesMap[clothes] || clothesMap.nude) + ', ';
+
+        // Экстры
+        if (selectedExtras.has('wet')) prompt += 'wet skin, water droplets, glistening, ';
+        if (selectedExtras.has('sweat')) prompt += 'sweaty, sweat drops, shiny skin, ';
+        if (selectedExtras.has('blush')) prompt += 'blushing, embarrassed, shy, ';
+        if (selectedExtras.has('ahegao')) prompt += 'ahegao face, tongue out, rolling eyes, drooling, ';
+        if (selectedExtras.has('bondage')) prompt += 'bondage, tied up, ropes, bdsm, ';
+        if (selectedExtras.has('tentacles')) prompt += 'tentacles, restrained by tentacles, multiple penetration, ';
+        if (selectedExtras.has('cum')) prompt += 'creampie, cum dripping, facial, covered in cum, ';
+        if (selectedExtras.has('pov')) prompt += 'pov, first person view, looking at viewer, ';
+
+        // Финальные теги качества
+        prompt += 'detailed, high quality, masterpiece, nsfw, explicit, furry, anthro, cinematic lighting, volumetric light';
+
+        const url = buildPollinationsUrl(prompt, size, seed);
+        
+        showLoading();
+        
+        const img = new Image();
+        img.onload = () => showResult(url, prompt);
+        img.onerror = () => {
+            document.getElementById('result-area').innerHTML = '<p class="text-red-400">Ошибка генерации. Попробуй другие параметры.</p>';
+        };
+        img.src = url;
+    }
+
+    // ===== ДЕЙСТВИЯ =====
+    function downloadResult() {
+        if (!currentImageUrl) return;
+        const a = document.createElement('a');
+        a.href = currentImageUrl;
+        a.download = 'fuckfaz_' + Date.now() + '.png';
+        a.target = '_blank';
+        a.click();
+    }
+
+    function regenerate() {
+        if (currentTab === 'advanced') {
+            generateAdvanced();
+        } else {
+            generateQuick();
+        }
+    }
+
+    // ===== АВТОРИЗАЦИЯ =====
     async function init() {
         await getSession();
         updateUI();
-        await loadCharacters();
+        renderHistory();
     }
 
     function updateUI() {
@@ -100,93 +555,16 @@ index_ai_updated = '''<!DOCTYPE html>
         }
     }
 
-    async function loadCharacters() {
-        const grid = document.getElementById('characters-grid');
-        grid.innerHTML = '<p class="col-span-full text-center py-16 text-zinc-500">Загрузка...</p>';
-
-        const { data, error } = await supabaseClient
-            .from('ai_characters')
-            .select('*')
-            .eq('is_public', true)
-            .order('created_at', { ascending: false });
-
-        if (error) {
-            grid.innerHTML = '<p class="col-span-full text-center py-16 text-red-400">Ошибка: ' + error.message + '</p>';
-            return;
-        }
-
-        allCharacters = data || [];
-
-        if (allCharacters.length === 0) {
-            grid.innerHTML = `
-                <div class="col-span-full text-center py-16">
-                    <p class="text-zinc-500 mb-4">Пока нет созданных персонажей</p>
-                    <a href="create_character.html" class="text-orange-500 hover:underline">Создай свою первую тянку!</a>
-                </div>
-            `;
-            return;
-        }
-
-        renderCharacters(allCharacters);
-    }
-
-    function renderCharacters(list) {
-        const grid = document.getElementById('characters-grid');
-        const searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-
-        let filtered = list;
-        if (searchTerm) {
-            filtered = filtered.filter(c =>
-                (c.name && c.name.toLowerCase().includes(searchTerm)) ||
-                (c.description && c.description.toLowerCase().includes(searchTerm))
-            );
-        }
-
-        if (filtered.length === 0) {
-            grid.innerHTML = '<p class="col-span-full text-center py-16 text-zinc-500">Ничего не найдено</p>';
-            return;
-        }
-
-        let html = '';
-        for (const char of filtered) {
-            const avatar = char.avatar_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(char.name || 'AI') + '&background=1f2533&color=c5d1e0&size=128';
-            const date = char.created_at
-                ? new Date(char.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
-                : '';
-
-            const shortDesc = char.description ? char.description.slice(0, 80) + (char.description.length > 80 ? '...' : '') : '';
-
-            html += `
-                <div class="card-ai rounded-2xl overflow-hidden flex flex-col">
-                    <div class="relative overflow-hidden">
-                        <img src="${avatar}" loading="lazy" class="card-img w-full h-56 object-cover" alt="${char.name || 'Персонаж'}"
-                             onerror="this.src='https://ui-avatars.com/api/?name=${encodeURIComponent(char.name || 'AI')}&background=1f2533&color=c5d1e0&size=128'">
-                    </div>
-                    <div class="p-4 flex flex-col flex-1">
-                        <h3 class="font-semibold text-lg leading-tight mb-1">${char.name || 'Без имени'}</h3>
-                        <p class="text-sm text-zinc-400 line-clamp-2 flex-1 mb-3">${shortDesc}</p>
-                        <div class="flex justify-between items-center text-xs text-zinc-500 mb-3">
-                            <span>${date}</span>
-                        </div>
-                        <a href="chat.html?character=${char.id}" 
-                           class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-black font-semibold py-2.5 rounded-xl text-sm transition-all text-center">
-                            Начать чат
-                        </a>
-                    </div>
-                </div>
-            `;
-        }
-
-        grid.innerHTML = html;
-    }
-
-    function filterCharacters() {
-        renderCharacters(allCharacters);
-    }
-
-    window.showRegisterModal = function() { alert('Регистрация: перейди на главную страницу'); };
-    window.showLoginModal = function() { alert('Вход: перейди на главную страницу'); };
-    window.logout = function() { supabaseClient.auth.signOut(); window.location.reload(); };
+    window.showRegisterModal = function() { 
+        // Редирект на главную для регистрации
+        window.location.href = 'index.html#register'; 
+    };
+    window.showLoginModal = function() { 
+        window.location.href = 'index.html#login'; 
+    };
+    window.logout = function() { 
+        supabaseClient.auth.signOut().then(() => window.location.reload()); 
+    };
 
     window.onload = init;
 </script>
@@ -194,6 +572,6 @@ index_ai_updated = '''<!DOCTYPE html>
 </html>'''
 
 with open('/mnt/agents/output/index_ai.html', 'w', encoding='utf-8') as f:
-    f.write(index_ai_updated)
+    f.write(index_ai_generator)
 
-print("index_ai.html сохранён")
+print(f"index_ai.html сохранён ({len(index_ai_generator)} символов)")
