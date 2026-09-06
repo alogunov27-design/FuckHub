@@ -1,538 +1,244 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FuckHub — Свободная платформа игр без цензуры</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="script.js"></script>
-    <style>
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0f1117;
-            color: #c5d1e0;
-        }
-
-        .game-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #1a1f2e;
-        }
-        .game-card:hover {
-            transform: translateY(-6px);
-            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
-            border-color: #3a455a;
-        }
-        .game-card:hover .card-img {
-            transform: scale(1.04);
-        }
-        .card-img {
-            transition: transform 0.4s ease;
-        }
-
-        .filter-btn.active {
-            background: #f97316 !important;
-            color: #000 !important;
-            font-weight: 600;
-        }
-
-        #mobile-menu {
-            transition: max-height 0.3s ease, opacity 0.25s ease;
-        }
-        #mobile-menu.closed {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-        #mobile-menu.open {
-            max-height: 600px;
-            opacity: 1;
-        }
-
-        .line-clamp-2 {
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .donate-btn {
-            background: linear-gradient(135deg, #f97316, #ea580c);
-        }
-        .donate-btn:hover {
-            background: linear-gradient(135deg, #fb923c, #f97316);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FNWP 2 — касса</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <style>
+    body { background: #07060a; }
+    .neon { text-shadow: 0 0 18px #ff2d8f; }
+    .btn { transition: .15s transform, .15s filter; }
+    .btn:active { transform: scale(.98); }
+  </style>
 </head>
-<body>
+<body class="min-h-screen text-pink-50">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <header class="flex items-center justify-between gap-4 mb-8">
+      <div>
+        <h1 class="text-4xl font-black italic neon text-pink-400">FNWP 2</h1>
+        <p class="text-pink-200/60 text-sm">FuckFaz Studios · касса и аккаунт</p>
+      </div>
+      <div id="who" class="text-sm text-pink-200/70"></div>
+    </header>
 
-    <!-- Навбар -->
-    <nav class="bg-[#0f1117]/90 backdrop-blur-md border-b border-[#1f2533] sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-14">
-                <a href="index.html" class="flex items-center gap-1.5 shrink-0">
-                    <span class="text-2xl sm:text-3xl font-bold tracking-tighter">FUCK</span>
-                    <span class="text-2xl sm:text-3xl font-bold tracking-tighter text-orange-500">HUB</span>
-                </a>
+    <p id="banner" class="hidden mb-4 rounded-xl border border-pink-500/30 bg-pink-500/10 px-4 py-3 text-sm"></p>
 
-                <!-- Desktop links -->
-                <div class="hidden md:flex items-center gap-7 text-sm font-medium">
-                    <a href="index.html" class="text-white">Магазин</a>
-                    <a href="game.html" class="hover:text-white transition-colors">Сообщество</a>
-                    <!-- AI Сучки — видны только FuckHub -->
-                    <a id="ai-link-desktop" href="index_ai.html" class="hover:text-white transition-colors hidden">AI Сучки</a>
-                    <a href="profile.html" class="hover:text-white transition-colors">Мои Игры</a>
-                    <button onclick="showDonateModal()" class="donate-btn text-black font-semibold px-4 py-1.5 rounded-xl text-sm transition-all hover:scale-105">
-                        Монетка в киску
-                    </button>
-                </div>
+    <!-- AUTH -->
+    <section id="view-auth" class="grid md:grid-cols-2 gap-6">
+      <form id="form-login" class="rounded-2xl border border-pink-500/20 bg-black/40 p-5 space-y-3">
+        <h2 class="text-xl font-bold text-pink-300">Вход</h2>
+        <input name="email" type="email" required placeholder="почта" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
+        <input name="password" type="password" required placeholder="пароль" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
+        <button class="btn w-full rounded-lg bg-pink-600 hover:bg-pink-500 py-2 font-bold">Войти</button>
+      </form>
 
-                <!-- Desktop auth -->
-                <div id="auth-buttons" class="hidden md:flex items-center gap-3">
-                    <button onclick="showRegisterModal()" class="px-5 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-zinc-100 transition-colors">Регистрация</button>
-                    <button onclick="showLoginModal()" class="px-5 py-2 text-sm font-semibold border border-zinc-700 hover:bg-zinc-800 rounded-xl transition-colors">Войти</button>
-                </div>
+      <form id="form-reg" class="rounded-2xl border border-pink-500/20 bg-black/40 p-5 space-y-3">
+        <h2 class="text-xl font-bold text-pink-300">Регистрация</h2>
+        <input name="nickname" minlength="3" maxlength="20" required placeholder="ник (уникальный)" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
+        <input name="email" type="email" required placeholder="почта" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
+        <input name="password" type="password" minlength="6" required placeholder="пароль от 6 символов" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
+        <p class="text-xs text-pink-200/50">Ник «FuckFaz» занят студией. Регистр не важен: Fexa и fexa — один ник.</p>
+        <button class="btn w-full rounded-lg bg-pink-600 hover:bg-pink-500 py-2 font-bold">Создать аккаунт</button>
+      </form>
+    </section>
 
-                <div id="user-section" class="hidden items-center gap-4 text-sm">
-                    <span id="username-display" class="text-zinc-400"></span>
-                    <a href="profile.html" class="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 rounded-xl transition-colors">Профиль</a>
-                    <button onclick="logout()" class="text-red-400 hover:text-red-500 transition-colors">Выйти</button>
-                </div>
+    <!-- APP -->
+    <section id="view-app" class="hidden space-y-6">
+      <div class="flex flex-wrap gap-2">
+        <button data-tab="shop" class="tab btn rounded-lg border border-pink-500/40 px-4 py-2">Магазин</button>
+        <button data-tab="mine" class="tab btn rounded-lg border border-pink-500/40 px-4 py-2">Мои сучки</button>
+        <button data-tab="admin" id="tab-admin" class="hidden tab btn rounded-lg border border-yellow-400/50 px-4 py-2 text-yellow-200">Выдача</button>
+        <button id="btn-out" class="btn ml-auto rounded-lg border border-zinc-600 px-4 py-2">Выйти</button>
+      </div>
 
-                <!-- Mobile hamburger -->
-                <button id="burger-btn" onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-lg hover:bg-zinc-800 transition-colors" aria-label="Меню">
-                    <svg id="burger-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    </svg>
-                    <svg id="close-icon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
+      <div id="tab-shop" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
 
-            <!-- Mobile menu -->
-            <div id="mobile-menu" class="closed md:hidden">
-                <div class="py-4 space-y-1 border-t border-[#1f2533]">
-                    <a href="index.html" class="block px-3 py-2.5 rounded-xl text-white bg-zinc-800/60 font-medium">Магазин</a>
-                    <a href="game.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Сообщество</a>
-                    <!-- AI Сучки — видны только FuckHub -->
-                    <a id="ai-link-mobile" href="index_ai.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors hidden">AI Сучки</a>
-                    <a href="profile.html" class="block px-3 py-2.5 rounded-xl hover:bg-zinc-800/60 transition-colors">Мои Игры</a>
-                    <button onclick="showDonateModal(); toggleMobileMenu()" class="w-full text-left px-3 py-2.5 rounded-xl donate-btn text-black font-semibold mt-1">
-                        Монетка в киску
-                    </button>
+      <div id="tab-mine" class="hidden rounded-2xl border border-pink-500/20 bg-black/40 p-5">
+        <ul id="mine-list" class="space-y-2"></ul>
+      </div>
 
-                    <div class="pt-3 mt-2 border-t border-[#1f2533] space-y-2">
-                        <div id="mobile-auth-buttons">
-                            <button onclick="showRegisterModal(); toggleMobileMenu()" class="w-full px-4 py-2.5 text-sm font-semibold bg-white text-black rounded-xl mb-2">Регистрация</button>
-                            <button onclick="showLoginModal(); toggleMobileMenu()" class="w-full px-4 py-2.5 text-sm font-semibold border border-zinc-700 rounded-xl">Войти</button>
-                        </div>
-                        <div id="mobile-user-section" class="hidden space-y-2">
-                            <div class="px-3 py-1 text-sm text-zinc-400" id="mobile-username"></div>
-                            <a href="profile.html" class="block px-4 py-2.5 bg-zinc-800 rounded-xl text-center">Профиль</a>
-                            <button onclick="logout()" class="w-full px-4 py-2.5 text-red-400 rounded-xl">Выйти</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </nav>
+      <div id="tab-admin" class="hidden rounded-2xl border border-yellow-400/30 bg-black/40 p-5 space-y-3">
+        <h2 class="text-xl font-bold text-yellow-200">Выдать девочку</h2>
+        <p class="text-sm text-pink-200/60">Работает только если в базе у тебя is_admin = true. Исходник страницы это не обходит.</p>
+        <input id="grant-nick" placeholder="ник игрока (FuckFaz — себе)" class="w-full rounded-lg bg-zinc-900 border border-yellow-400/20 px-3 py-2" />
+        <input id="grant-girl" placeholder="girl_id, например diana" class="w-full rounded-lg bg-zinc-900 border border-yellow-400/20 px-3 py-2" />
+        <button id="btn-grant" class="btn rounded-lg bg-yellow-500 text-black font-bold px-4 py-2">Выдать</button>
+      </div>
+    </section>
+  </div>
 
-    <!-- Hero -->
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-10 pb-10 sm:pb-14">
-        <div class="rounded-2xl sm:rounded-3xl h-[220px] sm:h-[300px] lg:h-[340px] flex items-center relative overflow-hidden border border-[#1f2533]"
-             style="background: linear-gradient(135deg, rgba(15,17,23,0.75) 0%, rgba(15,17,23,0.9) 100%), url('https://tankulestablitz-lab.github.io/fuckfaz-site.io/images/studio_logo.jpeg') center/cover;">
-            <div class="px-6 sm:px-10 relative z-10">
-                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tighter mb-2 sm:mb-3">FUCKHUB</h1>
-                <p class="text-base sm:text-xl text-zinc-300 max-w-lg leading-snug">
-                    Свободная платформа для игр без цензуры.<br class="hidden sm:block">
-                    PC · Android · iOS
-                </p>
-            </div>
-        </div>
-    </div>
+  <script>
+    const CATALOG = [
+      { id: "starter_door", name: "Стартовая · Дверь", price: "бесплатно" },
+      { id: "diana", name: "Диана", price: "платная / вручную" },
+      { id: "leopard", name: "Снежный леопард", price: "платная / вручную" },
+      { id: "fox", name: "Лиса", price: "платная / вручную" },
+      { id: "wolf_black", name: "Чёрная волчица", price: "платная / вручную" },
+      { id: "bunny", name: "Зайка", price: "платная / вручную" },
+    ];
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+    const cfg = window.FNWP_CONFIG || {};
+    const ready = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
+    const sb = ready ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
 
-        <!-- Поиск + фильтры -->
-        <div class="flex flex-col gap-3 sm:gap-4 mb-8">
-            <input id="search-input" onkeyup="filterGames()" placeholder="Поиск игр по названию или описанию..."
-                   class="w-full px-5 py-3.5 bg-[#1a1f2e] border border-[#2a3344] rounded-2xl focus:outline-none focus:border-orange-500/60 focus:ring-1 focus:ring-orange-500/30 transition-all text-sm sm:text-base">
+    const $ = (id) => document.getElementById(id);
+    const banner = (msg, ok) => {
+      const el = $("banner");
+      el.classList.remove("hidden");
+      el.textContent = msg;
+      el.style.color = ok ? "#86efac" : "#fda4af";
+    };
 
-            <div class="flex flex-wrap gap-2">
-                <button onclick="filterByPlatform('all')" class="filter-btn active px-4 py-2.5 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-xl text-sm font-medium transition-colors" data-platform="all">Все</button>
-                <button onclick="filterByPlatform('PC')" class="filter-btn px-4 py-2.5 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-xl text-sm font-medium transition-colors" data-platform="PC">🖥️ PC</button>
-                <button onclick="filterByPlatform('Android')" class="filter-btn px-4 py-2.5 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-xl text-sm font-medium transition-colors" data-platform="Android">📱 Android</button>
-                <button onclick="filterByPlatform('iOS')" class="filter-btn px-4 py-2.5 bg-[#1a1f2e] hover:bg-[#2a3344] rounded-xl text-sm font-medium transition-colors" data-platform="iOS">🍎 iOS</button>
-            </div>
-        </div>
+    let me = null;
+    let profile = null;
+    let owned = [];
 
-        <!-- Игры от FuckHub -->
-        <div class="mb-12 sm:mb-14">
-            <h2 class="text-xl sm:text-2xl font-semibold mb-5">Игры от FuckHub</h2>
-            <div id="fuckhub-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"></div>
-        </div>
+    function showAuth() {
+      $("view-auth").classList.remove("hidden");
+      $("view-app").classList.add("hidden");
+      $("who").textContent = ready ? "" : "режим без Supabase — сначала config.js";
+    }
 
-        <!-- Все игры -->
-        <div>
-            <h2 class="text-xl sm:text-2xl font-semibold mb-5">Все опубликованные игры</h2>
-            <div id="all-games" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-5"></div>
-        </div>
-    </div>
+    function showApp() {
+      $("view-auth").classList.add("hidden");
+      $("view-app").classList.remove("hidden");
+      $("who").textContent = profile ? "@" + profile.nickname : "";
+      $("tab-admin").classList.toggle("hidden", !profile?.is_admin);
+      renderShop();
+      renderMine();
+    }
 
-    <!-- Модал доната -->
-    <div id="donate-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-6 sm:p-8 w-full max-w-md relative">
-            <button onclick="hideDonateModal()" class="absolute top-4 right-4 text-zinc-500 hover:text-white text-2xl leading-none">&times;</button>
-            
-            <h2 class="text-2xl font-bold mb-2 text-center">Монетка в киску</h2>
-            <p class="text-zinc-400 text-sm text-center mb-6">Поддержи проект — чтобы киски всегда были мокрыми</p>
+    function openTab(name) {
+      ["shop", "mine", "admin"].forEach((t) => {
+        const pane = document.getElementById("tab-" + t);
+        if (pane) pane.classList.toggle("hidden", t !== name);
+      });
+    }
 
-            <div class="bg-[#11141c] border border-[#2a3344] rounded-2xl p-4 mb-5">
-                <p class="text-xs text-zinc-500 mb-1">Сеть: <span class="text-orange-400 font-medium">Ethereum (ERC20)</span></p>
-                <p class="text-xs text-zinc-500 mb-3">USDT или ETH</p>
-                
-                <div class="flex items-center gap-2">
-                    <code id="donate-address" class="flex-1 text-sm break-all text-zinc-200 font-mono">0x68F9011124C1e3E0E6CC84B5fa77e5f82A44Ff23</code>
-                    <button onclick="copyAddress()" class="shrink-0 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 rounded-xl text-sm transition-colors">
-                        Копировать
-                    </button>
-                </div>
-                <p id="copy-success" class="text-green-400 text-xs mt-2 hidden">Адрес скопирован</p>
-            </div>
+    function renderShop() {
+      $("tab-shop").innerHTML = CATALOG.map((g) => {
+        const have = owned.includes(g.id);
+        return `<article class="rounded-2xl border border-pink-500/20 bg-black/40 p-4">
+          <h3 class="font-bold text-lg">${g.name}</h3>
+          <p class="text-sm text-pink-200/50">${g.id}</p>
+          <p class="mt-2 text-pink-300">${have ? "уже есть" : g.price}</p>
+        </article>`;
+      }).join("");
+    }
 
-            <a href="https://link.trustwallet.com/send?coin=60&address=0x68F9011124C1e3E0E6CC84B5fa77e5f82A44Ff23&token_id=0xdAC17F958D2ee523a2206206994597C13D831ec7" 
-               target="_blank"
-               class="block w-full text-center donate-btn text-black font-bold py-3.5 rounded-2xl mb-4 transition-all hover:scale-[1.02]">
-                Открыть в Trust Wallet
-            </a>
+    function renderMine() {
+      if (!owned.length) {
+        $("mine-list").innerHTML = "<li>Пока пусто. Стартовых выдашь себе кнопкой Выдача.</li>";
+        return;
+      }
+      $("mine-list").innerHTML = owned.map((id) => `<li class="border-b border-pink-500/10 py-2">${id}</li>`).join("");
+    }
 
-            <p class="text-xs text-zinc-500 text-center leading-relaxed">
-                Лучше всего отправлять через <b class="text-zinc-300">Trust Wallet</b>.<br>
-                Убедись, что сеть — <b class="text-orange-400">Ethereum</b>.
-            </p>
-        </div>
-    </div>
+    async function loadProfile() {
+      const { data, error } = await sb.from("profiles").select("nickname,is_admin").eq("id", me.id).maybeSingle();
+      if (error) throw error;
+      profile = data;
+      const { data: girls, error: gErr } = await sb.from("owned_girls").select("girl_id").eq("user_id", me.id);
+      if (gErr) throw gErr;
+      owned = (girls || []).map((x) => x.girl_id);
+    }
 
-    <!-- Модалы авторизации -->
-    <div id="register-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
-            <h2 class="text-2xl font-semibold mb-7">Регистрация</h2>
-            <input id="reg-username" placeholder="Никнейм" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-4">
-            <input id="reg-email" type="email" placeholder="Email" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-4">
-            <input id="reg-password" type="password" placeholder="Пароль" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-6">
-            <button onclick="registerUser()" class="w-full bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Зарегистрироваться</button>
-            <button onclick="hideModals()" class="mt-3 w-full text-zinc-400 hover:text-white">Отмена</button>
-        </div>
-    </div>
+    $("form-login").onsubmit = async (e) => {
+      e.preventDefault();
+      if (!sb) return banner("Сначала заполни config.js");
+      const fd = new FormData(e.target);
+      const { data, error } = await sb.auth.signInWithPassword({
+        email: fd.get("email"),
+        password: fd.get("password"),
+      });
+      if (error) return banner(error.message);
+      me = data.user;
+      try {
+        await loadProfile();
+        showApp();
+        banner("Вход ок", true);
+      } catch (err) {
+        banner(err.message || String(err));
+      }
+    };
 
-    <div id="login-modal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
-        <div class="bg-[#1a1f2e] border border-[#2a3344] rounded-3xl p-8 w-full max-w-md">
-            <h2 class="text-2xl font-semibold mb-7">Вход</h2>
-            <input id="login-email" placeholder="Email" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-4">
-            <input id="login-password" type="password" placeholder="Пароль" class="w-full px-5 py-3.5 bg-[#11141c] border border-[#2a3344] rounded-2xl mb-6">
-            <button onclick="loginUser()" class="w-full bg-white text-black font-semibold py-3.5 rounded-2xl hover:bg-zinc-100">Войти</button>
-            <button onclick="hideModals()" class="mt-3 w-full text-zinc-400 hover:text-white">Отмена</button>
-        </div>
-    </div>
+    $("form-reg").onsubmit = async (e) => {
+      e.preventDefault();
+      if (!sb) return banner("Сначала заполни config.js");
+      const fd = new FormData(e.target);
+      const nickname = String(fd.get("nickname") || "").trim();
+      const norm = nickname.toLowerCase();
+      if (norm.length < 3) return banner("Ник слишком короткий");
+      if ((cfg.reservedNicks || []).includes(norm)) {
+        return banner("Ник зарезервирован студией");
+      }
 
-    <!-- Основной скрипт страницы -->
-    <script>
-        let currentPlatformFilter = 'all';
-        let allGames = [];
+      const { data, error } = await sb.auth.signUp({
+        email: fd.get("email"),
+        password: fd.get("password"),
+      });
+      if (error) return banner(error.message);
+      if (!data.user) return banner("Почта занята или нужно подтверждение письма");
 
-        // Переопределяем функции аутентификации, используя глобальный supabaseClient из script.js
-        window.showRegisterModal = function() { document.getElementById('register-modal').classList.remove('hidden'); };
-        window.showLoginModal = function() { document.getElementById('login-modal').classList.remove('hidden'); };
-        window.hideModals = function() {
-            document.getElementById('register-modal').classList.add('hidden');
-            document.getElementById('login-modal').classList.add('hidden');
-        };
-
-        window.registerUser = async function() {
-            const username = document.getElementById('reg-username').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            const password = document.getElementById('reg-password').value.trim();
-            if (!username || !email || !password) return alert("Заполните все поля");
-
-            try {
-                await registerUser(email, password, username);
-                alert("Регистрация прошла! Проверьте почту.");
-                hideModals();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
-            }
-        };
-
-        window.loginUser = async function() {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value.trim();
-            if (!email || !password) return alert("Заполните email и пароль");
-
-            try {
-                await loginUser(email, password);
-                alert("Успешный вход!");
-                hideModals();
-                location.reload();
-            } catch (e) {
-                alert("Ошибка: " + e.message);
-            }
-        };
-
-        window.logout = async function() { 
-            await logout(); 
-        };
-
-        function toggleMobileMenu() {
-            const menu = document.getElementById('mobile-menu');
-            const burger = document.getElementById('burger-icon');
-            const close = document.getElementById('close-icon');
-            const isOpen = menu.classList.contains('open');
-            if (isOpen) {
-                menu.classList.remove('open');
-                menu.classList.add('closed');
-                burger.classList.remove('hidden');
-                close.classList.add('hidden');
-            } else {
-                menu.classList.remove('closed');
-                menu.classList.add('open');
-                burger.classList.add('hidden');
-                close.classList.remove('hidden');
-            }
+      const { error: pErr } = await sb.rpc("register_profile", { nick: nickname });
+      if (pErr) {
+        const msg = pErr.message || "";
+        if (msg.includes("profiles_nickname_norm_key") || msg.includes("duplicate")) {
+          return banner("Ник уже занят");
         }
+        if (msg.includes("nick_reserved")) return banner("Ник зарезервирован");
+        return banner(msg);
+      }
+      banner("Аккаунт создан. Если включено подтверждение почты — сначала письмо, потом вход.", true);
+    };
 
-        // Функция проверки, является ли пользователь FuckHub
-        function isFuckHub(user) {
-            if (!user) return false;
-            const username = user.user_metadata?.username || '';
-            return username.toLowerCase() === 'fuckhub';
+    $("btn-out").onclick = async () => {
+      if (sb) await sb.auth.signOut();
+      me = null;
+      profile = null;
+      owned = [];
+      showAuth();
+    };
+
+    $("btn-grant").onclick = async () => {
+      if (!sb) return banner("Нет Supabase");
+      const nick = $("grant-nick").value.trim();
+      const girl = $("grant-girl").value.trim();
+      const { error } = await sb.rpc("admin_grant", { target_nick: nick, p_girl_id: girl });
+      if (error) return banner(error.message);
+      banner("Выдано " + girl + " → " + nick, true);
+      await loadProfile();
+      renderShop();
+      renderMine();
+    };
+
+    document.querySelectorAll(".tab").forEach((b) => {
+      b.onclick = () => openTab(b.dataset.tab);
+    });
+
+    (async () => {
+      if (!ready) {
+        banner("config.js пустой. Сайт открывается, но вход заработает после нового проекта Supabase.");
+        showAuth();
+        return;
+      }
+      const { data } = await sb.auth.getSession();
+      if (data.session) {
+        me = data.session.user;
+        try {
+          await loadProfile();
+          showApp();
+        } catch (err) {
+          banner(err.message || String(err));
+          showAuth();
         }
-
-        // Функция обновления видимости AI-ссылок
-        function updateAIVisibility() {
-            const isAdmin = isFuckHub(currentUser);
-            const desktopLink = document.getElementById('ai-link-desktop');
-            const mobileLink = document.getElementById('ai-link-mobile');
-            
-            if (desktopLink) {
-                desktopLink.classList.toggle('hidden', !isAdmin);
-                desktopLink.classList.toggle('inline', isAdmin);
-            }
-            if (mobileLink) {
-                mobileLink.classList.toggle('hidden', !isAdmin);
-            }
-        }
-
-        // Инициализация и загрузка игр
-        async function initIndex() {
-            try {
-                await getSession();
-                
-                // Обновляем UI в зависимости от авторизации
-                if (currentUser) {
-                    document.getElementById('auth-buttons').classList.add('hidden');
-                    document.getElementById('auth-buttons').classList.remove('md:flex');
-                    const userSec = document.getElementById('user-section');
-                    userSec.classList.remove('hidden');
-                    userSec.classList.add('flex');
-                    document.getElementById('username-display').textContent = currentUser.user_metadata?.username || currentUser.email;
-
-                    document.getElementById('mobile-auth-buttons').classList.add('hidden');
-                    document.getElementById('mobile-user-section').classList.remove('hidden');
-                    document.getElementById('mobile-username').textContent = currentUser.user_metadata?.username || currentUser.email;
-                } else {
-                    document.getElementById('auth-buttons').classList.remove('hidden');
-                    document.getElementById('mobile-auth-buttons').classList.remove('hidden');
-                    document.getElementById('mobile-user-section').classList.add('hidden');
-                }
-
-                // Обновляем видимость AI-ссылок
-                updateAIVisibility();
-
-                await loadGamesForIndex();
-            } catch (e) {
-                console.error('Init error:', e);
-            }
-        }
-
-        async function loadGamesForIndex() {
-            try {
-                const { data, error } = await supabaseClient.from('games').select('*').order('created_at', { ascending: false });
-                if (error) throw error;
-                allGames = data || [];
-                renderGamesForIndex(allGames);
-            } catch (e) {
-                console.error(e);
-                document.getElementById('fuckhub-games').innerHTML = '<p class="col-span-full text-center py-10 text-zinc-500">Ошибка загрузки игр</p>';
-                document.getElementById('all-games').innerHTML = '';
-            }
-        }
-
-        function renderGamesForIndex(games) {
-            const fuckhubContainer = document.getElementById('fuckhub-games');
-            const allContainer = document.getElementById('all-games');
-
-            let filteredGames = Array.isArray(games) ? [...games] : [];
-
-            if (currentPlatformFilter !== 'all') {
-                filteredGames = filteredGames.filter(g => {
-                    if (!g.platforms) return false;
-                    const plats = typeof g.platforms === 'string' ? g.platforms : (Array.isArray(g.platforms) ? g.platforms.join(',') : '');
-                    return plats.includes(currentPlatformFilter);
-                });
-            }
-
-            const searchTerm = (document.getElementById('search-input')?.value || '').toLowerCase().trim();
-            if (searchTerm) {
-                filteredGames = filteredGames.filter(g =>
-                    (g.title && g.title.toLowerCase().includes(searchTerm)) ||
-                    (g.description && g.description.toLowerCase().includes(searchTerm)) ||
-                    (g.author && g.author.toLowerCase().includes(searchTerm))
-                );
-            }
-
-            const fuckhubGames = filteredGames.filter(g => g.author === 'FuckHub');
-            const otherGames = filteredGames.filter(g => g.author !== 'FuckHub');
-
-            fuckhubContainer.innerHTML = fuckhubGames.length
-                ? fuckhubGames.map(g => createCard(g)).join('')
-                : '<p class="col-span-full text-center py-12 text-zinc-500">Пока нет официальных игр</p>';
-
-            allContainer.innerHTML = otherGames.length
-                ? otherGames.map(g => createCard(g)).join('')
-                : '<p class="col-span-full text-center py-12 text-zinc-500">Пока нет других игр</p>';
-        }
-
-        function createCard(g) {
-            try {
-                let platformsHTML = '';
-                if (g.platforms) {
-                    const plats = typeof g.platforms === 'string' 
-                        ? g.platforms.split(',').map(p => p.trim()).filter(Boolean)
-                        : (Array.isArray(g.platforms) ? g.platforms : []);
-                    platformsHTML = plats.map(p => {
-                        let icon = p.includes('PC') ? '🖥️' : p.includes('Android') ? '📱' : p.includes('iOS') ? '🍎' : '🎮';
-                        return `<span class="inline-flex items-center bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">${icon} ${p}</span>`;
-                    }).join('');
-                }
-
-                let tagsHTML = '';
-                if (g.tags) {
-                    const tags = Array.isArray(g.tags) ? g.tags : (typeof g.tags === 'string' ? g.tags.split(',') : []);
-                    tagsHTML = tags.slice(0, 4).map(tag =>
-                        `<span class="inline-block bg-[#1f2533] text-xs px-2.5 py-1 rounded-full">${String(tag).trim()}</span>`
-                    ).join('');
-                }
-
-                const nsfwBadge = g.is_nsfw
-                    ? `<span class="bg-red-600/90 text-white text-[11px] font-bold px-2.5 py-1 rounded-full">18+</span>`
-                    : '';
-                const officialBadge = g.author === 'FuckHub'
-                    ? `<span class="bg-orange-500 text-black text-[11px] font-bold px-2.5 py-1 rounded-full">FuckFaz</span>`
-                    : '';
-
-                const downloadCount = g.download_count || 0;
-                const date = g.created_at
-                    ? new Date(g.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' })
-                    : '';
-
-                const cover = g.cover || 'https://picsum.photos/400/300?grayscale';
-                const safeDownload = (g.download || '').replace(/'/g, "\\'");
-
-                return `
-                    <div class="game-card rounded-2xl overflow-hidden border border-[#2a3344] flex flex-col">
-                        <div class="relative overflow-hidden">
-                            <img src="${cover}" loading="lazy" class="card-img w-full h-48 sm:h-52 object-cover" alt="${g.title || 'Игра'}">
-                            <div class="absolute top-3 right-3 flex gap-1.5">
-                                ${officialBadge}
-                                ${nsfwBadge}
-                            </div>
-                        </div>
-                        <div class="p-4 sm:p-5 flex flex-col flex-1">
-                            <h3 class="font-semibold text-base sm:text-lg leading-tight mb-1 line-clamp-2">${g.title || 'Без названия'}</h3>
-                            <p class="text-sm text-zinc-400 mb-3">${g.author || 'Неизвестно'}</p>
-
-                            ${platformsHTML ? `<div class="flex flex-wrap gap-1.5 mb-3">${platformsHTML}</div>` : ''}
-                            ${tagsHTML ? `<div class="flex flex-wrap gap-1.5 mb-3">${tagsHTML}</div>` : ''}
-
-                            <p class="text-sm text-zinc-400 line-clamp-2 mb-4 flex-1">${g.description || 'Описание отсутствует'}</p>
-
-                            <div class="flex justify-between items-center mb-4 text-sm">
-                                <span class="text-zinc-400">Скачано: <span class="font-medium text-white">${downloadCount}</span></span>
-                                <span class="text-zinc-500 text-xs">${date}</span>
-                            </div>
-
-                            <button onclick="downloadGame('${g.id}', '${safeDownload}')"
-                                    class="w-full bg-orange-500 hover:bg-orange-600 active:scale-[0.98] text-black font-semibold py-3 rounded-xl text-sm transition-all">
-                                Скачать / Играть
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } catch (err) {
-                console.error('Card render error:', err, g);
-                return '';
-            }
-        }
-
-        window.downloadGame = async function(gameId, downloadUrl) {
-            if (!downloadUrl) return alert("Ссылка отсутствует");
-            window.open(downloadUrl, '_blank');
-
-            try {
-                const { data } = await supabaseClient
-                    .from('games')
-                    .select('download_count')
-                    .eq('id', gameId)
-                    .single();
-
-                const newCount = (data?.download_count || 0) + 1;
-                await supabaseClient
-                    .from('games')
-                    .update({ download_count: newCount })
-                    .eq('id', gameId);
-
-                setTimeout(() => loadGamesForIndex(), 900);
-            } catch (e) {
-                console.error('Ошибка обновления счётчика:', e);
-            }
-        };
-
-        window.filterByPlatform = function(platform) {
-            currentPlatformFilter = platform;
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-            const activeBtn = document.querySelector(`.filter-btn[data-platform="${platform}"]`);
-            if (activeBtn) activeBtn.classList.add('active');
-            renderGamesForIndex(allGames);
-        };
-
-        window.filterGames = function() {
-            renderGamesForIndex(allGames);
-        };
-
-        // Обработчики доната
-        window.showDonateModal = function() { document.getElementById('donate-modal').classList.remove('hidden'); };
-        window.hideDonateModal = function() { document.getElementById('donate-modal').classList.add('hidden'); };
-        window.copyAddress = function() {
-            const addr = document.getElementById('donate-address').textContent.trim();
-            navigator.clipboard.writeText(addr).then(() => {
-                const el = document.getElementById('copy-success');
-                el.classList.remove('hidden');
-                setTimeout(() => el.classList.add('hidden'), 2000);
-            }).catch(() => {
-                const textarea = document.createElement('textarea');
-                textarea.value = addr;
-                document.body.appendChild(textarea);
-                textarea.select();
-                document.execCommand('copy');
-                document.body.removeChild(textarea);
-                const el = document.getElementById('copy-success');
-                el.classList.remove('hidden');
-                setTimeout(() => el.classList.add('hidden'), 2000);
-            });
-        };
-
-        window.onload = initIndex;
-    </script>
+      } else {
+        showAuth();
+      }
+    })();
+  </script>
 </body>
 </html>
