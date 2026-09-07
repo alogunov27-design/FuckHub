@@ -161,10 +161,31 @@
     #banner.bad { color: #ff8aa8; }
     .hidden { display: none !important; }
     .row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+    .inv { display: grid; grid-template-columns: 1fr; gap: 12px; }
+    .inv-card { padding: 0; overflow: hidden; }
+    .inv-card img, .girl-card img, .ph {
+      display: block; width: 100%; height: auto;
+      aspect-ratio: 9 / 16;
+      object-fit: contain;
+      object-position: center;
+      background: #1a0a14;
+    }
+    .girl-card { padding: 0; overflow: hidden; }
+    .girl-card .meta { padding: 10px 12px 14px; }
+    #shop-girls { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
+    .inv-card .meta { padding: 10px 12px 12px; }
+    .ph {
+      display: grid; place-items: center;
+      background: linear-gradient(180deg, #2a1020, #12030d);
+      color: var(--pink2); font-weight: 800; font-size: 13px;
+    }
+    #mine-list { padding-left: 0; }
     @media (min-width: 640px) {
       .row { grid-template-columns: 1fr auto; align-items: start; }
       .row .btn { width: auto; padding-inline: 22px; }
       .grid.packs { grid-template-columns: 1fr 1fr 1fr; }
+      .inv, #shop-girls { grid-template-columns: 1fr 1fr; }
     }
     @media (min-width: 980px) {
       .wrap { width: min(1180px, calc(100% - 48px)); padding-top: 22px; }
@@ -173,25 +194,10 @@
       h1 { font-size: 56px; }
       .lead { font-size: 17px; max-width: 36ch; }
       .panel { padding: 22px; }
-      .inv { grid-template-columns: 1fr; max-width: 420px; }
-      .inv-card img { height: 480px; }
+      .inv, #shop-girls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
       .grid.packs { grid-template-columns: repeat(3, 1fr); }
       .logo { font-size: 22px; }
     }
-    footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
-    .inv { display: grid; grid-template-columns: 1fr; gap: 12px; }
-    .inv-card { padding: 0; overflow: hidden; }
-    .inv-card img {
-      display: block; width: 100%; height: 360px; object-fit: cover; object-position: top;
-      background: #1a0a14;
-    }
-    .inv-card .meta { padding: 10px 12px 12px; }
-    .ph {
-      height: 210px; display: grid; place-items: center;
-      background: linear-gradient(180deg, #2a1020, #12030d);
-      color: var(--pink2); font-weight: 800; font-size: 13px;
-    }
-    #mine-list { padding-left: 0; }
   </style>
 </head>
 <body>
@@ -273,7 +279,7 @@
             <p class="price" id="coins-label">0 FF</p>
           </article>
         </div>
-        <div class="grid packs" id="shop-girls" style="margin-top:10px"></div>
+        <div id="shop-girls"></div>
       </div>
 
       <div id="tab-mine" class="hidden">
@@ -387,12 +393,12 @@
       const pics = Object.fromEntries(CATALOG.map((g) => [g.id, g.img]));
       box.innerHTML = rows.map((g) => {
         const have = owned.includes(g.id);
-        const pic = pics[g.id] ? `<img src="${pics[g.id]}" alt="" style="width:100%;height:160px;object-fit:cover;object-position:top;border-radius:12px">` : "";
-        return `<article class="card">${pic}<h3>${g.name}</h3>
+        const pic = pics[g.id] ? `<img src="${pics[g.id]}" alt="">` : `<div class="ph">нет кадра</div>`;
+        return `<article class="card girl-card">${pic}<div class="meta"><h3>${g.name}</h3>
           <p class="muted">${have ? "уже в аккаунте" : "откроется в игре после оплаты"}</p>
           <p class="price">${have ? "есть" : g.price_rub + " ₽"}</p>
           ${have ? "" : `<button class="btn" data-buy="${g.id}" data-sum="${g.price_rub}" type="button">Купить ${g.price_rub} ₽</button>`}
-        </article>`;
+        </div></article>`;
       }).join("") || "<p class='muted'>витрина пустая</p>";
       box.querySelectorAll("[data-buy]").forEach((b) => {
         b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy);
