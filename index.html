@@ -251,20 +251,11 @@
         <div class="grid">
           <article class="card lock">
             <h3>Игровая валюта</h3>
-            <p class="muted">Часть сучек за монеты, часть за рубли.</p>
+            <p class="muted">Пока закрыта. Сучки за рубли ниже.</p>
             <p class="price" id="coins-label">0 FF</p>
           </article>
-          <article class="card">
-            <h3>Стартовый набор</h3>
-            <p class="muted">Дверь смены. На тесте выдаёт админ.</p>
-            <p class="price">в сборке</p>
-          </article>
-          <article class="card">
-            <h3>Ночные карточки</h3>
-            <p class="muted">Каталог откроется вместе с валютой.</p>
-            <p class="price">скоро</p>
-          </article>
         </div>
+        <div class="grid packs" id="shop-girls" style="margin-top:10px"></div>
       </div>
 
       <div id="tab-mine" class="hidden">
@@ -290,12 +281,10 @@
 
   <script>
     const CATALOG = [
-      { id: "starter_door", name: "Стартовая · Дверь", img: "" },
+      { id: "fexa", name: "Fexa", img: "" },
+      { id: "fnia", name: "Fnia", img: "" },
+      { id: "bonfie", name: "Bonfie", img: "" },
       { id: "diana", name: "Диана", img: "./img/diana.png" },
-      { id: "leopard", name: "Снежный леопард", img: "" },
-      { id: "fox", name: "Лиса", img: "" },
-      { id: "wolf_black", name: "Чёрная волчица", img: "" },
-      { id: "bunny", name: "Зайка", img: "" },
     ];
     const PACKS = [
       { amount: 300, title: "Кофе", text: "маленькая поддержка" },
@@ -330,6 +319,7 @@
       $("coins-label").textContent = (profile?.coins ?? 0) + " FF · скоро";
       renderDonate();
       renderMine();
+      renderShopGirls();
     }
     function openTab(name) {
       ["donate", "shop", "mine", "admin"].forEach((t) => {
@@ -357,15 +347,36 @@
       if (n > 150000) return banner("Разбей платёж");
       askDonate(n);
     };
-    async function askDonate(amount) {
+    async function askDonate(amount, girlId) {
       if (!sb || !me) return banner("Сначала вход");
       const { error } = await sb.from("donations").insert({
         user_id: me.id, amount_rub: amount, status: "pending",
-        comment: (profile && profile.nickname) || "",
+        comment: girlId || ((profile && profile.nickname) || ""),
       });
       if (error) return banner(error.message);
       banner("Заявка " + amount + " ₽ записана. СБП позже.", true);
     }
+    async function renderShopGirls() {
+      const box = $("shop-girls");
+      if (!box || !sb) return;
+      const { data, error } = await sb.from("girls").select("id,name,price_rub,in_shop").order("price_rub");
+      if (error) { box.innerHTML = "<p class='muted'>" + error.message + "</p>"; return; }
+      const rows = (data || []).filter((g) => g.in_shop || g.price_rub > 0);
+      const pics = Object.fromEntries(CATALOG.map((g) => [g.id, g.img]));
+      box.innerHTML = rows.map((g) => {
+        const have = owned.includes(g.id);
+        const pic = pics[g.id] ? `<img src="${pics[g.id]}" alt="" style="width:100%;height:160px;object-fit:cover;object-position:top;border-radius:12px">` : "";
+        return `<article class="card">${pic}<h3>${g.name}</h3>
+          <p class="muted">${have ? "уже в аккаунте" : "откроется в игре после оплаты"}</p>
+          <p class="price">${have ? "есть" : g.price_rub + " ₽"}</p>
+          ${have ? "" : `<button class="btn" data-buy="${g.id}" data-sum="${g.price_rub}" type="button">Купить ${g.price_rub} ₽</button>`}
+        </article>`;
+      }).join("") || "<p class='muted'>витрина пустая</p>";
+      box.querySelectorAll("[data-buy]").forEach((b) => {
+        b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy);
+      });
+    }
+
     function renderMine() {
       const map = Object.fromEntries(CATALOG.map((g) => [g.id, g]));
       if (!owned.length) {
