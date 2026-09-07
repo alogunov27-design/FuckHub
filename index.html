@@ -2,242 +2,457 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FNWP 2 — касса</title>
-  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>FNWP 2 — FuckFaz Studios</title>
+  <meta name="theme-color" content="#12010c" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js"></script>
   <style>
-    body { background: #07060a; }
-    .neon { text-shadow: 0 0 18px #ff2d8f; }
-    .btn { transition: .15s transform, .15s filter; }
-    .btn:active { transform: scale(.98); }
+    :root {
+      --bg: #09050b;
+      --pink: #ff3d9a;
+      --pink2: #ff8ec4;
+      --gold: #f3c15c;
+      --text: #fff5fb;
+      --muted: #b89aaa;
+      --line: rgba(255, 80, 160, .28);
+      --safe: env(safe-area-inset-bottom);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: Manrope, system-ui, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(120% 60% at 50% -10%, rgba(255, 40, 140, .28), transparent 55%),
+        repeating-linear-gradient(-12deg, transparent 0 18px, rgba(255,255,255,.015) 18px 19px),
+        #09050b;
+    }
+    .wrap {
+      width: min(720px, 100%);
+      margin: 0 auto;
+      padding: 12px 16px calc(28px + var(--safe));
+    }
+    header {
+      position: sticky; top: 0; z-index: 20;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0 12px;
+      background: linear-gradient(#09050b 70%, transparent);
+    }
+    .brand { display: flex; gap: 10px; align-items: center; }
+    .mark {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: conic-gradient(from 210deg, #ff3d9a, #7a1fff, #ff3d9a);
+      box-shadow: 0 0 18px rgba(255,61,154,.55);
+    }
+    .logo { font-family: Unbounded, sans-serif; font-weight: 800; margin: 0; font-size: 18px; }
+    .sub { margin: 0; color: var(--muted); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
+    .who { color: var(--pink2); font-weight: 800; font-size: 13px; }
+    .poster {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 22px 18px 20px;
+      background:
+        linear-gradient(180deg, rgba(255,61,154,.16), rgba(9,5,11,.2)),
+        #14040e;
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-family: Unbounded, sans-serif;
+      font-size: clamp(28px, 9vw, 44px);
+      line-height: .92;
+      margin: 0 0 10px;
+    }
+    .pink { color: var(--pink); }
+    .lead { margin: 0; color: #efd4e2; font-size: 15px; line-height: 1.45; }
+    .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .chip {
+      border: 1px solid var(--line); border-radius: 999px;
+      padding: 6px 10px; font-size: 11px; font-weight: 800; color: var(--pink2);
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 16px;
+      background: rgba(16, 6, 14, .9);
+      margin-bottom: 12px;
+    }
+    .tabs {
+      display: flex; gap: 8px; overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      margin: 0 0 12px;
+      padding-bottom: 2px;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab, .btn, button {
+      font-family: inherit; border: 0; cursor: pointer;
+    }
+    .tab {
+      flex: 0 0 auto;
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #1a0a14;
+      color: var(--text);
+      border: 1px solid var(--line);
+      font-weight: 800;
+      font-size: 14px;
+    }
+    .tab.on { background: var(--pink); color: #1a0210; border-color: transparent; }
+    input {
+      width: 100%;
+      min-height: 50px;
+      font-size: 16px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: #0c070b;
+      color: var(--text);
+      padding: 12px 14px;
+      margin: 0 0 10px;
+    }
+    .btn, a.btn {
+      display: block;
+      width: 100%;
+      min-height: 50px;
+      border-radius: 14px;
+      padding: 13px 14px;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 16px;
+      background: linear-gradient(180deg, #ff6fb8, #ff2d8f);
+      color: #1a0210;
+    }
+    .btn.gold { background: linear-gradient(180deg, #ffd789, #e0a328); color: #2a1a00; }
+    .btn.ghost { background: transparent; color: var(--pink2); border: 1px solid var(--line); }
+    .grid { display: grid; gap: 10px; }
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 16px;
+      background: #12030d;
+    }
+    .card h3 { font-family: Unbounded, sans-serif; margin: 0 0 6px; font-size: 16px; }
+    .muted { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 0; }
+    .price { color: var(--gold); font-weight: 800; font-size: 22px; margin: 12px 0; }
+    .lock { position: relative; overflow: hidden; }
+    .lock::after {
+      content: "временно недоступна";
+      position: absolute; inset: 0;
+      background: rgba(8,4,10,.78);
+      display: grid; place-items: center;
+      font-weight: 800; color: var(--pink2);
+    }
+    #banner {
+      display: none; margin: 0 0 12px; padding: 12px 14px;
+      border-radius: 14px; border: 1px solid var(--line);
+      background: rgba(255,61,154,.12); font-size: 14px;
+    }
+    #banner.show { display: block; }
+    #banner.ok { color: #8dffb8; }
+    #banner.bad { color: #ff8aa8; }
+    .hidden { display: none !important; }
+    .row { display: grid; grid-template-columns: 1fr; gap: 8px; }
+    @media (min-width: 640px) {
+      .row { grid-template-columns: 1fr auto; align-items: start; }
+      .row .btn { width: auto; padding-inline: 22px; }
+      .grid.packs { grid-template-columns: 1fr 1fr 1fr; }
+    }
+    footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
+    .inv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .inv-card { padding: 0; overflow: hidden; }
+    .inv-card img {
+      display: block; width: 100%; height: 210px; object-fit: cover; object-position: top;
+      background: #1a0a14;
+    }
+    .inv-card .meta { padding: 10px 12px 12px; }
+    .ph {
+      height: 210px; display: grid; place-items: center;
+      background: linear-gradient(180deg, #2a1020, #12030d);
+      color: var(--pink2); font-weight: 800; font-size: 13px;
+    }
+    #mine-list { padding-left: 18px; }
   </style>
 </head>
-<body class="min-h-screen text-pink-50">
-  <div class="max-w-5xl mx-auto px-4 py-8">
-    <header class="flex items-center justify-between gap-4 mb-8">
-      <div>
-        <h1 class="text-4xl font-black italic neon text-pink-400">FNWP 2</h1>
-        <p class="text-pink-200/60 text-sm">FuckFaz Studios · касса и аккаунт</p>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="mark"></div>
+        <div>
+          <p class="logo">FNWP 2</p>
+          <p class="sub">FuckFaz Studios</p>
+        </div>
       </div>
-      <div id="who" class="text-sm text-pink-200/70"></div>
+      <div class="who" id="who"></div>
     </header>
 
-    <p id="banner" class="hidden mb-4 rounded-xl border border-pink-500/30 bg-pink-500/10 px-4 py-3 text-sm"></p>
+    <div id="banner"></div>
 
-    <!-- AUTH -->
-    <section id="view-auth" class="grid md:grid-cols-2 gap-6">
-      <form id="form-login" class="rounded-2xl border border-pink-500/20 bg-black/40 p-5 space-y-3">
-        <h2 class="text-xl font-bold text-pink-300">Вход</h2>
-        <input name="email" type="email" required placeholder="почта" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
-        <input name="password" type="password" required placeholder="пароль" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
-        <button class="btn w-full rounded-lg bg-pink-600 hover:bg-pink-500 py-2 font-bold">Войти</button>
+    <section class="poster" id="poster">
+      <h1>Ночь,<br><span class="pink">не со стула.</span></h1>
+      <p class="lead">Ходишь по клубу. Собираешь смену. Ловишь сучку — уже не скример. Аккаунт, чтобы покупки пережили смену телефона.</p>
+      <div class="chips">
+        <span class="chip">18+</span>
+        <span class="chip">Android first</span>
+        <span class="chip">касса + облако</span>
+      </div>
+    </section>
+
+    <section class="panel" id="view-auth">
+      <div class="tabs">
+        <button class="tab on" type="button" data-auth="login">Вход</button>
+        <button class="tab" type="button" data-auth="reg">Регистрация</button>
+      </div>
+      <form id="form-login">
+        <input name="email" type="email" required placeholder="почта" autocomplete="email" inputmode="email" />
+        <input name="password" type="password" required placeholder="пароль" autocomplete="current-password" />
+        <button class="btn" type="submit">Войти</button>
       </form>
-
-      <form id="form-reg" class="rounded-2xl border border-pink-500/20 bg-black/40 p-5 space-y-3">
-        <h2 class="text-xl font-bold text-pink-300">Регистрация</h2>
-        <input name="nickname" minlength="3" maxlength="20" required placeholder="ник (уникальный)" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
-        <input name="email" type="email" required placeholder="почта" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
-        <input name="password" type="password" minlength="6" required placeholder="пароль от 6 символов" class="w-full rounded-lg bg-zinc-900 border border-pink-500/20 px-3 py-2" />
-        <p class="text-xs text-pink-200/50">Ник «FuckFaz» занят студией. Регистр не важен: Fexa и fexa — один ник.</p>
-        <button class="btn w-full rounded-lg bg-pink-600 hover:bg-pink-500 py-2 font-bold">Создать аккаунт</button>
+      <form id="form-reg" class="hidden">
+        <input name="nickname" minlength="3" maxlength="20" required placeholder="ник (уникальный)" />
+        <input name="email" type="email" required placeholder="почта" autocomplete="email" inputmode="email" />
+        <input name="password" type="password" minlength="6" required placeholder="пароль от 6 символов" autocomplete="new-password" />
+        <p class="muted" style="margin-bottom:10px">Ник FuckFaz занят студией. Регистр не важен.</p>
+        <button class="btn" type="submit">Создать аккаунт</button>
       </form>
     </section>
 
-    <!-- APP -->
-    <section id="view-app" class="hidden space-y-6">
-      <div class="flex flex-wrap gap-2">
-        <button data-tab="shop" class="tab btn rounded-lg border border-pink-500/40 px-4 py-2">Магазин</button>
-        <button data-tab="mine" class="tab btn rounded-lg border border-pink-500/40 px-4 py-2">Мои сучки</button>
-        <button data-tab="admin" id="tab-admin" class="hidden tab btn rounded-lg border border-yellow-400/50 px-4 py-2 text-yellow-200">Выдача</button>
-        <button id="btn-out" class="btn ml-auto rounded-lg border border-zinc-600 px-4 py-2">Выйти</button>
+    <section id="view-app" class="hidden">
+      <div class="tabs">
+        <button class="tab on" type="button" data-tab="donate">Донат</button>
+        <button class="tab" type="button" data-tab="shop">Магазин</button>
+        <button class="tab" type="button" data-tab="mine">Инвентарь</button>
+        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab">Выдача</button>
+        <button class="tab" type="button" id="btn-out">Выйти</button>
       </div>
 
-      <div id="tab-shop" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
-
-      <div id="tab-mine" class="hidden rounded-2xl border border-pink-500/20 bg-black/40 p-5">
-        <ul id="mine-list" class="space-y-2"></ul>
+      <div id="tab-donate">
+        <div class="panel">
+          <h2 style="font-family:Unbounded;margin:0 0 8px;font-size:20px">Поддержка FNWP 2</h2>
+          <p class="muted">Оплата разработки. СБП подключится после проверки Тинька. Сейчас сумма и ник уходят заявкой.</p>
+        </div>
+        <div class="grid packs" id="donate-grid"></div>
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Своя сумма</h3>
+          <p class="muted" style="margin-bottom:10px">От 100 ₽</p>
+          <div class="row">
+            <input id="donate-custom" type="number" min="100" step="50" inputmode="numeric" placeholder="сумма, ₽" />
+            <button class="btn gold" id="btn-donate-custom" type="button">Поддержать</button>
+          </div>
+        </div>
       </div>
 
-      <div id="tab-admin" class="hidden rounded-2xl border border-yellow-400/30 bg-black/40 p-5 space-y-3">
-        <h2 class="text-xl font-bold text-yellow-200">Выдать девочку</h2>
-        <p class="text-sm text-pink-200/60">Работает только если в базе у тебя is_admin = true. Исходник страницы это не обходит.</p>
-        <input id="grant-nick" placeholder="ник игрока (FuckFaz — себе)" class="w-full rounded-lg bg-zinc-900 border border-yellow-400/20 px-3 py-2" />
-        <input id="grant-girl" placeholder="girl_id, например diana" class="w-full rounded-lg bg-zinc-900 border border-yellow-400/20 px-3 py-2" />
-        <button id="btn-grant" class="btn rounded-lg bg-yellow-500 text-black font-bold px-4 py-2">Выдать</button>
+      <div id="tab-shop" class="hidden">
+        <div class="grid">
+          <article class="card lock">
+            <h3>Игровая валюта</h3>
+            <p class="muted">Часть сучек за монеты, часть за рубли.</p>
+            <p class="price" id="coins-label">0 FF</p>
+          </article>
+          <article class="card">
+            <h3>Стартовый набор</h3>
+            <p class="muted">Дверь смены. На тесте выдаёт админ.</p>
+            <p class="price">в сборке</p>
+          </article>
+          <article class="card">
+            <h3>Ночные карточки</h3>
+            <p class="muted">Каталог откроется вместе с валютой.</p>
+            <p class="price">скоро</p>
+          </article>
+        </div>
+      </div>
+
+      <div id="tab-mine" class="hidden">
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Мои сучки</h3>
+          <div class="inv" id="mine-list"></div>
+        </div>
+      </div>
+
+      <div id="tab-admin" class="hidden">
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3>
+          <p class="muted" style="margin-bottom:10px">Только is_admin в базе.</p>
+          <input id="grant-nick" placeholder="ник игрока" />
+          <input id="grant-girl" placeholder="girl_id, например diana" />
+          <button class="btn gold" id="btn-grant" type="button">Выдать</button>
+        </div>
       </div>
     </section>
+
+    <footer>FuckFaz Studios · 18+ · касса FNWP 2</footer>
   </div>
 
   <script>
     const CATALOG = [
-      { id: "starter_door", name: "Стартовая · Дверь", price: "бесплатно" },
-      { id: "diana", name: "Диана", price: "платная / вручную" },
-      { id: "leopard", name: "Снежный леопард", price: "платная / вручную" },
-      { id: "fox", name: "Лиса", price: "платная / вручную" },
-      { id: "wolf_black", name: "Чёрная волчица", price: "платная / вручную" },
-      { id: "bunny", name: "Зайка", price: "платная / вручную" },
+      { id: "starter_door", name: "Стартовая · Дверь", img: "" },
+      { id: "diana", name: "Диана", img: "./img/diana.png" },
+      { id: "leopard", name: "Снежный леопард", img: "" },
+      { id: "fox", name: "Лиса", img: "" },
+      { id: "wolf_black", name: "Чёрная волчица", img: "" },
+      { id: "bunny", name: "Зайка", img: "" },
+    ];
+    const PACKS = [
+      { amount: 300, title: "Кофе", text: "маленькая поддержка" },
+      { amount: 500, title: "Смена", text: "стандарт" },
+      { amount: 1000, title: "Касса", text: "заметный донат" },
     ];
 
     const cfg = window.FNWP_CONFIG || {};
     const ready = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
     const sb = ready ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
-
     const $ = (id) => document.getElementById(id);
     const banner = (msg, ok) => {
       const el = $("banner");
-      el.classList.remove("hidden");
+      el.className = "show " + (ok ? "ok" : "bad");
       el.textContent = msg;
-      el.style.color = ok ? "#86efac" : "#fda4af";
     };
 
-    let me = null;
-    let profile = null;
-    let owned = [];
+    let me = null, profile = null, owned = [];
 
     function showAuth() {
       $("view-auth").classList.remove("hidden");
       $("view-app").classList.add("hidden");
-      $("who").textContent = ready ? "" : "режим без Supabase — сначала config.js";
+      $("poster").classList.remove("hidden");
+      $("who").textContent = ready ? "гость" : "нет config.js";
     }
-
     function showApp() {
       $("view-auth").classList.add("hidden");
       $("view-app").classList.remove("hidden");
+      $("poster").classList.add("hidden");
       $("who").textContent = profile ? "@" + profile.nickname : "";
-      $("tab-admin").classList.toggle("hidden", !profile?.is_admin);
-      renderShop();
+      $("btn-admin-tab").classList.toggle("hidden", !profile?.is_admin);
+      $("coins-label").textContent = (profile?.coins ?? 0) + " FF · скоро";
+      renderDonate();
       renderMine();
     }
-
     function openTab(name) {
-      ["shop", "mine", "admin"].forEach((t) => {
-        const pane = document.getElementById("tab-" + t);
+      ["donate", "shop", "mine", "admin"].forEach((t) => {
+        const pane = $("tab-" + t);
         if (pane) pane.classList.toggle("hidden", t !== name);
       });
+      document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
     }
-
-    function renderShop() {
-      $("tab-shop").innerHTML = CATALOG.map((g) => {
-        const have = owned.includes(g.id);
-        return `<article class="rounded-2xl border border-pink-500/20 bg-black/40 p-4">
-          <h3 class="font-bold text-lg">${g.name}</h3>
-          <p class="text-sm text-pink-200/50">${g.id}</p>
-          <p class="mt-2 text-pink-300">${have ? "уже есть" : g.price}</p>
-        </article>`;
+    function renderDonate() {
+      const links = cfg.donateLinks || {};
+      $("donate-grid").innerHTML = PACKS.map((p) => {
+        const href = links[p.amount];
+        const btn = href
+          ? `<a class="btn" href="${href}" target="_blank" rel="noopener">${p.amount} ₽</a>`
+          : `<button class="btn" data-ask="${p.amount}" type="button">${p.amount} ₽ · заявка</button>`;
+        return `<article class="card"><h3>${p.title}</h3><p class="muted">${p.text}</p><p class="price">${p.amount} ₽</p>${btn}</article>`;
       }).join("");
+      $("donate-grid").querySelectorAll("[data-ask]").forEach((b) => {
+        b.onclick = () => askDonate(+b.dataset.ask);
+      });
     }
-
+    $("btn-donate-custom").onclick = () => {
+      const n = Math.floor(Number($("donate-custom").value));
+      if (!Number.isFinite(n) || n < 100) return banner("Минимум 100 ₽");
+      if (n > 150000) return banner("Разбей платёж");
+      askDonate(n);
+    };
+    async function askDonate(amount) {
+      if (!sb || !me) return banner("Сначала вход");
+      const { error } = await sb.from("donations").insert({
+        user_id: me.id, amount_rub: amount, status: "pending",
+        comment: (profile && profile.nickname) || "",
+      });
+      if (error) return banner(error.message);
+      banner("Заявка " + amount + " ₽ записана. СБП позже.", true);
+    }
     function renderMine() {
+      const map = Object.fromEntries(CATALOG.map((g) => [g.id, g]));
       if (!owned.length) {
-        $("mine-list").innerHTML = "<li>Пока пусто. Стартовых выдашь себе кнопкой Выдача.</li>";
+        $("mine-list").innerHTML = `<p class="muted">Пусто. На тесте выдаёт админ.</p>`;
         return;
       }
-      $("mine-list").innerHTML = owned.map((id) => `<li class="border-b border-pink-500/10 py-2">${id}</li>`).join("");
+      $("mine-list").innerHTML = owned.map((id) => {
+        const g = map[id] || { id, name: id, img: "" };
+        const pic = g.img
+          ? `<img src="${g.img}" alt="${g.name}">`
+          : `<div class="ph">нет кадра</div>`;
+        return `<article class="card inv-card">${pic}<div class="meta"><h3>${g.name}</h3></div></article>`;
+      }).join("");
     }
-
     async function loadProfile() {
-      const { data, error } = await sb.from("profiles").select("nickname,is_admin").eq("id", me.id).maybeSingle();
+      const { data, error } = await sb.from("profiles").select("nickname,is_admin,coins").eq("id", me.id).maybeSingle();
       if (error) throw error;
       profile = data;
       const { data: girls, error: gErr } = await sb.from("owned_girls").select("girl_id").eq("user_id", me.id);
       if (gErr) throw gErr;
       owned = (girls || []).map((x) => x.girl_id);
     }
-
+    document.querySelectorAll("[data-auth]").forEach((b) => {
+      b.onclick = () => {
+        document.querySelectorAll("[data-auth]").forEach((x) => x.classList.toggle("on", x === b));
+        $("form-login").classList.toggle("hidden", b.dataset.auth !== "login");
+        $("form-reg").classList.toggle("hidden", b.dataset.auth !== "reg");
+      };
+    });
+    document.querySelectorAll("[data-tab]").forEach((b) => {
+      b.onclick = () => openTab(b.dataset.tab);
+    });
     $("form-login").onsubmit = async (e) => {
       e.preventDefault();
       if (!sb) return banner("Сначала заполни config.js");
       const fd = new FormData(e.target);
       const { data, error } = await sb.auth.signInWithPassword({
-        email: fd.get("email"),
-        password: fd.get("password"),
+        email: fd.get("email"), password: fd.get("password"),
       });
       if (error) return banner(error.message);
       me = data.user;
-      try {
-        await loadProfile();
-        showApp();
-        banner("Вход ок", true);
-      } catch (err) {
-        banner(err.message || String(err));
-      }
+      try { await loadProfile(); showApp(); banner("Вход ок", true); }
+      catch (err) { banner(err.message || String(err)); }
     };
-
     $("form-reg").onsubmit = async (e) => {
       e.preventDefault();
       if (!sb) return banner("Сначала заполни config.js");
       const fd = new FormData(e.target);
       const nickname = String(fd.get("nickname") || "").trim();
-      const norm = nickname.toLowerCase();
-      if (norm.length < 3) return banner("Ник слишком короткий");
-      if ((cfg.reservedNicks || []).includes(norm)) {
-        return banner("Ник зарезервирован студией");
-      }
-
+      if ((cfg.reservedNicks || []).includes(nickname.toLowerCase())) return banner("Ник зарезервирован студией");
       const { data, error } = await sb.auth.signUp({
-        email: fd.get("email"),
-        password: fd.get("password"),
+        email: fd.get("email"), password: fd.get("password"),
       });
       if (error) return banner(error.message);
-      if (!data.user) return banner("Почта занята или нужно подтверждение письма");
-
+      if (!data.user) return banner("Почта занята или нужно письмо");
       const { error: pErr } = await sb.rpc("register_profile", { nick: nickname });
       if (pErr) {
         const msg = pErr.message || "";
-        if (msg.includes("profiles_nickname_norm_key") || msg.includes("duplicate")) {
-          return banner("Ник уже занят");
-        }
+        if (msg.includes("duplicate") || msg.includes("profiles_nickname_norm_key")) return banner("Ник уже занят");
         if (msg.includes("nick_reserved")) return banner("Ник зарезервирован");
         return banner(msg);
       }
-      banner("Аккаунт создан. Если включено подтверждение почты — сначала письмо, потом вход.", true);
+      banner("Аккаунт создан. Если нужно письмо — сначала оно.", true);
     };
-
     $("btn-out").onclick = async () => {
       if (sb) await sb.auth.signOut();
-      me = null;
-      profile = null;
-      owned = [];
+      me = null; profile = null; owned = [];
       showAuth();
     };
-
     $("btn-grant").onclick = async () => {
-      if (!sb) return banner("Нет Supabase");
       const nick = $("grant-nick").value.trim();
       const girl = $("grant-girl").value.trim();
       const { error } = await sb.rpc("admin_grant", { target_nick: nick, p_girl_id: girl });
       if (error) return banner(error.message);
       banner("Выдано " + girl + " → " + nick, true);
       await loadProfile();
-      renderShop();
       renderMine();
     };
-
-    document.querySelectorAll(".tab").forEach((b) => {
-      b.onclick = () => openTab(b.dataset.tab);
-    });
-
     (async () => {
-      if (!ready) {
-        banner("config.js пустой. Сайт открывается, но вход заработает после нового проекта Supabase.");
-        showAuth();
-        return;
-      }
+      renderDonate();
+      if (!ready) { banner("config.js пустой"); showAuth(); return; }
       const { data } = await sb.auth.getSession();
       if (data.session) {
         me = data.session.user;
-        try {
-          await loadProfile();
-          showApp();
-        } catch (err) {
-          banner(err.message || String(err));
-          showAuth();
-        }
-      } else {
-        showAuth();
-      }
+        try { await loadProfile(); showApp(); }
+        catch (err) { banner(err.message || String(err)); showAuth(); }
+      } else showAuth();
     })();
   </script>
 </body>
