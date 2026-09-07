@@ -36,6 +36,10 @@
       margin: 0 auto;
       padding: 12px 16px calc(28px + var(--safe));
     }
+    .guest {
+      display: grid;
+      gap: 14px;
+    }
     header {
       position: sticky; top: 0; z-index: 20;
       display: flex; align-items: center; justify-content: space-between;
@@ -162,6 +166,17 @@
       .row .btn { width: auto; padding-inline: 22px; }
       .grid.packs { grid-template-columns: 1fr 1fr 1fr; }
     }
+    @media (min-width: 980px) {
+      .wrap { width: min(1180px, calc(100% - 48px)); padding-top: 22px; }
+      .guest { grid-template-columns: 1.4fr .9fr; align-items: stretch; }
+      .poster { margin-bottom: 0; min-height: 320px; padding: 36px 32px; }
+      h1 { font-size: 56px; }
+      .lead { font-size: 17px; max-width: 36ch; }
+      .panel { padding: 22px; }
+      .inv { grid-template-columns: repeat(4, 1fr); }
+      .grid.packs { grid-template-columns: repeat(3, 1fr); }
+      .logo { font-size: 22px; }
+    }
     footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
     .inv { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .inv-card { padding: 0; overflow: hidden; }
@@ -193,6 +208,7 @@
 
     <div id="banner"></div>
 
+    <div class="guest" id="guest">
     <section class="poster" id="poster">
       <h1>Ночь,<br><span class="pink">не со стула.</span></h1>
       <p class="lead">Ходишь по клубу. Собираешь смену. Ловишь сучку — уже не скример. Аккаунт, чтобы покупки пережили смену телефона.</p>
@@ -221,6 +237,7 @@
         <button class="btn" type="submit">Создать аккаунт</button>
       </form>
     </section>
+    </div>
 
     <section id="view-app" class="hidden">
       <div class="tabs">
@@ -308,12 +325,16 @@
       $("view-auth").classList.remove("hidden");
       $("view-app").classList.add("hidden");
       $("poster").classList.remove("hidden");
+      const guest = $("guest");
+      if (guest) guest.classList.remove("hidden");
       $("who").textContent = ready ? "гость" : "нет config.js";
     }
     function showApp() {
       $("view-auth").classList.add("hidden");
       $("view-app").classList.remove("hidden");
       $("poster").classList.add("hidden");
+      const guest = $("guest");
+      if (guest) guest.classList.add("hidden");
       $("who").textContent = profile ? "@" + profile.nickname : "";
       $("btn-admin-tab").classList.toggle("hidden", !profile?.is_admin);
       $("coins-label").textContent = (profile?.coins ?? 0) + " FF · скоро";
