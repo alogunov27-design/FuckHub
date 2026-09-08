@@ -81,10 +81,23 @@ input {
   background: rgba(8,4,10,.78); display: grid; place-items: center;
   font-weight: 800; color: var(--pink2);
 }
-#banner { display: none; margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(255,61,154,.12); font-size: 14px; }
+#banner {
+  display: none;
+  position: sticky;
+  top: 56px;
+  z-index: 30;
+  margin: 0 0 12px;
+  padding: 14px 14px;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  background: #2a0a18;
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 700;
+}
 #banner.show { display: block; }
-#banner.ok { color: #8dffb8; }
-#banner.bad { color: #ff8aa8; }
+#banner.ok { color: #8dffb8; border-color: rgba(141,255,184,.35); }
+#banner.bad { color: #ffb0c2; border-color: rgba(255,80,160,.45); }
 .hidden { display: none !important; }
 .row { display: grid; grid-template-columns: 1fr; gap: 8px; }
 footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
