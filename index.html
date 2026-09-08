@@ -251,7 +251,8 @@
         <button class="tab on" type="button" data-tab="donate">Донат</button>
         <button class="tab" type="button" data-tab="shop">Магазин</button>
         <button class="tab" type="button" data-tab="mine">Инвентарь</button>
-        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab">Выдача</button>
+        <button class="tab" type="button" data-tab="promo">Промокод</button>
+        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab">Админ</button>
         <button class="tab" type="button" id="btn-out">Выйти</button>
       </div>
 
@@ -273,10 +274,10 @@
 
       <div id="tab-shop" class="hidden">
         <div class="grid">
-          <article class="card lock">
-            <h3>Игровая валюта</h3>
-            <p class="muted">Пока закрыта. Сучки за рубли ниже.</p>
-            <p class="price" id="coins-label">0 FF</p>
+          <article class="card">
+            <h3>SexCoin</h3>
+            <p class="muted">SC. Стартовые 100. Промокоды и покупки завязаны на этот баланс.</p>
+            <p class="price" id="coins-label">0 SC</p>
           </article>
         </div>
         <div id="shop-girls"></div>
@@ -289,6 +290,15 @@
         </div>
       </div>
 
+      <div id="tab-promo" class="hidden">
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Промокод</h3>
+          <p class="muted" style="margin-bottom:10px">Один код — один раз на аккаунт. Награда из облака, патч игры не нужен.</p>
+          <input id="promo-code" placeholder="код" autocomplete="off" />
+          <button class="btn" id="btn-promo" type="button">Активировать</button>
+        </div>
+      </div>
+
       <div id="tab-admin" class="hidden">
         <div class="panel">
           <h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3>
@@ -296,6 +306,20 @@
           <input id="grant-nick" placeholder="ник игрока" />
           <input id="grant-girl" placeholder="girl_id, например diana" />
           <button class="btn gold" id="btn-grant" type="button">Выдать</button>
+        </div>
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Новый промокод</h3>
+          <p class="muted" style="margin-bottom:10px">Пустой girl_id — только SC. 0 SC — только сучка. Оба поля — пак.</p>
+          <input id="promo-new-code" placeholder="код, например NIGHT100" />
+          <input id="promo-new-coins" type="number" min="0" step="10" placeholder="SexCoin, 0 если не надо" />
+          <input id="promo-new-girl" placeholder="girl_id или пусто, например diana" />
+          <input id="promo-new-max" type="number" min="1" placeholder="лимит активаций, пусто = безлимит" />
+          <input id="promo-new-note" placeholder="заметка себе" />
+          <button class="btn gold" id="btn-promo-create" type="button">Создать / обновить код</button>
+        </div>
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Коды</h3>
+          <div id="promo-list" class="muted"></div>
         </div>
       </div>
     </section>
@@ -344,13 +368,14 @@
       if (guest) guest.classList.add("hidden");
       $("who").textContent = profile ? "@" + profile.nickname : "";
       $("btn-admin-tab").classList.toggle("hidden", !profile?.is_admin);
-      $("coins-label").textContent = (profile?.coins ?? 0) + " FF · скоро";
+      $("coins-label").textContent = (profile?.coins ?? 0) + " SC";
       renderDonate();
       renderMine();
       renderShopGirls();
+      if (profile?.is_admin) renderPromoList();
     }
     function openTab(name) {
-      ["donate", "shop", "mine", "admin"].forEach((t) => {
+      ["donate", "shop", "mine", "promo", "admin"].forEach((t) => {
         const pane = $("tab-" + t);
         if (pane) pane.classList.toggle("hidden", t !== name);
       });
@@ -474,6 +499,51 @@
       me = null; profile = null; owned = [];
       showAuth();
     };
+    $("btn-promo").onclick = async () => {
+      const code = $("promo-code").value.trim();
+      if (!code) return banner("Введи код");
+      const { data, error } = await sb.rpc("redeem_promo", { p_code: code });
+      if (error) {
+        const m = error.message || "";
+        if (m.includes("bad_promo")) return banner("Кода нет или выключен");
+        if (m.includes("already_used")) return banner("Ты уже активировал этот код");
+        if (m.includes("promo_spent")) return banner("Лимит активаций кончился");
+        return banner(m);
+      }
+      await loadProfile();
+      showApp();
+      banner("Промокод засчитан. SC: " + (data && data.coins) + " сучка: " + ((data && data.girl) || "нет"), true);
+    };
+
+    $("btn-promo-create").onclick = async () => {
+      const code = $("promo-new-code").value.trim();
+      const coins = Math.max(0, Math.floor(Number($("promo-new-coins").value || 0)));
+      const girl = $("promo-new-girl").value.trim();
+      const maxRaw = $("promo-new-max").value.trim();
+      const note = $("promo-new-note").value.trim();
+      const maxUses = maxRaw === "" ? null : Math.max(1, Math.floor(Number(maxRaw)));
+      const { error } = await sb.rpc("admin_create_promo", {
+        p_code: code,
+        p_coins: coins,
+        p_girl: girl || null,
+        p_max: maxUses,
+        p_note: note || null,
+      });
+      if (error) return banner(error.message);
+      banner("Код " + code.toUpperCase() + " живой", true);
+      renderPromoList();
+    };
+
+    async function renderPromoList() {
+      const box = $("promo-list");
+      if (!box) return;
+      const { data, error } = await sb.from("promo_codes").select("code_norm,coins,girl_id,max_uses,used,active").order("created_at", { ascending: false });
+      if (error) { box.textContent = error.message; return; }
+      box.innerHTML = (data || []).map((p) =>
+        `<div style="margin:0 0 8px">${p.code_norm} · ${p.coins} SC · ${p.girl_id || "без сучки"} · ${p.used}/${p.max_uses ?? "∞"} · ${p.active ? "вкл" : "выкл"}</div>`
+      ).join("") || "пусто";
+    }
+
     $("btn-grant").onclick = async () => {
       const nick = $("grant-nick").value.trim();
       const girl = $("grant-girl").value.trim();
