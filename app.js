@@ -15,6 +15,18 @@ function labelOf(id, fallback) {
   const g = CATALOG.find((x) => x.id === id);
   return (g && g.name) || fallback || id;
 }
+function authMsg(err) {
+  const m = String((err && (err.message || err.msg)) || err || "").toLowerCase();
+  if (m.includes("invalid login") || m.includes("invalid credentials")) return "Неверная почта или пароль";
+  if (m.includes("email not confirmed")) return "Почта не подтверждена. Открой письмо от supabase (часто спам) и нажми ссылку";
+  if (m.includes("user already registered") || m.includes("already registered")) return "Эта почта уже зарегистрирована. Жми Вход";
+  if (m.includes("password") && (m.includes("least") || m.includes("6") || m.includes("short"))) return "Пароль слишком короткий, от 6 символов";
+  if (m.includes("unable to validate email") || m.includes("invalid email")) return "Почта написана криво";
+  if (m.includes("duplicate") || m.includes("profiles_nickname") || m.includes("already exists")) return "Ник уже занят, выбери другой";
+  if (m.includes("nick_reserved") || m.includes("reserved")) return "Этот ник занят студией";
+  if (m.includes("rate limit") || m.includes("too many")) return "Слишком много попыток, подожди минуту";
+  return (err && err.message) || "Ошибка. Попробуй ещё раз";
+}
 const cfg = window.FNWP_CONFIG || {};
 const ready = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
 const sb = ready ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
@@ -124,24 +136,33 @@ $("form-login").onsubmit = async (e) => {
   e.preventDefault();
   if (!sb) return banner("нет config.js");
   const fd = new FormData(e.target);
+  banner("Вход...");
   const { data, error } = await sb.auth.signInWithPassword({ email: fd.get("email"), password: fd.get("password") });
-  if (error) return banner(error.message);
+  if (error) return banner(authMsg(error));
   me = data.user;
   try { await loadProfile(); showApp(); banner("Вход ок", true); }
-  catch (err) { banner(err.message || String(err)); }
+  catch (err) { banner(authMsg(err)); }
 };
 $("form-reg").onsubmit = async (e) => {
   e.preventDefault();
   if (!sb) return banner("нет config.js");
   const fd = new FormData(e.target);
   const nickname = String(fd.get("nickname") || "").trim();
-  if ((cfg.reservedNicks || []).includes(nickname.toLowerCase())) return banner("Ник зарезервирован");
+  if (nickname.length < 3) return banner("Ник от 3 символов");
+  if ((cfg.reservedNicks || []).includes(nickname.toLowerCase())) return banner("Этот ник занят студией");
+  banner("Создаём аккаунт...");
   const { data, error } = await sb.auth.signUp({ email: fd.get("email"), password: fd.get("password") });
-  if (error) return banner(error.message);
-  if (!data.user) return banner("Почта занята или нужно письмо");
-  const { error: pErr } = await sb.rpc("register_profile", { nick: nickname });
-  if (pErr) return banner(pErr.message);
-  banner("Аккаунт создан", true);
+  if (error) return banner(authMsg(error));
+  if (!data.user) return banner("Не вышло. Почта могла быть занята — попробуй Вход");
+  if (data.session) {
+    me = data.user;
+    const { error: pErr } = await sb.rpc("register_profile", { nick: nickname });
+    if (pErr) return banner(authMsg(pErr));
+    try { await loadProfile(); showApp(); banner("Аккаунт создан, ты в системе", true); }
+    catch (err) { banner(authMsg(err)); }
+    return;
+  }
+  banner("Аккаунт создан. Теперь открой письмо на почте (часто папка Спам) и подтверди. После этого жми Вход. Ник пропишется после первого входа, если сессия не открылась сразу", true);
 };
 $("btn-out").onclick = async () => { if (sb) await sb.auth.signOut(); me = null; profile = null; owned = []; showAuth(); };
 $("btn-promo").onclick = async () => {
