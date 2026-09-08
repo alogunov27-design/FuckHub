@@ -67,7 +67,7 @@ function showApp() {
   if (profile?.is_admin) renderPromoList();
 }
 function openTab(name) {
-  ["donate", "shop", "mine", "promo", "admin"].forEach((t) => {
+  ["download", "donate", "shop", "mine", "promo", "admin"].forEach((t) => {
     const pane = $("tab-" + t);
     if (pane) pane.classList.toggle("hidden", t !== name);
   });
