@@ -271,15 +271,18 @@
       <div id="tab-donate">
         <div class="panel">
           <h2 style="font-family:Unbounded;margin:0 0 8px;font-size:20px">Поддержка FNWP 2</h2>
-          <p class="muted">Оплата разработки. СБП подключится после проверки Тинька. Сейчас сумма и ник уходят заявкой.</p>
+          <p class="muted">Игра в разработке. Это поддержка проекта, не покупка. Перевод на карту, сумма любая.</p>
+          <p class="price" id="card-num" style="font-size:22px;letter-spacing:.06em;user-select:all">2204 3103 7844 5509</p>
+          <p class="muted">Яндекс Карта · получатель как на карте</p>
+          <button class="btn gold" id="btn-copy-card" type="button" style="margin-top:12px">Скопировать номер</button>
         </div>
         <div class="grid packs" id="donate-grid"></div>
         <div class="panel">
           <h3 style="font-family:Unbounded;margin:0 0 8px">Своя сумма</h3>
-          <p class="muted" style="margin-bottom:10px">От 100 ₽</p>
+          <p class="muted" style="margin-bottom:10px">Переведи сколько хочешь на карту выше. Заявка — чтобы я видел ник.</p>
           <div class="row">
             <input id="donate-custom" type="number" min="100" step="50" inputmode="numeric" placeholder="сумма, ₽" />
-            <button class="btn gold" id="btn-donate-custom" type="button">Поддержать</button>
+            <button class="btn gold" id="btn-donate-custom" type="button">Я перевёл</button>
           </div>
         </div>
       </div>
@@ -401,18 +404,23 @@
       document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
     }
     function renderDonate() {
-      const links = cfg.donateLinks || {};
       $("donate-grid").innerHTML = PACKS.map((p) => {
-        const href = links[p.amount];
-        const btn = href
-          ? `<a class="btn" href="${href}" target="_blank" rel="noopener">${p.amount} ₽</a>`
-          : `<button class="btn" data-ask="${p.amount}" type="button">${p.amount} ₽ · заявка</button>`;
-        return `<article class="card"><h3>${p.title}</h3><p class="muted">${p.text}</p><p class="price">${p.amount} ₽</p>${btn}</article>`;
+        return `<article class="card"><h3>${p.title}</h3><p class="muted">${p.text}. Карта сверху.</p><p class="price">${p.amount} ₽</p>
+          <button class="btn" data-ask="${p.amount}" type="button">Отметить ${p.amount} ₽</button></article>`;
       }).join("");
       $("donate-grid").querySelectorAll("[data-ask]").forEach((b) => {
         b.onclick = () => askDonate(+b.dataset.ask);
       });
     }
+    const copyBtn = $("btn-copy-card");
+    if (copyBtn) copyBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText("2204310378445509");
+        banner("Номер карты скопирован", true);
+      } catch (e) {
+        banner("Скопируй вручную: 2204 3103 7844 5509");
+      }
+    };
     $("btn-donate-custom").onclick = () => {
       const n = Math.floor(Number($("donate-custom").value));
       if (!Number.isFinite(n) || n < 100) return banner("Минимум 100 ₽");
@@ -426,7 +434,7 @@
         comment: girlId || ((profile && profile.nickname) || ""),
       });
       if (error) return banner(error.message);
-      banner("Заявка " + amount + " ₽ записана. СБП позже.", true);
+      banner("Заявка " + amount + " ₽ записана. Переводи на карту 2204 3103 7844 5509", true);
     }
     async function renderShopGirls() {
       const box = $("shop-girls");
