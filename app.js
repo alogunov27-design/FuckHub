@@ -1,8 +1,9 @@
-const STARTERS = ["fexa", "fnia", "bonfie"];
+const STARTERS = ["fexa", "fnia", "bonfie", "chiku"];
 const CATALOG = [
   { id: "fexa", name: "Fexa", img: "./img/fexa.png" },
   { id: "fnia", name: "Frenni", img: "./img/frenny.jpg" },
   { id: "bonfie", name: "Bonfie", img: "./img/bonfie.jpg" },
+  { id: "chiku", name: "Chiku", img: "./img/Chiku.png" },
   { id: "loona", name: "Loona", img: "./img/Loona.png" },
   { id: "diana", name: "Диана", img: "./img/diana.png" },
 ];
@@ -100,9 +101,13 @@ async function renderShopGirls() {
   const pics = Object.fromEntries(CATALOG.map((g) => [g.id, g.img]));
   box.innerHTML = rows.map((g) => {
     const have = owned.includes(g.id);
+    const free = STARTERS.includes(g.id) || Number(g.price_rub) === 0;
     const pic = pics[g.id] ? "<img src=\"" + pics[g.id] + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
     const title = labelOf(g.id, g.name);
-    return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + title + "</h3><p class=\"muted\">" + (have ? "уже в аккаунте" : "после оплаты") + "</p><p class=\"price\">" + (have ? "есть" : g.price_rub + " ₽") + "</p>" + (have ? "" : "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " ₽</button>") + "</div></article>";
+    const status = have || free ? (have ? "уже в аккаунте" : "база пака") : "после оплаты";
+    const price = have || free ? (free ? "бесплатно" : "есть") : g.price_rub + " ₽";
+    const buy = have || free ? "" : "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " ₽</button>";
+    return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + title + "</h3><p class=\"muted\">" + status + "</p><p class=\"price\">" + price + "</p>" + buy + "</div></article>";
   }).join("") || "<p class='muted'>витрина пустая</p>";
   box.querySelectorAll("[data-buy]").forEach((b) => { b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy); });
 }
