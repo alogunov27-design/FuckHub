@@ -1,6 +1,6 @@
 const STARTERS = ["fexa", "fnia", "bonfie"];
 const CATALOG = [
-  { id: "fexa", name: "Fexa", img: "" },
+  { id: "fexa", name: "Fexa", img: "./img/fexa.png" },
   { id: "fnia", name: "Frenni", img: "" },
   { id: "bonfie", name: "Bonfie", img: "" },
   { id: "loona", name: "Loona", img: "./img/Loona.png" },
