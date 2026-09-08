@@ -1,9 +1,20 @@
+const STARTERS = ["fexa", "fnia", "bonfie"];
 const CATALOG = [
   { id: "fexa", name: "Fexa", img: "" },
-  { id: "fnia", name: "Fnia", img: "" },
+  { id: "fnia", name: "Frenni", img: "" },
   { id: "bonfie", name: "Bonfie", img: "" },
+  { id: "loona", name: "Loona", img: "./img/Loona.png" },
   { id: "diana", name: "Диана", img: "./img/diana.png" },
 ];
+function showOnSite(id) {
+  const g = CATALOG.find((x) => x.id === id);
+  if (STARTERS.includes(id)) return true;
+  return !!(g && g.img);
+}
+function labelOf(id, fallback) {
+  const g = CATALOG.find((x) => x.id === id);
+  return (g && g.name) || fallback || id;
+}
 const cfg = window.FNWP_CONFIG || {};
 const ready = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
 const sb = ready ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
@@ -73,21 +84,23 @@ async function renderShopGirls() {
   if (!box || !sb) return;
   const { data, error } = await sb.from("girls").select("id,name,price_rub,in_shop").order("price_rub");
   if (error) { box.innerHTML = "<p class='muted'>" + error.message + "</p>"; return; }
-  const rows = (data || []).filter((g) => g.in_shop || g.price_rub > 0);
+  const rows = (data || []).filter((g) => (g.in_shop || g.price_rub > 0) && showOnSite(g.id));
   const pics = Object.fromEntries(CATALOG.map((g) => [g.id, g.img]));
   box.innerHTML = rows.map((g) => {
     const have = owned.includes(g.id);
-    const pic = pics[g.id] ? "<img src=\"" + pics[g.id] + "\" alt=\"\">" : "<div class=\"ph\">нет кадра</div>";
-    return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + g.name + "</h3><p class=\"muted\">" + (have ? "уже в аккаунте" : "после оплаты") + "</p><p class=\"price\">" + (have ? "есть" : g.price_rub + " ₽") + "</p>" + (have ? "" : "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " ₽</button>") + "</div></article>";
+    const pic = pics[g.id] ? "<img src=\"" + pics[g.id] + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
+    const title = labelOf(g.id, g.name);
+    return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + title + "</h3><p class=\"muted\">" + (have ? "уже в аккаунте" : "после оплаты") + "</p><p class=\"price\">" + (have ? "есть" : g.price_rub + " ₽") + "</p>" + (have ? "" : "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " ₽</button>") + "</div></article>";
   }).join("") || "<p class='muted'>витрина пустая</p>";
   box.querySelectorAll("[data-buy]").forEach((b) => { b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy); });
 }
 function renderMine() {
   const map = Object.fromEntries(CATALOG.map((g) => [g.id, g]));
-  if (!owned.length) { $("mine-list").innerHTML = "<p class=\"muted\">Пусто.</p>"; return; }
-  $("mine-list").innerHTML = owned.map((id) => {
+  const list = owned.filter(showOnSite);
+  if (!list.length) { $("mine-list").innerHTML = "<p class=\"muted\">Пусто.</p>"; return; }
+  $("mine-list").innerHTML = list.map((id) => {
     const g = map[id] || { id, name: id, img: "" };
-    const pic = g.img ? "<img src=\"" + g.img + "\" alt=\"\">" : "<div class=\"ph\">нет кадра</div>";
+    const pic = g.img ? "<img src=\"" + g.img + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
     return "<article class=\"card inv-card\">" + pic + "<div class=\"meta\"><h3>" + g.name + "</h3></div></article>";
   }).join("");
 }
@@ -157,7 +170,7 @@ async function renderPromoList() {
   if (!box) return;
   const { data, error } = await sb.from("promo_codes").select("code_norm,coins,girl_id,max_uses,used,active").order("created_at", { ascending: false });
   if (error) { box.textContent = error.message; return; }
-  box.innerHTML = (data || []).map((p) => p.code_norm + " · " + p.coins + " SC · " + (p.girl_id || "без сучки") + " · " + p.used + "/" + (p.max_uses ?? "∞")).join("<br>") || "пусто";
+  box.innerHTML = (data || []).map((p) => p.code_norm + " \u00b7 " + p.coins + " SC \u00b7 " + (p.girl_id || "без сучки") + " \u00b7 " + p.used + "/" + (p.max_uses ?? "\u221e")).join("<br>") || "пусто";
 }
 $("btn-grant").onclick = async () => {
   const { error } = await sb.rpc("admin_grant", { target_nick: $("grant-nick").value.trim(), p_girl_id: $("grant-girl").value.trim() });
