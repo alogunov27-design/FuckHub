@@ -70,6 +70,17 @@ input {
 }
 .btn.gold { background: linear-gradient(180deg, #ffd789, #e0a328); color: #2a1a00; }
 .btn.ghost { background: transparent; color: var(--pink2); border: 1px solid var(--line); }
+.btn:disabled {
+  opacity: .42;
+  filter: grayscale(.2);
+  pointer-events: none;
+  cursor: not-allowed;
+}
+.game-hero { display: flex; gap: 14px; align-items: center; margin-bottom: 16px; }
+.game-ico {
+  width: 88px; height: 88px; border-radius: 20px;
+  object-fit: cover; border: 1px solid var(--line); background: #1a0a14; flex: 0 0 auto;
+}
 .grid { display: grid; gap: 10px; }
 .card { border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: #12030d; }
 .card h3 { font-family: Unbounded, sans-serif; margin: 0 0 6px; font-size: 16px; }
