@@ -1,64 +1,128 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>FNWP 2</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./config.js"></script>
-<style>body{margin:0;background:#09050b;color:#fff;font-family:sans-serif} .wrap{max-width:720px;margin:0 auto;padding:16px} .panel{border:1px solid rgba(255,80,160,.28);border-radius:16px;padding:16px;margin:12px 0} .price{color:#f3c15c;font-size:22px} .btn{display:block;width:100%;min-height:48px;border:0;border-radius:12px;background:#ff2d8f;font-weight:800} .gold{background:#e0a328} .hidden{display:none!important} input{width:100%;min-height:44px;margin:0 0 8px;background:#0c070b;color:#fff;border:1px solid rgba(255,80,160,.28);border-radius:10px} .tab{margin:4px}</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <title>FNWP 2 — FuckFaz Studios</title>
+  <meta name="theme-color" content="#12010c" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./config.js"></script>
+  <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-<div class="wrap">
-<header><b>FNWP 2</b> <span id="who"></span> <span id="sc-bal"></span></header>
-<div id="banner"></div>
-<div id="guest">
-<section id="poster"><h1>Ночь, не со стула.</h1></section>
-<section class="panel" id="view-auth">
-<button class="tab" data-auth="login">Вход</button>
-<button class="tab" data-auth="reg">Регистрация</button>
-<form id="form-login"><input name="email" type="email" required placeholder="почта"/><input name="password" type="password" required placeholder="пароль"/><button class="btn">Войти</button></form>
-<form id="form-reg" class="hidden"><input name="nickname" minlength="3" required placeholder="ник"/><input name="email" type="email" required placeholder="почта"/><input name="password" type="password" minlength="6" required placeholder="пароль"/><button class="btn">Создать</button></form>
-</section>
-</div>
-<section id="view-app" class="hidden">
-<button data-tab="donate">Донат</button>
-<button data-tab="shop">Магазин</button>
-<button data-tab="mine">Инвентарь</button>
-<button data-tab="promo">Промокод</button>
-<button data-tab="admin" id="btn-admin-tab" class="hidden">Админ</button>
-<button id="btn-out">Выйти</button>
-<div id="tab-donate"><div class="panel"><h2>Поддержка FNWP 2</h2><p>Перевод на карту, сумма любая.</p><p class="price" id="card-num">2204 3103 7844 5509</p><p>Яндекс Карта</p><button class="btn gold" id="btn-copy-card" type="button">Скопировать номер</button></div></div>
-<div id="tab-shop" class="hidden"><p id="coins-label">0 SC</p><div id="shop-girls"></div></div>
-<div id="tab-mine" class="hidden"><div id="mine-list"></div></div>
-<div id="tab-promo" class="hidden"><input id="promo-code" placeholder="код"/><button class="btn" id="btn-promo" type="button">Активировать</button></div>
-<div id="tab-admin" class="hidden"><input id="grant-nick" placeholder="ник"/><input id="grant-girl" placeholder="girl_id"/><button class="btn" id="btn-grant" type="button">Выдать</button><input id="promo-new-code" placeholder="код"/><input id="promo-new-coins" type="number" placeholder="SC"/><input id="promo-new-girl" placeholder="girl"/><input id="promo-new-max" placeholder="лимит"/><input id="promo-new-note" placeholder="заметка"/><button class="btn" id="btn-promo-create" type="button">Создать код</button><div id="promo-list"></div></div>
-</section>
-</div>
-<script>
-const CATALOG=[{id:"fexa",name:"Fexa",img:""},{id:"fnia",name:"Fnia",img:""},{id:"bonfie",name:"Bonfie",img:""},{id:"diana",name:"Диана",img:"./img/diana.png"}];
-const cfg=window.FNWP_CONFIG||{};
-const ready=!!(cfg.supabaseUrl&&cfg.supabaseAnonKey);
-const sb=ready?window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey):null;
-const $=id=>document.getElementById(id);
-const banner=(m,ok)=>{const el=$("banner");el.textContent=m;el.style.color=ok?"#8dffb8":"#ff8aa8";};
-let me=null,profile=null,owned=[];
-function showAuth(){$("view-auth").classList.remove("hidden");$("view-app").classList.add("hidden");$("who").textContent="гость";}
-function showApp(){$("view-auth").classList.add("hidden");$("view-app").classList.remove("hidden");$("who").textContent=profile?"@"+profile.nickname:"";if($("sc-bal"))$("sc-bal").textContent="FNWP 2 · "+(profile?.coins??0)+" SC";if($("coins-label"))$("coins-label").textContent=(profile?.coins??0)+" SC";$("btn-admin-tab").classList.toggle("hidden",!profile?.is_admin);renderMine();renderShopGirls();if(profile?.is_admin)renderPromoList();}
-function openTab(name){["donate","shop","mine","promo","admin"].forEach(t=>{const p=$("tab-"+t);if(p)p.classList.toggle("hidden",t!==name);});}
-document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>openTab(b.dataset.tab));
-document.querySelectorAll("[data-auth]").forEach(b=>b.onclick=()=>{$("form-login").classList.toggle("hidden",b.dataset.auth!=="login");$("form-reg").classList.toggle("hidden",b.dataset.auth!=="reg");});
-if($("btn-copy-card"))$("btn-copy-card").onclick=async()=>{try{await navigator.clipboard.writeText("2204310378445509");banner("скопировано",true);}catch(e){banner("2204 3103 7844 5509");}};
-$("form-login").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);const {data,error}=await sb.auth.signInWithPassword({email:fd.get("email"),password:fd.get("password")});if(error)return banner(error.message);me=data.user;await loadProfile();showApp();};
-$("form-reg").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);const nickname=String(fd.get("nickname")||"").trim();const {data,error}=await sb.auth.signUp({email:fd.get("email"),password:fd.get("password")});if(error)return banner(error.message);const {error:pErr}=await sb.rpc("register_profile",{nick:nickname});if(pErr)return banner(pErr.message);banner("аккаунт создан",true);};
-$("btn-out").onclick=async()=>{if(sb)await sb.auth.signOut();me=null;profile=null;owned=[];showAuth();};
-async function loadProfile(){const {data,error}=await sb.from("profiles").select("nickname,is_admin,coins").eq("id",me.id).maybeSingle();if(error)throw error;profile=data;const {data:girls}=await sb.from("owned_girls").select("girl_id").eq("user_id",me.id);owned=(girls||[]).map(x=>x.girl_id);}
-async function renderShopGirls(){const box=$("shop-girls");if(!box||!sb)return;const {data}=await sb.from("girls").select("id,name,price_rub,in_shop").order("price_rub");box.innerHTML=(data||[]).filter(g=>g.in_shop||g.price_rub>0).map(g=>g.name+" "+g.price_rub+"₽").join("<br>")||"пусто";}
-function renderMine(){const box=$("mine-list");if(!box)return;box.innerHTML=owned.join(", ")||"пусто";}
-$("btn-promo").onclick=async()=>{const {error}=await sb.rpc("redeem_promo",{p_code:$("promo-code").value.trim()});if(error)return banner(error.message);await loadProfile();showApp();banner("ок",true);};
-$("btn-promo-create").onclick=async()=>{const {error}=await sb.rpc("admin_create_promo",{p_code:$("promo-new-code").value.trim(),p_coins:+$("promo-new-coins").value||0,p_girl:$("promo-new-girl").value.trim()||null,p_max:$("promo-new-max").value?+$("promo-new-max").value:null,p_note:$("promo-new-note").value.trim()||null});if(error)return banner(error.message);banner("код живой",true);renderPromoList();};
-async function renderPromoList(){const box=$("promo-list");if(!box)return;const {data}=await sb.from("promo_codes").select("code_norm,coins,girl_id,used,max_uses,active");box.innerHTML=(data||[]).map(p=>p.code_norm+" "+p.coins+"SC "+(p.girl_id||"")).join("<br>")||"пусто";}
-$("btn-grant").onclick=async()=>{const {error}=await sb.rpc("admin_grant",{target_nick:$("grant-nick").value.trim(),p_girl_id:$("grant-girl").value.trim()});if(error)return banner(error.message);banner("выдано",true);};
-(async()=>{if(!ready){showAuth();return;}const {data}=await sb.auth.getSession();if(data.session){me=data.session.user;try{await loadProfile();showApp();}catch(e){showAuth();}}else showAuth();})();
-</script>
-</body></html>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="mark"></div>
+        <div>
+          <p class="logo">FNWP 2</p>
+          <p class="sub">FuckFaz Studios</p>
+        </div>
+      </div>
+      <div>
+        <div class="who" id="who"></div>
+        <div class="bal" id="sc-bal">FNWP 2 · 0 SC</div>
+      </div>
+    </header>
+    <div id="banner"></div>
+    <div class="guest" id="guest">
+    <section class="poster" id="poster">
+      <h1>Ночь,<br><span class="pink">не со стула.</span></h1>
+      <p class="lead">Ходишь по клубу. Собираешь смену. Ловишь сучку — уже не скример. Аккаунт, чтобы покупки пережили смену телефона.</p>
+      <div class="chips">
+        <span class="chip">18+</span>
+        <span class="chip">Android first</span>
+        <span class="chip">касса + облако</span>
+      </div>
+    </section>
+    <section class="panel" id="view-auth">
+      <div class="tabs">
+        <button class="tab on" type="button" data-auth="login">Вход</button>
+        <button class="tab" type="button" data-auth="reg">Регистрация</button>
+      </div>
+      <form id="form-login">
+        <input name="email" type="email" required placeholder="почта" autocomplete="email" inputmode="email" />
+        <input name="password" type="password" required placeholder="пароль" autocomplete="current-password" />
+        <button class="btn" type="submit">Войти</button>
+      </form>
+      <form id="form-reg" class="hidden">
+        <input name="nickname" minlength="3" maxlength="20" required placeholder="ник (уникальный)" />
+        <input name="email" type="email" required placeholder="почта" autocomplete="email" inputmode="email" />
+        <input name="password" type="password" minlength="6" required placeholder="пароль от 6 символов" autocomplete="new-password" />
+        <p class="muted" style="margin-bottom:10px">Ник FuckFaz занят студией. Регистр не важен.</p>
+        <button class="btn" type="submit">Создать аккаунт</button>
+      </form>
+    </section>
+    </div>
+    <section id="view-app" class="hidden">
+      <div class="tabs">
+        <button class="tab on" type="button" data-tab="donate">Донат</button>
+        <button class="tab" type="button" data-tab="shop">Магазин</button>
+        <button class="tab" type="button" data-tab="mine">Инвентарь</button>
+        <button class="tab" type="button" data-tab="promo">Промокод</button>
+        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab">Админ</button>
+        <button class="tab" type="button" id="btn-out">Выйти</button>
+      </div>
+      <div id="tab-donate">
+        <div class="panel">
+          <h2 style="font-family:Unbounded;margin:0 0 8px;font-size:20px">Поддержка FNWP 2</h2>
+          <p class="muted">Игра в разработке. Это поддержка проекта, не покупка. Перевод на карту, сумма любая.</p>
+          <p class="price" id="card-num" style="font-size:22px;letter-spacing:.06em;user-select:all">2204 3103 7844 5509</p>
+          <p class="muted">Яндекс Карта · получатель как на карте</p>
+          <button class="btn gold" id="btn-copy-card" type="button" style="margin-top:12px">Скопировать номер</button>
+        </div>
+      </div>
+      <div id="tab-shop" class="hidden">
+        <div class="grid">
+          <article class="card">
+            <h3>SexCoin</h3>
+            <p class="muted">SC. Стартовые 100. Промокоды и покупки завязаны на этот баланс.</p>
+            <p class="price" id="coins-label">0 SC</p>
+          </article>
+        </div>
+        <div id="shop-girls"></div>
+      </div>
+      <div id="tab-mine" class="hidden">
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Мои сучки</h3>
+          <div class="inv" id="mine-list"></div>
+        </div>
+      </div>
+      <div id="tab-promo" class="hidden">
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Промокод</h3>
+          <p class="muted" style="margin-bottom:10px">Один код — один раз на аккаунт.</p>
+          <input id="promo-code" placeholder="код" autocomplete="off" />
+          <button class="btn" id="btn-promo" type="button">Активировать</button>
+        </div>
+      </div>
+      <div id="tab-admin" class="hidden">
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3>
+          <input id="grant-nick" placeholder="ник игрока" />
+          <input id="grant-girl" placeholder="girl_id, например diana" />
+          <button class="btn gold" id="btn-grant" type="button">Выдать</button>
+        </div>
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Новый промокод</h3>
+          <input id="promo-new-code" placeholder="код, например NIGHT100" />
+          <input id="promo-new-coins" type="number" min="0" step="10" placeholder="SexCoin, 0 если не надо" />
+          <input id="promo-new-girl" placeholder="girl_id или пусто" />
+          <input id="promo-new-max" type="number" min="1" placeholder="лимит активаций" />
+          <input id="promo-new-note" placeholder="заметка" />
+          <button class="btn gold" id="btn-promo-create" type="button">Создать / обновить код</button>
+        </div>
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Коды</h3>
+          <div id="promo-list" class="muted"></div>
+        </div>
+      </div>
+    </section>
+    <footer>FuckFaz Studios · 18+ · касса FNWP 2</footer>
+  </div>
+  <script src="./app.js"></script>
+</body>
+</html>
