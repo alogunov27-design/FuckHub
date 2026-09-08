@@ -76,12 +76,14 @@ input {
   pointer-events: none;
   cursor: not-allowed;
 }
-.game-hero { display: flex; gap: 16px; align-items: center; margin-bottom: 14px; }
+.game-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 16px; }
 .game-ico {
-  width: 120px; height: 120px; border-radius: 26px;
-  object-fit: cover; border: 1px solid var(--line); background: #1a0a14; flex: 0 0 auto;
+  width: min(220px, 70vw); height: min(220px, 70vw);
+  border-radius: 28px;
+  object-fit: cover; border: 1px solid var(--line); background: #1a0a14;
+  box-shadow: 0 12px 40px rgba(255,61,154,.28);
 }
-.game-desc { color: #efd4e2; font-size: 15px; line-height: 1.5; margin: 0 0 16px; }
+.game-desc { color: #efd4e2; font-size: 16px; line-height: 1.55; margin: 0 0 16px; }
 .grid { display: grid; gap: 10px; }
 .card { border: 1px solid var(--line); border-radius: 18px; padding: 16px; background: #12030d; }
 .card h3 { font-family: Unbounded, sans-serif; margin: 0 0 6px; font-size: 16px; }
