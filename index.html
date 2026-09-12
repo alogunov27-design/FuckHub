@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <title>FNWP 2 — FuckFaz Studios</title>
   <meta name="theme-color" content="#12010c" />
-  <link rel="icon" href="/img/icon.jpg?v=21" type="image/jpeg" />
-  <link rel="apple-touch-icon" href="/img/icon.jpg?v=21" />
+  <link rel="icon" href="/img/icon.jpg?v=22" type="image/jpeg" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./config.js?v=tabs21"></script>
-  <link rel="stylesheet" href="./style.css?v=tabs21" />
+  <script src="./config.js?v=tabs22"></script>
+  <link rel="stylesheet" href="./style.css?v=tabs22" />
 </head>
 <body>
   <div class="wrap">
@@ -72,14 +71,22 @@
       <div id="tab-pays" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Заявки</h3><div id="pay-list" class="muted">пусто</div></div></div>
       <div id="tab-checks" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Чеки</h3><input id="check-q" placeholder="поиск по коду FF..." /><button class="btn" id="btn-check-find" type="button">Найти</button><div id="check-list" class="muted">пусто</div></div></div>
       <div id="tab-admin" class="hidden">
-        <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3><input id="grant-nick" placeholder="ник" /><input id="grant-girl" placeholder="girl_id" /><button class="btn gold" id="btn-grant" type="button">Выдать</button></div>
+        <div class="panel">
+          <h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3>
+          <p class="muted" style="margin-bottom:10px">Ник обязателен. Тянку и SC можно выдать вместе или по отдельности.</p>
+          <input id="grant-nick" placeholder="ник" />
+          <input id="grant-girl" placeholder="girl_id, можно пусто" />
+          <input id="grant-sc" type="number" min="0" step="10" placeholder="SC, можно 0" />
+          <button class="btn gold" id="btn-grant" type="button">Выдать</button>
+        </div>
         <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Новый промокод</h3><input id="promo-new-code" placeholder="код" /><input id="promo-new-coins" type="number" placeholder="SC" /><input id="promo-new-girl" placeholder="girl_id" /><input id="promo-new-max" type="number" placeholder="лимит" /><input id="promo-new-note" placeholder="заметка" /><button class="btn gold" id="btn-promo-create" type="button">Создать</button></div>
         <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Коды</h3><div id="promo-list" class="muted"></div></div>
       </div>
     </section>
     <footer>FuckFaz Studios · 18+</footer>
   </div>
-  <script src="./app.js?v=tabs21"></script>
-  <script src="./promo-fix.js?v=21"></script>
+  <script src="./app.js?v=tabs22"></script>
+  <script src="./promo-fix.js?v=22"></script>
+  <script src="./grant-fix.js?v=22"></script>
 </body>
 </html>
