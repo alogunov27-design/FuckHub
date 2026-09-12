@@ -1,4 +1,5 @@
 const STARTERS = ["fexa", "fnia", "bonfie", "chiku"];
+const SC_PRICE = { diana: 3000 };
 const CATALOG = [
   { id: "fexa", name: "Fexa", img: "./img/fexa.png" },
   { id: "fnia", name: "Frenni", img: "./img/frenny.jpg" },
@@ -62,7 +63,8 @@ function showApp() {
     bal.textContent = "FNWP 2 \u00b7 " + (profile?.coins ?? 0) + " SC";
     bal.classList.add("on");
   }
-  $("btn-admin-tab").classList.toggle("hidden", !profile?.is_admin);
+  const adminBtn = $("btn-admin-tab");
+  if (adminBtn) adminBtn.classList.toggle("hidden", !profile?.is_admin);
   if ($("coins-label")) $("coins-label").textContent = (profile?.coins ?? 0) + " SC";
   renderMine();
   renderShopGirls();
@@ -76,6 +78,7 @@ function openTab(name) {
   });
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
 }
+window.openTab = openTab;
 function copyCardFallback() {
   const ta = document.createElement("textarea");
   ta.value = CARD_NUM;
@@ -116,7 +119,7 @@ async function loadPlayerCount() {
     const { count, error } = await sb.from("profiles").select("id", { count: "exact", head: true });
     if (!error && typeof count === "number") n = count;
   }
-  const text = n == null ? "—" : String(n);
+  const text = n == null ? "\u2014" : String(n);
   ["player-count", "player-count-guest"].forEach((id) => {
     const el = $(id);
     if (el) el.textContent = text;
@@ -129,23 +132,32 @@ async function askDonate(amount, girlId) {
     comment: girlId || ((profile && profile.nickname) || ""),
   });
   if (error) return banner(error.message);
-  banner("Заявка " + amount + " ₽. Карта сверху", true);
+  banner("Заявка " + amount + " \u20bd. Карта сверху", true);
 }
 async function renderShopGirls() {
   const box = $("shop-girls");
   if (!box || !sb) return;
   const { data, error } = await sb.from("girls").select("id,name,price_rub,in_shop").order("price_rub");
   if (error) { box.innerHTML = "<p class='muted'>" + error.message + "</p>"; return; }
-  const rows = (data || []).filter((g) => (g.in_shop || g.price_rub > 0) && showOnSite(g.id));
+  const rows = (data || []).filter((g) => (g.in_shop || g.price_rub > 0 || SC_PRICE[g.id]) && showOnSite(g.id));
   const pics = Object.fromEntries(CATALOG.map((g) => [g.id, g.img]));
   box.innerHTML = rows.map((g) => {
     const have = owned.includes(g.id);
-    const free = STARTERS.includes(g.id) || Number(g.price_rub) === 0;
+    const sc = SC_PRICE[g.id] || 0;
+    const free = !sc && (STARTERS.includes(g.id) || Number(g.price_rub) === 0);
     const pic = pics[g.id] ? "<img src=\"" + pics[g.id] + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
     const title = labelOf(g.id, g.name);
-    const status = have || free ? (have ? "уже в аккаунте" : "база пака") : "после оплаты";
-    const price = have || free ? (free ? "бесплатно" : "есть") : g.price_rub + " ₽";
-    const buy = have || free ? "" : "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " ₽</button>";
+    let status = "база пака";
+    let price = "бесплатно";
+    let buy = "";
+    if (have) { status = "уже в аккаунте"; price = "есть"; }
+    else if (sc) { status = "за SexCoin в игре"; price = sc + " SC"; }
+    else if (free) { status = "база пака"; price = "бесплатно"; }
+    else {
+      status = "после оплаты";
+      price = g.price_rub + " \u20bd";
+      buy = "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " \u20bd</button>";
+    }
     return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + title + "</h3><p class=\"muted\">" + status + "</p><p class=\"price\">" + price + "</p>" + buy + "</div></article>";
   }).join("") || "<p class='muted'>витрина пустая</p>";
   box.querySelectorAll("[data-buy]").forEach((b) => { b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy); });
@@ -176,7 +188,7 @@ document.querySelectorAll("[data-auth]").forEach((b) => {
   };
 });
 document.querySelectorAll("[data-tab]").forEach((b) => { b.onclick = () => openTab(b.dataset.tab); });
-$("form-login").onsubmit = async (e) => {
+if ($("form-login")) $("form-login").onsubmit = async (e) => {
   e.preventDefault();
   if (!sb) return banner("нет config.js");
   const fd = new FormData(e.target);
@@ -187,7 +199,7 @@ $("form-login").onsubmit = async (e) => {
   try { await loadProfile(); showApp(); banner("Вход ок", true); }
   catch (err) { banner(authMsg(err)); }
 };
-$("form-reg").onsubmit = async (e) => {
+if ($("form-reg")) $("form-reg").onsubmit = async (e) => {
   e.preventDefault();
   if (!sb) return banner("нет config.js");
   const fd = new FormData(e.target);
@@ -208,8 +220,8 @@ $("form-reg").onsubmit = async (e) => {
   }
   banner("Аккаунт создан. Теперь открой письмо на почте (часто папка Спам) и подтверди. После этого жми Вход", true);
 };
-$("btn-out").onclick = async () => { if (sb) await sb.auth.signOut(); me = null; profile = null; owned = []; showAuth(); };
-$("btn-promo").onclick = async () => {
+if ($("btn-out")) $("btn-out").onclick = async () => { if (sb) await sb.auth.signOut(); me = null; profile = null; owned = []; showAuth(); };
+if ($("btn-promo")) $("btn-promo").onclick = async () => {
   const code = $("promo-code").value.trim();
   if (!code) return banner("Введи код");
   const { data, error } = await sb.rpc("redeem_promo", { p_code: code });
@@ -217,7 +229,7 @@ $("btn-promo").onclick = async () => {
   await loadProfile(); showApp();
   banner("Промокод засчитан", true);
 };
-$("btn-promo-create").onclick = async () => {
+if ($("btn-promo-create")) $("btn-promo-create").onclick = async () => {
   const maxRaw = $("promo-new-max").value.trim();
   const { error } = await sb.rpc("admin_create_promo", {
     p_code: $("promo-new-code").value.trim(),
@@ -237,7 +249,7 @@ async function renderPromoList() {
   if (error) { box.textContent = error.message; return; }
   box.innerHTML = (data || []).map((p) => p.code_norm + " \u00b7 " + p.coins + " SC \u00b7 " + (p.girl_id || "без сучки") + " \u00b7 " + p.used + "/" + (p.max_uses ?? "\u221e")).join("<br>") || "пусто";
 }
-$("btn-grant").onclick = async () => {
+if ($("btn-grant")) $("btn-grant").onclick = async () => {
   const { error } = await sb.rpc("admin_grant", { target_nick: $("grant-nick").value.trim(), p_girl_id: $("grant-girl").value.trim() });
   if (error) return banner(error.message);
   banner("Выдано", true);
