@@ -50,8 +50,7 @@ h1 { font-family: Unbounded, sans-serif; font-size: clamp(28px, 9vw, 44px); line
 .count-line { margin: 16px 0 12px; color: var(--pink2); font-weight: 800; }
 .count-line b { color: var(--gold); font-size: 22px; }
 .panel { border: 1px solid var(--line); border-radius: 22px; padding: 16px; background: rgba(16, 6, 14, .9); margin-bottom: 12px; }
-.tabs { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; margin: 0 0 12px; padding-bottom: 2px; }
-.tabs::-webkit-scrollbar { display: none; }
+.tabs { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; }
 .tab, .btn, button { font-family: inherit; border: 0; cursor: pointer; }
 .tab {
   flex: 0 0 auto; min-height: 42px; padding: 10px 14px; border-radius: 999px;
@@ -72,18 +71,11 @@ input {
 }
 .btn.gold { background: linear-gradient(180deg, #ffd789, #e0a328); color: #2a1a00; }
 .btn.ghost { background: transparent; color: var(--pink2); border: 1px solid var(--line); }
-.btn:disabled {
-  opacity: .42;
-  filter: grayscale(.2);
-  pointer-events: none;
-  cursor: not-allowed;
-}
+.btn:disabled { opacity: .42; filter: grayscale(.2); pointer-events: none; cursor: not-allowed; }
 .game-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 12px; margin-bottom: 16px; }
 .game-ico {
   width: min(220px, 70vw); height: min(220px, 70vw);
-  border-radius: 28px;
-  object-fit: cover; border: 1px solid var(--line); background: #1a0a14;
-  box-shadow: 0 12px 40px rgba(255,61,154,.28);
+  border-radius: 28px; object-fit: cover; border: 1px solid var(--line); background: #1a0a14;
 }
 .game-desc { color: #efd4e2; font-size: 16px; line-height: 1.55; margin: 0 0 16px; }
 .grid { display: grid; gap: 10px; }
@@ -91,31 +83,15 @@ input {
 .card h3 { font-family: Unbounded, sans-serif; margin: 0 0 6px; font-size: 16px; }
 .muted { color: var(--muted); font-size: 13px; line-height: 1.4; margin: 0; }
 .price { color: var(--gold); font-weight: 800; font-size: 22px; margin: 12px 0; }
-.lock { position: relative; overflow: hidden; }
-.lock::after {
-  content: "временно недоступна"; position: absolute; inset: 0;
-  background: rgba(8,4,10,.78); display: grid; place-items: center;
-  font-weight: 800; color: var(--pink2);
-}
 #banner {
-  display: none;
-  position: sticky;
-  top: 56px;
-  z-index: 30;
-  margin: 0 0 12px;
-  padding: 14px 14px;
-  border-radius: 14px;
-  border: 1px solid var(--line);
-  background: #2a0a18;
-  font-size: 15px;
-  line-height: 1.35;
-  font-weight: 700;
+  display: none; position: sticky; top: 56px; z-index: 30;
+  margin: 0 0 12px; padding: 14px; border-radius: 14px;
+  border: 1px solid var(--line); background: #2a0a18; font-size: 15px; font-weight: 700;
 }
 #banner.show { display: block; }
 #banner.ok { color: #8dffb8; border-color: rgba(141,255,184,.35); }
 #banner.bad { color: #ffb0c2; border-color: rgba(255,80,160,.45); }
 .hidden { display: none !important; }
-.row { display: grid; grid-template-columns: 1fr; gap: 8px; }
 footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
 .inv { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .inv-card { padding: 0; overflow: hidden; }
@@ -127,21 +103,13 @@ footer { color: var(--muted); font-size: 12px; margin-top: 18px; }
 .girl-card .meta, .inv-card .meta { padding: 10px 12px 14px; }
 #shop-girls { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 10px; }
 .ph { display: grid; place-items: center; background: linear-gradient(180deg, #2a1020, #12030d); color: var(--pink2); font-weight: 800; font-size: 13px; }
-#mine-list { padding-left: 0; }
 @media (min-width: 640px) {
-  .row { grid-template-columns: 1fr auto; align-items: start; }
-  .row .btn { width: auto; padding-inline: 22px; }
-  .grid.packs { grid-template-columns: 1fr 1fr 1fr; }
   .inv, #shop-girls { grid-template-columns: 1fr 1fr; }
 }
 @media (min-width: 980px) {
   .wrap { width: min(1180px, calc(100% - 48px)); padding-top: 22px; }
-  .guest { grid-template-columns: 1.4fr .9fr; align-items: stretch; }
+  .guest { grid-template-columns: 1.4fr .9fr; }
   .poster { margin-bottom: 0; min-height: 320px; padding: 36px 32px; }
   h1 { font-size: 56px; }
-  .lead { font-size: 17px; max-width: 36ch; }
-  .panel { padding: 22px; }
   .inv, #shop-girls { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .grid.packs { grid-template-columns: repeat(3, 1fr); }
-  .logo { font-size: 22px; }
 }
