@@ -28,6 +28,9 @@ function authMsg(err) {
   if (m.includes("duplicate") || m.includes("profiles_nickname") || m.includes("already exists")) return "Ник уже занят, выбери другой";
   if (m.includes("nick_reserved") || m.includes("reserved")) return "Этот ник занят студией";
   if (m.includes("rate limit") || m.includes("too many")) return "Слишком много попыток, подожди минуту";
+  if (m.includes("not_enough")) return "Не хватает SC";
+  if (m.includes("already_owned")) return "Уже куплена";
+  if (m.includes("not_for_sc") || m.includes("no_girl")) return "Эту сучку нельзя купить за SC";
   return (err && err.message) || "Ошибка. Попробуй ещё раз";
 }
 const cfg = window.FNWP_CONFIG || {};
@@ -41,6 +44,14 @@ const banner = (msg, ok) => {
   el.textContent = msg;
 };
 let me = null, profile = null, owned = [];
+function paintCoins() {
+  const bal = $("sc-bal");
+  if (bal) {
+    bal.textContent = "FNWP 2 \u00b7 " + (profile?.coins ?? 0) + " SC";
+    bal.classList.add("on");
+  }
+  if ($("coins-label")) $("coins-label").textContent = (profile?.coins ?? 0) + " SC";
+}
 function showAuth() {
   $("view-auth").classList.remove("hidden");
   $("view-app").classList.add("hidden");
@@ -58,14 +69,9 @@ function showApp() {
   const guest = $("guest");
   if (guest) guest.classList.add("hidden");
   $("who").textContent = profile ? "@" + profile.nickname : "";
-  const bal = $("sc-bal");
-  if (bal) {
-    bal.textContent = "FNWP 2 \u00b7 " + (profile?.coins ?? 0) + " SC";
-    bal.classList.add("on");
-  }
+  paintCoins();
   const adminBtn = $("btn-admin-tab");
   if (adminBtn) adminBtn.classList.toggle("hidden", !profile?.is_admin);
-  if ($("coins-label")) $("coins-label").textContent = (profile?.coins ?? 0) + " SC";
   renderMine();
   renderShopGirls();
   if (profile?.is_admin) renderPromoList();
@@ -134,6 +140,17 @@ async function askDonate(amount, girlId) {
   if (error) return banner(error.message);
   banner("Заявка " + amount + " \u20bd. Карта сверху", true);
 }
+async function buyGirlSc(id) {
+  if (!sb || !me) return banner("Сначала вход");
+  banner("Покупка...");
+  const { error } = await sb.rpc("buy_girl_sc", { p_girl_id: id });
+  if (error) return banner(authMsg(error));
+  await loadProfile();
+  paintCoins();
+  renderMine();
+  renderShopGirls();
+  banner("Куплено", true);
+}
 async function renderShopGirls() {
   const box = $("shop-girls");
   if (!box || !sb) return;
@@ -151,7 +168,11 @@ async function renderShopGirls() {
     let price = "бесплатно";
     let buy = "";
     if (have) { status = "уже в аккаунте"; price = "есть"; }
-    else if (sc) { status = "за SexCoin в игре"; price = sc + " SC"; }
+    else if (sc) {
+      status = "за SexCoin";
+      price = sc + " SC";
+      buy = "<button class=\"btn\" data-sc=\"" + g.id + "\" type=\"button\">Купить " + sc + " SC</button>";
+    }
     else if (free) { status = "база пака"; price = "бесплатно"; }
     else {
       status = "после оплаты";
@@ -161,6 +182,7 @@ async function renderShopGirls() {
     return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + title + "</h3><p class=\"muted\">" + status + "</p><p class=\"price\">" + price + "</p>" + buy + "</div></article>";
   }).join("") || "<p class='muted'>витрина пустая</p>";
   box.querySelectorAll("[data-buy]").forEach((b) => { b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy); });
+  box.querySelectorAll("[data-sc]").forEach((b) => { b.onclick = () => buyGirlSc(b.dataset.sc); });
 }
 function renderMine() {
   const map = Object.fromEntries(CATALOG.map((g) => [g.id, g]));
