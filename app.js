@@ -7,6 +7,7 @@ const CATALOG = [
   { id: "loona", name: "Loona", img: "./img/Loona.png" },
   { id: "diana", name: "Диана", img: "./img/diana.png" },
 ];
+const CARD_NUM = "2204310378445509";
 function showOnSite(id) {
   const g = CATALOG.find((x) => x.id === id);
   if (STARTERS.includes(id)) return true;
@@ -66,23 +67,61 @@ function showApp() {
   renderMine();
   renderShopGirls();
   if (profile?.is_admin) renderPromoList();
+  openTab("home");
 }
 function openTab(name) {
-  ["download", "donate", "shop", "mine", "promo", "admin"].forEach((t) => {
+  ["home", "download", "donate", "shop", "mine", "promo", "admin"].forEach((t) => {
     const pane = $("tab-" + t);
     if (pane) pane.classList.toggle("hidden", t !== name);
   });
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
 }
-const copyBtn = $("btn-copy-card");
-if (copyBtn) copyBtn.onclick = async () => {
+function copyCardFallback() {
+  const ta = document.createElement("textarea");
+  ta.value = CARD_NUM;
+  ta.setAttribute("readonly", "");
+  ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  ta.setSelectionRange(0, CARD_NUM.length);
+  let ok = false;
+  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+  document.body.removeChild(ta);
+  return ok;
+}
+async function copyCard() {
   try {
-    await navigator.clipboard.writeText("2204310378445509");
-    banner("Номер карты скопирован", true);
-  } catch (e) {
-    banner("2204 3103 7844 5509");
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(CARD_NUM);
+      banner("Номер карты скопирован", true);
+      return;
+    }
+  } catch (e) {}
+  if (copyCardFallback()) banner("Номер карты скопирован", true);
+  else banner("Не скопировалось. Выдели номер сам: 2204 3103 7844 5509");
+}
+const copyBtn = $("btn-copy-card");
+if (copyBtn) copyBtn.onclick = copyCard;
+const cardEl = $("card-num");
+if (cardEl) cardEl.onclick = copyCard;
+async function loadPlayerCount() {
+  if (!sb) return;
+  let n = null;
+  try {
+    const rpc = await sb.rpc("player_count");
+    if (!rpc.error && typeof rpc.data === "number") n = rpc.data;
+  } catch (e) {}
+  if (n == null) {
+    const { count, error } = await sb.from("profiles").select("id", { count: "exact", head: true });
+    if (!error && typeof count === "number") n = count;
   }
-};
+  const text = n == null ? "—" : String(n);
+  ["player-count", "player-count-guest"].forEach((id) => {
+    const el = $(id);
+    if (el) el.textContent = text;
+  });
+}
 async function askDonate(amount, girlId) {
   if (!sb || !me) return banner("Сначала вход");
   const { error } = await sb.from("donations").insert({
@@ -167,7 +206,7 @@ $("form-reg").onsubmit = async (e) => {
     catch (err) { banner(authMsg(err)); }
     return;
   }
-  banner("Аккаунт создан. Теперь открой письмо на почте (часто папка Спам) и подтверди. После этого жми Вход. Ник пропишется после первого входа, если сессия не открылась сразу", true);
+  banner("Аккаунт создан. Теперь открой письмо на почте (часто папка Спам) и подтверди. После этого жми Вход", true);
 };
 $("btn-out").onclick = async () => { if (sb) await sb.auth.signOut(); me = null; profile = null; owned = []; showAuth(); };
 $("btn-promo").onclick = async () => {
@@ -206,6 +245,7 @@ $("btn-grant").onclick = async () => {
 };
 (async () => {
   if (!ready) { banner("config.js пустой"); showAuth(); return; }
+  loadPlayerCount();
   const { data } = await sb.auth.getSession();
   if (data.session) {
     me = data.session.user;
