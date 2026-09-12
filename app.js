@@ -1,5 +1,6 @@
 const STARTERS = ["fexa", "fnia", "bonfie", "chiku"];
 const SC_PRICE = { diana: 3000 };
+const RUB_PRICE = { loona: 150 };
 const CATALOG = [
   { id: "fexa", name: "Fexa", img: "./img/fexa.png" },
   { id: "fnia", name: "Frenni", img: "./img/frenny.jpg" },
@@ -9,6 +10,7 @@ const CATALOG = [
   { id: "diana", name: "Диана", img: "./img/diana.png" },
 ];
 const CARD_NUM = "2204310378445509";
+const CARD_NICE = "2204 3103 7844 5509";
 function showOnSite(id) {
   const g = CATALOG.find((x) => x.id === id);
   if (STARTERS.includes(id)) return true;
@@ -18,20 +20,18 @@ function labelOf(id, fallback) {
   const g = CATALOG.find((x) => x.id === id);
   return (g && g.name) || fallback || id;
 }
+function makePayCode() {
+  const abc = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let s = "FF";
+  for (let i = 0; i < 5; i++) s += abc[Math.floor(Math.random() * abc.length)];
+  return s;
+}
 function authMsg(err) {
   const m = String((err && (err.message || err.msg)) || err || "").toLowerCase();
   if (m.includes("invalid login") || m.includes("invalid credentials")) return "Неверная почта или пароль";
-  if (m.includes("email not confirmed")) return "Почта не подтверждена. Открой письмо от supabase (часто спам) и нажми ссылку";
-  if (m.includes("user already registered") || m.includes("already registered")) return "Эта почта уже зарегистрирована. Жми Вход";
-  if (m.includes("password") && (m.includes("least") || m.includes("6") || m.includes("short"))) return "Пароль слишком короткий, от 6 символов";
-  if (m.includes("unable to validate email") || m.includes("invalid email")) return "Почта написана криво";
-  if (m.includes("duplicate") || m.includes("profiles_nickname") || m.includes("already exists")) return "Ник уже занят, выбери другой";
-  if (m.includes("nick_reserved") || m.includes("reserved")) return "Этот ник занят студией";
-  if (m.includes("rate limit") || m.includes("too many")) return "Слишком много попыток, подожди минуту";
   if (m.includes("not_enough")) return "Не хватает SC";
   if (m.includes("already_owned")) return "Уже куплена";
-  if (m.includes("not_for_sc") || m.includes("no_girl")) return "Эту сучку нельзя купить за SC";
-  return (err && err.message) || "Ошибка. Попробуй ещё раз";
+  return (err && err.message) || "Ошибка";
 }
 const cfg = window.FNWP_CONFIG || {};
 const ready = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
@@ -51,6 +51,22 @@ function paintCoins() {
     bal.classList.add("on");
   }
   if ($("coins-label")) $("coins-label").textContent = (profile?.coins ?? 0) + " SC";
+}
+function showPayBox(code, amount, girlId) {
+  const box = $("pay-box");
+  if (!box) return;
+  box.classList.remove("hidden");
+  box.innerHTML = "<h3 style='font-family:Unbounded;margin:0 0 8px'>Оплата</h3>"
+    + "<p class='muted'>Перевод <b>" + amount + " ₽</b> за " + labelOf(girlId, girlId) + "</p>"
+    + "<p class='price' style='font-size:20px'>" + CARD_NICE + "</p>"
+    + "<p class='muted'>В комментарии перевода вставь точно этот код:</p>"
+    + "<p class='price' id='pay-code' style='font-size:26px;letter-spacing:.08em'>" + code + "</p>"
+    + "<button class='btn gold' type='button' id='btn-copy-pay'>Скопировать код</button>";
+  const btn = $("btn-copy-pay");
+  if (btn) btn.onclick = async () => {
+    try { await navigator.clipboard.writeText(code); banner("Код скопирован", true); }
+    catch (e) { banner("Выдели код сам: " + code); }
+  };
 }
 function showAuth() {
   $("view-auth").classList.remove("hidden");
@@ -74,7 +90,7 @@ function showApp() {
   if (adminBtn) adminBtn.classList.toggle("hidden", !profile?.is_admin);
   renderMine();
   renderShopGirls();
-  if (profile?.is_admin) renderPromoList();
+  if (profile?.is_admin) { renderPromoList(); renderPays(); }
   openTab("home");
 }
 function openTab(name) {
@@ -85,20 +101,6 @@ function openTab(name) {
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
 }
 window.openTab = openTab;
-function copyCardFallback() {
-  const ta = document.createElement("textarea");
-  ta.value = CARD_NUM;
-  ta.setAttribute("readonly", "");
-  ta.style.cssText = "position:fixed;top:0;left:0;opacity:0";
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
-  ta.setSelectionRange(0, CARD_NUM.length);
-  let ok = false;
-  try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
-  document.body.removeChild(ta);
-  return ok;
-}
 async function copyCard() {
   try {
     if (navigator.clipboard && window.isSecureContext) {
@@ -107,8 +109,7 @@ async function copyCard() {
       return;
     }
   } catch (e) {}
-  if (copyCardFallback()) banner("Номер карты скопирован", true);
-  else banner("Не скопировалось. Выдели номер сам: 2204 3103 7844 5509");
+  banner("Выдели номер: " + CARD_NICE);
 }
 const copyBtn = $("btn-copy-card");
 if (copyBtn) copyBtn.onclick = copyCard;
@@ -133,12 +134,18 @@ async function loadPlayerCount() {
 }
 async function askDonate(amount, girlId) {
   if (!sb || !me) return banner("Сначала вход");
+  const code = makePayCode();
+  const nick = (profile && profile.nickname) || "";
   const { error } = await sb.from("donations").insert({
-    user_id: me.id, amount_rub: amount, status: "pending",
-    comment: girlId || ((profile && profile.nickname) || ""),
+    user_id: me.id,
+    amount_rub: amount,
+    status: "pending",
+    comment: code + "|" + (girlId || "") + "|" + nick,
   });
   if (error) return banner(error.message);
-  banner("Заявка " + amount + " \u20bd. Карта сверху", true);
+  showPayBox(code, amount, girlId);
+  openTab("shop");
+  banner("Код для комментария: " + code, true);
 }
 async function buyGirlSc(id) {
   if (!sb || !me) return banner("Сначала вход");
@@ -156,12 +163,13 @@ async function renderShopGirls() {
   if (!box || !sb) return;
   const { data, error } = await sb.from("girls").select("id,name,price_rub,in_shop").order("price_rub");
   if (error) { box.innerHTML = "<p class='muted'>" + error.message + "</p>"; return; }
-  const rows = (data || []).filter((g) => (g.in_shop || g.price_rub > 0 || SC_PRICE[g.id]) && showOnSite(g.id));
+  const rows = (data || []).filter((g) => (g.in_shop || g.price_rub > 0 || SC_PRICE[g.id] || RUB_PRICE[g.id]) && showOnSite(g.id));
   const pics = Object.fromEntries(CATALOG.map((g) => [g.id, g.img]));
   box.innerHTML = rows.map((g) => {
     const have = owned.includes(g.id);
     const sc = SC_PRICE[g.id] || 0;
-    const free = !sc && (STARTERS.includes(g.id) || Number(g.price_rub) === 0);
+    const rub = RUB_PRICE[g.id] || Number(g.price_rub) || 0;
+    const free = !sc && !rub && (STARTERS.includes(g.id) || Number(g.price_rub) === 0);
     const pic = pics[g.id] ? "<img src=\"" + pics[g.id] + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
     const title = labelOf(g.id, g.name);
     let status = "база пака";
@@ -173,12 +181,12 @@ async function renderShopGirls() {
       price = sc + " SC";
       buy = "<button class=\"btn\" data-sc=\"" + g.id + "\" type=\"button\">Купить " + sc + " SC</button>";
     }
-    else if (free) { status = "база пака"; price = "бесплатно"; }
-    else {
-      status = "после оплаты";
-      price = g.price_rub + " \u20bd";
-      buy = "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + g.price_rub + "\" type=\"button\">Купить " + g.price_rub + " \u20bd</button>";
+    else if (rub) {
+      status = "перевод на карту";
+      price = rub + " ₽";
+      buy = "<button class=\"btn\" data-buy=\"" + g.id + "\" data-sum=\"" + rub + "\" type=\"button\">Купить " + rub + " ₽</button>";
     }
+    else if (free) { status = "база пака"; price = "бесплатно"; }
     return "<article class=\"card girl-card\">" + pic + "<div class=\"meta\"><h3>" + title + "</h3><p class=\"muted\">" + status + "</p><p class=\"price\">" + price + "</p>" + buy + "</div></article>";
   }).join("") || "<p class='muted'>витрина пустая</p>";
   box.querySelectorAll("[data-buy]").forEach((b) => { b.onclick = () => askDonate(+b.dataset.sum, b.dataset.buy); });
@@ -193,6 +201,31 @@ function renderMine() {
     const pic = g.img ? "<img src=\"" + g.img + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
     return "<article class=\"card inv-card\">" + pic + "<div class=\"meta\"><h3>" + g.name + "</h3></div></article>";
   }).join("");
+}
+function parsePay(comment) {
+  const p = String(comment || "").split("|");
+  return { code: p[0] || "", girl: p[1] || "", nick: p[2] || "" };
+}
+async function renderPays() {
+  const box = $("pay-list");
+  if (!box || !sb) return;
+  const { data, error } = await sb.from("donations").select("id,amount_rub,status,comment,created_at").eq("status", "pending").order("created_at", { ascending: false });
+  if (error) { box.textContent = error.message; return; }
+  if (!data || !data.length) { box.textContent = "пусто"; return; }
+  box.innerHTML = data.map((d) => {
+    const p = parsePay(d.comment);
+    return "<p>" + p.nick + " · " + labelOf(p.girl, p.girl) + " · " + d.amount_rub + " ₽ · код <b>" + p.code + "</b> "
+      + "<button class='btn' type='button' data-ok='" + d.id + "'>Подтвердить</button></p>";
+  }).join("");
+  box.querySelectorAll("[data-ok]").forEach((b) => {
+    b.onclick = () => confirmPay(b.dataset.ok);
+  });
+}
+async function confirmPay(id) {
+  const { error } = await sb.rpc("admin_confirm_pay", { p_id: id });
+  if (error) return banner(error.message);
+  banner("Выдано", true);
+  renderPays();
 }
 async function loadProfile() {
   const { data, error } = await sb.from("profiles").select("nickname,is_admin,coins").eq("id", me.id).maybeSingle();
@@ -214,7 +247,6 @@ if ($("form-login")) $("form-login").onsubmit = async (e) => {
   e.preventDefault();
   if (!sb) return banner("нет config.js");
   const fd = new FormData(e.target);
-  banner("Вход...");
   const { data, error } = await sb.auth.signInWithPassword({ email: fd.get("email"), password: fd.get("password") });
   if (error) return banner(authMsg(error));
   me = data.user;
@@ -227,26 +259,24 @@ if ($("form-reg")) $("form-reg").onsubmit = async (e) => {
   const fd = new FormData(e.target);
   const nickname = String(fd.get("nickname") || "").trim();
   if (nickname.length < 3) return banner("Ник от 3 символов");
-  if ((cfg.reservedNicks || []).includes(nickname.toLowerCase())) return banner("Этот ник занят студией");
-  banner("Создаём аккаунт...");
   const { data, error } = await sb.auth.signUp({ email: fd.get("email"), password: fd.get("password") });
   if (error) return banner(authMsg(error));
-  if (!data.user) return banner("Не вышло. Почта могла быть занята — попробуй Вход");
+  if (!data.user) return banner("Не вышло");
   if (data.session) {
     me = data.user;
     const { error: pErr } = await sb.rpc("register_profile", { nick: nickname });
     if (pErr) return banner(authMsg(pErr));
-    try { await loadProfile(); showApp(); banner("Аккаунт создан, ты в системе", true); }
+    try { await loadProfile(); showApp(); banner("Аккаунт создан", true); }
     catch (err) { banner(authMsg(err)); }
     return;
   }
-  banner("Аккаунт создан. Теперь открой письмо на почте (часто папка Спам) и подтверди. После этого жми Вход", true);
+  banner("Подтверди почту, потом Вход", true);
 };
 if ($("btn-out")) $("btn-out").onclick = async () => { if (sb) await sb.auth.signOut(); me = null; profile = null; owned = []; showAuth(); };
 if ($("btn-promo")) $("btn-promo").onclick = async () => {
   const code = $("promo-code").value.trim();
   if (!code) return banner("Введи код");
-  const { data, error } = await sb.rpc("redeem_promo", { p_code: code });
+  const { error } = await sb.rpc("redeem_promo", { p_code: code });
   if (error) return banner(error.message);
   await loadProfile(); showApp();
   banner("Промокод засчитан", true);
@@ -269,13 +299,12 @@ async function renderPromoList() {
   if (!box) return;
   const { data, error } = await sb.from("promo_codes").select("code_norm,coins,girl_id,max_uses,used,active").order("created_at", { ascending: false });
   if (error) { box.textContent = error.message; return; }
-  box.innerHTML = (data || []).map((p) => p.code_norm + " \u00b7 " + p.coins + " SC \u00b7 " + (p.girl_id || "без сучки") + " \u00b7 " + p.used + "/" + (p.max_uses ?? "\u221e")).join("<br>") || "пусто";
+  box.innerHTML = (data || []).map((p) => p.code_norm + " \u00b7 " + p.coins + " SC \u00b7 " + (p.girl_id || "-") + " \u00b7 " + p.used + "/" + (p.max_uses ?? "\u221e")).join("<br>") || "пусто";
 }
 if ($("btn-grant")) $("btn-grant").onclick = async () => {
   const { error } = await sb.rpc("admin_grant", { target_nick: $("grant-nick").value.trim(), p_girl_id: $("grant-girl").value.trim() });
   if (error) return banner(error.message);
   banner("Выдано", true);
-  await loadProfile(); renderMine();
 };
 (async () => {
   if (!ready) { banner("config.js пустой"); showAuth(); return; }
