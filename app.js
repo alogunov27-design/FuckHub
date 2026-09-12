@@ -26,9 +26,7 @@ function makePayCode() {
   for (let i = 0; i < 5; i++) s += abc[Math.floor(Math.random() * abc.length)];
   return s;
 }
-function authMsg(err) {
-  return (err && err.message) || "Ошибка";
-}
+function authMsg(err) { return (err && err.message) || "Ошибка"; }
 const cfg = window.FNWP_CONFIG || {};
 const ready = !!(cfg.supabaseUrl && cfg.supabaseAnonKey);
 const sb = ready ? window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey) : null;
@@ -39,13 +37,10 @@ const banner = (msg, ok) => {
   el.className = "show " + (ok ? "ok" : "bad");
   el.textContent = msg;
 };
-let me = null, profile = null, owned = [], lastPayId = null;
+let me = null, profile = null, owned = [], lastPayId = null, checksCache = [];
 function paintCoins() {
   const bal = $("sc-bal");
-  if (bal) {
-    bal.textContent = "FNWP 2 \u00b7 " + (profile?.coins ?? 0) + " SC";
-    bal.classList.add("on");
-  }
+  if (bal) { bal.textContent = "FNWP 2 \u00b7 " + (profile?.coins ?? 0) + " SC"; bal.classList.add("on"); }
   if ($("coins-label")) $("coins-label").textContent = (profile?.coins ?? 0) + " SC";
 }
 function hidePayBox() {
@@ -64,10 +59,8 @@ function showPayBox(code, amount, girlId, payId) {
     + "<p class='muted'>Ник: <b>" + ((profile && profile.nickname) || "-") + "</b></p>"
     + "<p class='muted'>Товар: <b>" + labelOf(girlId, girlId) + "</b></p>"
     + "<p class='muted'>Сумма: <b>" + amount + " ₽</b></p>"
-    + "<p class='muted'>Карта</p>"
     + "<p class='price' style='font-size:20px'>" + CARD_NICE + "</p>"
-    + "<p class='muted'>Комментарий перевода</p>"
-    + "<p class='price' style='font-size:26px;letter-spacing:.08em'>" + code + "</p>"
+    + "<p class='price' style='font-size:26px'>" + code + "</p>"
     + "<button class='btn gold' type='button' id='btn-copy-pay'>Скопировать код</button>"
     + "<button class='btn' type='button' id='btn-i-paid' style='margin-top:10px'>Я оплатил</button>"
     + "<button class='btn ghost' type='button' id='btn-pay-cancel' style='margin-top:10px'>Отмена</button>";
@@ -109,20 +102,22 @@ function showApp() {
   $("who").textContent = profile ? "@" + profile.nickname : "";
   paintCoins();
   const admin = !!(profile && profile.is_admin);
-  if ($("btn-admin-tab")) $("btn-admin-tab").classList.toggle("hidden", !admin);
-  if ($("btn-pays-tab")) $("btn-pays-tab").classList.toggle("hidden", !admin);
+  ["btn-admin-tab", "btn-pays-tab", "btn-checks-tab"].forEach((id) => {
+    if ($(id)) $(id).classList.toggle("hidden", !admin);
+  });
   renderMine();
   renderShopGirls();
-  if (admin) { renderPromoList(); renderPays(); }
+  if (admin) { renderPromoList(); renderPays(); renderChecks(); }
   openTab("home");
 }
 function openTab(name) {
-  ["home", "download", "donate", "shop", "mine", "promo", "admin", "pays"].forEach((t) => {
+  ["home", "download", "donate", "shop", "mine", "promo", "admin", "pays", "checks"].forEach((t) => {
     const pane = $("tab-" + t);
     if (pane) pane.classList.toggle("hidden", t !== name);
   });
   document.querySelectorAll("[data-tab]").forEach((b) => b.classList.toggle("on", b.dataset.tab === name));
   if (name === "pays" && profile && profile.is_admin) renderPays();
+  if (name === "checks" && profile && profile.is_admin) renderChecks();
 }
 window.openTab = openTab;
 async function copyCard() {
@@ -146,9 +141,7 @@ async function askDonate(amount, girlId) {
   const code = makePayCode();
   const nick = (profile && profile.nickname) || "";
   const { data, error } = await sb.from("donations").insert({
-    user_id: me.id,
-    amount_rub: amount,
-    status: "pending",
+    user_id: me.id, amount_rub: amount, status: "pending",
     comment: code + "|" + (girlId || "") + "|" + nick,
   }).select("id").single();
   if (error) return banner(error.message);
@@ -159,10 +152,7 @@ async function buyGirlSc(id) {
   if (!sb || !me) return banner("Сначала вход");
   const { error } = await sb.rpc("buy_girl_sc", { p_girl_id: id });
   if (error) return banner(authMsg(error));
-  await loadProfile();
-  paintCoins();
-  renderMine();
-  renderShopGirls();
+  await loadProfile(); paintCoins(); renderMine(); renderShopGirls();
   banner("Куплено", true);
 }
 async function renderShopGirls() {
@@ -195,6 +185,7 @@ async function renderShopGirls() {
 function renderMine() {
   const map = Object.fromEntries(CATALOG.map((g) => [g.id, g]));
   const list = owned.filter(showOnSite);
+  if (!$("mine-list")) return;
   if (!list.length) { $("mine-list").innerHTML = "<p class='muted'>Пусто.</p>"; return; }
   $("mine-list").innerHTML = list.map((id) => {
     const g = map[id] || { id, name: id, img: "" };
@@ -206,39 +197,52 @@ function parsePay(comment) {
   const p = String(comment || "").split("|");
   return { code: p[0] || "-", girl: p[1] || "-", nick: p[2] || "-" };
 }
+function cardHtml(d) {
+  const p = parsePay(d.comment);
+  const st = d.status === "paid" ? "подтверждён" : d.status === "rejected" ? "отказ" : d.status === "sent" ? "оплатил" : "ждёт";
+  return "<div class='panel' style='margin:0 0 12px'><p>Ник: <b>" + p.nick + "</b></p><p>Товар: <b>" + labelOf(p.girl, p.girl) + "</b></p><p>Цена: <b>" + d.amount_rub + " ₽</b></p><p>Код: <b>" + p.code + "</b></p><p class='muted'>" + st + "</p>";
+}
 async function renderPays() {
   const box = $("pay-list");
   if (!box || !sb) return;
   const { data, error } = await sb.rpc("admin_list_pays");
   if (error) { box.textContent = error.message; return; }
   if (!data || !data.length) { box.textContent = "пусто"; return; }
-  box.innerHTML = data.map((d) => {
-    const p = parsePay(d.comment);
-    const st = d.status === "sent" ? "оплатил" : "ждёт";
-    return "<div class='panel' style='margin:0 0 12px'>"
-      + "<p>Ник: <b>" + p.nick + "</b></p>"
-      + "<p>Товар: <b>" + labelOf(p.girl, p.girl) + "</b></p>"
-      + "<p>Цена: <b>" + d.amount_rub + " ₽</b></p>"
-      + "<p>Код: <b>" + p.code + "</b></p>"
-      + "<p class='muted'>" + st + "</p>"
-      + "<button class='btn gold' type='button' data-ok='" + d.id + "'>Подтвердить</button>"
-      + "<button class='btn ghost' type='button' data-no='" + d.id + "' style='margin-top:8px'>Отказ</button>"
-      + "</div>";
-  }).join("");
+  box.innerHTML = data.map((d) => cardHtml(d)
+    + "<button class='btn gold' type='button' data-ok='" + d.id + "'>Подтвердить</button>"
+    + "<button class='btn ghost' type='button' data-no='" + d.id + "' style='margin-top:8px'>Отказ</button></div>").join("");
   box.querySelectorAll("[data-ok]").forEach((b) => { b.onclick = () => confirmPay(b.dataset.ok); });
   box.querySelectorAll("[data-no]").forEach((b) => { b.onclick = () => rejectPay(b.dataset.no); });
+}
+function paintChecks(list) {
+  const box = $("check-list");
+  if (!box) return;
+  if (!list.length) { box.textContent = "пусто"; return; }
+  box.innerHTML = list.map((d) => cardHtml(d) + "</div>").join("");
+}
+async function renderChecks() {
+  const box = $("check-list");
+  if (!box || !sb) return;
+  const { data, error } = await sb.rpc("admin_list_checks");
+  if (error) { box.textContent = error.message; return; }
+  checksCache = data || [];
+  const q = (($("check-q") && $("check-q").value) || "").trim().toUpperCase();
+  const list = q ? checksCache.filter((d) => String(d.comment || "").toUpperCase().indexOf(q) >= 0) : checksCache;
+  paintChecks(list);
 }
 async function confirmPay(id) {
   const { error } = await sb.rpc("admin_confirm_pay", { p_id: id });
   if (error) return banner(error.message);
   banner("Выдано", true);
   renderPays();
+  renderChecks();
 }
 async function rejectPay(id) {
   const { error } = await sb.rpc("admin_reject_pay", { p_id: id });
   if (error) return banner(error.message);
   banner("Отказ", true);
   renderPays();
+  renderChecks();
 }
 async function loadProfile() {
   const { data, error } = await sb.from("profiles").select("nickname,is_admin,coins").eq("id", me.id).maybeSingle();
@@ -256,6 +260,8 @@ document.querySelectorAll("[data-auth]").forEach((b) => {
   };
 });
 document.querySelectorAll("[data-tab]").forEach((b) => { b.onclick = () => openTab(b.dataset.tab); });
+if ($("btn-check-find")) $("btn-check-find").onclick = () => renderChecks();
+if ($("check-q")) $("check-q").onkeydown = (e) => { if (e.key === "Enter") renderChecks(); };
 if ($("form-login")) $("form-login").onsubmit = async (e) => {
   e.preventDefault();
   const fd = new FormData(e.target);
