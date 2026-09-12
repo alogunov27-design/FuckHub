@@ -27,10 +27,6 @@ function makePayCode() {
   return s;
 }
 function authMsg(err) {
-  const m = String((err && (err.message || err.msg)) || err || "").toLowerCase();
-  if (m.includes("invalid login") || m.includes("invalid credentials")) return "Неверная почта или пароль";
-  if (m.includes("not_enough")) return "Не хватает SC";
-  if (m.includes("already_owned")) return "Уже куплена";
   return (err && err.message) || "Ошибка";
 }
 const cfg = window.FNWP_CONFIG || {};
@@ -65,10 +61,12 @@ function showPayBox(code, amount, girlId, payId) {
   lastPayId = payId;
   box.classList.remove("hidden");
   box.innerHTML = "<h3 style='font-family:Unbounded;margin:0 0 8px'>Оплата</h3>"
-    + "<p class='muted'>Переведи <b>" + amount + " ₽</b> за " + labelOf(girlId, girlId) + "</p>"
+    + "<p class='muted'>Ник: <b>" + ((profile && profile.nickname) || "-") + "</b></p>"
+    + "<p class='muted'>Товар: <b>" + labelOf(girlId, girlId) + "</b></p>"
+    + "<p class='muted'>Сумма: <b>" + amount + " ₽</b></p>"
     + "<p class='muted'>Карта</p>"
     + "<p class='price' style='font-size:20px'>" + CARD_NICE + "</p>"
-    + "<p class='muted'>Комментарий перевода — только этот код</p>"
+    + "<p class='muted'>Комментарий перевода</p>"
     + "<p class='price' style='font-size:26px;letter-spacing:.08em'>" + code + "</p>"
     + "<button class='btn gold' type='button' id='btn-copy-pay'>Скопировать код</button>"
     + "<button class='btn' type='button' id='btn-i-paid' style='margin-top:10px'>Я оплатил</button>"
@@ -82,14 +80,14 @@ function showPayBox(code, amount, girlId, payId) {
 }
 async function markSent() {
   if (!lastPayId || !sb) return banner("Нет заявки");
-  const { error } = await sb.from("donations").update({ status: "sent" }).eq("id", lastPayId).eq("user_id", me.id);
+  const { error } = await sb.rpc("user_set_pay", { p_id: lastPayId, p_status: "sent" });
   if (error) return banner(error.message);
   hidePayBox();
   banner("Заявка ушла на проверку", true);
 }
 async function cancelPay() {
   if (!lastPayId || !sb) { hidePayBox(); return; }
-  const { error } = await sb.from("donations").update({ status: "cancelled" }).eq("id", lastPayId).eq("user_id", me.id);
+  const { error } = await sb.rpc("user_set_pay", { p_id: lastPayId, p_status: "cancelled" });
   if (error) return banner(error.message);
   hidePayBox();
   banner("Заявка отменена", true);
@@ -140,10 +138,6 @@ async function loadPlayerCount() {
     const rpc = await sb.rpc("player_count");
     if (!rpc.error && typeof rpc.data === "number") n = rpc.data;
   } catch (e) {}
-  if (n == null) {
-    const { count } = await sb.from("profiles").select("id", { count: "exact", head: true });
-    n = count;
-  }
   const text = n == null ? "\u2014" : String(n);
   ["player-count", "player-count-guest"].forEach((id) => { const el = $(id); if (el) el.textContent = text; });
 }
@@ -182,7 +176,7 @@ async function renderShopGirls() {
     const have = owned.includes(g.id);
     const sc = SC_PRICE[g.id] || 0;
     const rub = RUB_PRICE[g.id] || Number(g.price_rub) || 0;
-    const pic = pics[g.id] ? "<img src=\"" + pics[g.id] + "\" alt=\"\">" : "<div class=\"ph\">база</div>";
+    const pic = pics[g.id] ? "<img src='" + pics[g.id] + "' alt=''>" : "<div class='ph'>база</div>";
     const title = labelOf(g.id, g.name);
     let status = "база", price = "бесплатно", buy = "";
     if (have) { status = "уже в аккаунте"; price = "есть"; }
@@ -210,26 +204,40 @@ function renderMine() {
 }
 function parsePay(comment) {
   const p = String(comment || "").split("|");
-  return { code: p[0] || "", girl: p[1] || "", nick: p[2] || "" };
+  return { code: p[0] || "-", girl: p[1] || "-", nick: p[2] || "-" };
 }
 async function renderPays() {
   const box = $("pay-list");
   if (!box || !sb) return;
-  const { data, error } = await sb.from("donations").select("id,amount_rub,status,comment,created_at").in("status", ["pending", "sent"]).order("created_at", { ascending: false });
+  const { data, error } = await sb.rpc("admin_list_pays");
   if (error) { box.textContent = error.message; return; }
   if (!data || !data.length) { box.textContent = "пусто"; return; }
   box.innerHTML = data.map((d) => {
     const p = parsePay(d.comment);
     const st = d.status === "sent" ? "оплатил" : "ждёт";
-    return "<p>" + p.nick + " · " + labelOf(p.girl, p.girl) + " · " + d.amount_rub + " ₽ · " + st + " · <b>" + p.code + "</b> "
-      + "<button class='btn' type='button' data-ok='" + d.id + "'>Подтвердить</button></p>";
+    return "<div class='panel' style='margin:0 0 12px'>"
+      + "<p>Ник: <b>" + p.nick + "</b></p>"
+      + "<p>Товар: <b>" + labelOf(p.girl, p.girl) + "</b></p>"
+      + "<p>Цена: <b>" + d.amount_rub + " ₽</b></p>"
+      + "<p>Код: <b>" + p.code + "</b></p>"
+      + "<p class='muted'>" + st + "</p>"
+      + "<button class='btn gold' type='button' data-ok='" + d.id + "'>Подтвердить</button>"
+      + "<button class='btn ghost' type='button' data-no='" + d.id + "' style='margin-top:8px'>Отказ</button>"
+      + "</div>";
   }).join("");
   box.querySelectorAll("[data-ok]").forEach((b) => { b.onclick = () => confirmPay(b.dataset.ok); });
+  box.querySelectorAll("[data-no]").forEach((b) => { b.onclick = () => rejectPay(b.dataset.no); });
 }
 async function confirmPay(id) {
   const { error } = await sb.rpc("admin_confirm_pay", { p_id: id });
   if (error) return banner(error.message);
   banner("Выдано", true);
+  renderPays();
+}
+async function rejectPay(id) {
+  const { error } = await sb.rpc("admin_reject_pay", { p_id: id });
+  if (error) return banner(error.message);
+  banner("Отказ", true);
   renderPays();
 }
 async function loadProfile() {
