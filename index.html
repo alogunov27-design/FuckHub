@@ -5,13 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <title>FNWP 2 — FuckFaz Studios</title>
   <meta name="theme-color" content="#12010c" />
-  <link rel="icon" href="/img/icon.jpg?v=18" type="image/jpeg" />
-  <link rel="apple-touch-icon" href="/img/icon.jpg?v=18" />
+  <link rel="icon" href="/img/icon.jpg?v=19" type="image/jpeg" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./config.js?v=tabs18"></script>
-  <link rel="stylesheet" href="./style.css?v=tabs18" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <script src="./config.js?v=tabs19"></script>
+  <link rel="stylesheet" href="./style.css?v=tabs19" />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
 </head>
 <body>
@@ -24,9 +21,8 @@
     <div class="guest" id="guest">
     <section class="poster" id="poster">
       <h1>Собери смену.<br><span class="pink">Переживи ночь.</span></h1>
-      <p class="lead">Ночная смена. Ты ходишь. Они ходят за тобой. Фонарик, карта пиццерии, шкаф на пару секунд воздуха.</p>
-      <div class="chips"><span class="chip">18+</span><span class="chip">Android first</span><span class="chip">касса + облако</span></div>
-      <p class="count-line">Уже с нами: <b id="player-count-guest">—</b> игроков</p>
+      <p class="lead">Ночная смена. Ты ходишь. Они ходят за тобой.</p>
+      <p class="count-line">Уже с нами: <b id="player-count-guest">—</b></p>
       <a class="btn" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener">Telegram</a>
     </section>
     <section class="panel" id="view-auth">
@@ -34,17 +30,8 @@
         <button class="tab on" type="button" data-auth="login">Вход</button>
         <button class="tab" type="button" data-auth="reg">Регистрация</button>
       </div>
-      <form id="form-login">
-        <input name="email" type="email" required placeholder="почта" />
-        <input name="password" type="password" required placeholder="пароль" />
-        <button class="btn" type="submit">Войти</button>
-      </form>
-      <form id="form-reg" class="hidden">
-        <input name="nickname" minlength="3" maxlength="20" required placeholder="ник" />
-        <input name="email" type="email" required placeholder="почта" />
-        <input name="password" type="password" minlength="6" required placeholder="пароль" />
-        <button class="btn" type="submit">Создать аккаунт</button>
-      </form>
+      <form id="form-login"><input name="email" type="email" required placeholder="почта" /><input name="password" type="password" required placeholder="пароль" /><button class="btn" type="submit">Войти</button></form>
+      <form id="form-reg" class="hidden"><input name="nickname" minlength="3" required placeholder="ник" /><input name="email" type="email" required placeholder="почта" /><input name="password" type="password" minlength="6" required placeholder="пароль" /><button class="btn" type="submit">Создать аккаунт</button></form>
     </section>
     </div>
     <section id="view-app" class="hidden">
@@ -61,57 +48,20 @@
         <button class="tab" type="button" id="btn-out">Выйти</button>
       </div>
       <div id="tab-home">
-        <div class="panel">
-          <h2 style="font-family:Unbounded;margin:0 0 8px;font-size:22px">FNWP 2</h2>
-          <p class="game-desc">Ночная смена. Ты ходишь. Они ходят за тобой. Хоррор с ходьбой, сменой состава и сучками из разных вселенных. Не сидишь в кресле: фонарик, карта пиццерии, шкаф на пару секунд воздуха.</p>
-          <p class="count-line">Уже с нами: <b id="player-count">—</b> игроков</p>
-          <a class="btn" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener">Telegram-канал</a>
-        </div>
-        <div class="panel">
-          <h3 style="font-family:Unbounded;margin:0 0 8px">Что за игра</h3>
-          <p class="game-desc">Пять ночей. Состав смены собираешь сам: базовые Fexa, Frenni, Bonfie, Chiku — сразу. Диана, Луна и новые — за SC или донат. Аккаунт тянет покупки между телефоном и ПК.</p>
-        </div>
-        <div class="panel">
-          <h3 style="font-family:Unbounded;margin:0 0 8px">Студия</h3>
-          <p class="game-desc">FuckFaz Studios — мелкая независимая мастерская. Вторая часть — живой проект с обновами, не новая касса каждый раз.</p>
-        </div>
-        <div class="panel">
-          <h3 style="font-family:Unbounded;margin:0 0 8px">Сейчас в работе</h3>
-          <p class="game-desc">Пиццерия с охраной, залом, кухней, складом, спальней, морозилкой и архивом. Скачать — когда ночь проходится.</p>
-        </div>
+        <div class="panel"><h2 style="font-family:Unbounded;margin:0 0 8px;font-size:22px">FNWP 2</h2><p class="game-desc">Ночная смена. Ты ходишь. Они ходят за тобой.</p><p class="count-line">Уже с нами: <b id="player-count">—</b></p><a class="btn" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener">Telegram</a></div>
+        <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Что за игра</h3><p class="game-desc">Пять ночей. Fexa, Frenni, Bonfie, Chiku сразу. Диана и Луна — за SC или донат.</p></div>
       </div>
-      <div id="tab-donate" class="hidden">
-        <div class="panel">
-          <h2 style="font-family:Unbounded;margin:0 0 8px;font-size:20px">Поддержка FNWP 2</h2>
-          <p class="muted">Поддержка проекта, не покупка.</p>
-          <p class="price" id="card-num" style="font-size:22px">2204 3103 7844 5509</p>
-          <button class="btn gold" id="btn-copy-card" type="button">Скопировать номер</button>
-        </div>
-      </div>
-      <div id="tab-download" class="hidden">
-        <div class="panel">
-          <div class="game-hero"><img class="game-ico" src="./img/icon.jpg" alt="FNWP 2" /><div><h2 style="font-family:Unbounded;margin:0 0 6px;font-size:24px">FNWP 2</h2><p class="muted">18+</p></div></div>
-          <p class="game-desc">Ты не сидишь в офисе. Ночь в клубе: ходишь сам. Старт: Fexa, Frenni, Bonfie, Chiku. Дальше Loona и Диана.</p>
-          <button class="btn" type="button" disabled>Андроид · скоро</button>
-          <button class="btn ghost" type="button" disabled style="margin-top:10px">ПК · скоро</button>
-        </div>
-      </div>
-      <div id="tab-shop" class="hidden">
-        <div class="grid"><article class="card"><h3>SexCoin</h3><p class="price" id="coins-label">0 SC</p></article></div>
-        <div id="pay-box" class="panel hidden"></div>
-        <div id="shop-girls"></div>
-      </div>
-      <div id="tab-mine" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Мои сучки</h3><div class="inv" id="mine-list"></div></div></div>
+      <div id="tab-donate" class="hidden"><div class="panel"><p class="price" id="card-num">2204 3103 7844 5509</p><button class="btn gold" id="btn-copy-card" type="button">Скопировать номер</button></div></div>
+      <div id="tab-download" class="hidden"><div class="panel"><button class="btn" type="button" disabled>Андроид · скоро</button><button class="btn ghost" type="button" disabled style="margin-top:10px">ПК · скоро</button></div></div>
+      <div id="tab-shop" class="hidden"><div class="grid"><article class="card"><h3>SexCoin</h3><p class="price" id="coins-label">0 SC</p></article></div><div id="pay-box" class="panel hidden"></div><div id="shop-girls"></div></div>
+      <div id="tab-mine" class="hidden"><div class="panel"><div class="inv" id="mine-list"></div></div></div>
       <div id="tab-promo" class="hidden"><div class="panel"><input id="promo-code" placeholder="код" /><button class="btn" id="btn-promo" type="button">Активировать</button></div></div>
-      <div id="tab-pays" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Заявки</h3><p class="muted">Живые. После подтверждения уходят в Чеки.</p><div id="pay-list" class="muted">пусто</div></div></div>
-      <div id="tab-checks" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Чеки</h3><p class="muted">Подтверждённые и отказы.</p><div id="check-list" class="muted">пусто</div></div></div>
-      <div id="tab-admin" class="hidden">
-        <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3><input id="grant-nick" placeholder="ник" /><input id="grant-girl" placeholder="girl_id" /><button class="btn gold" id="btn-grant" type="button">Выдать</button></div>
-        <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Промокод</h3><input id="promo-new-code" placeholder="код" /><input id="promo-new-coins" type="number" placeholder="SC" /><input id="promo-new-girl" placeholder="girl_id" /><input id="promo-new-max" type="number" placeholder="лимит" /><input id="promo-new-note" placeholder="заметка" /><button class="btn gold" id="btn-promo-create" type="button">Создать</button><div id="promo-list" class="muted"></div></div>
-      </div>
+      <div id="tab-pays" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Заявки</h3><div id="pay-list" class="muted">пусто</div></div></div>
+      <div id="tab-checks" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Чеки</h3><input id="check-q" placeholder="поиск по коду FF..." /><button class="btn" id="btn-check-find" type="button" style="margin-top:8px">Найти</button><div id="check-list" class="muted" style="margin-top:12px">пусто</div></div></div>
+      <div id="tab-admin" class="hidden"><div class="panel"><input id="grant-nick" placeholder="ник" /><input id="grant-girl" placeholder="girl_id" /><button class="btn gold" id="btn-grant" type="button">Выдать</button></div><div class="panel"><input id="promo-new-code" placeholder="код" /><input id="promo-new-coins" type="number" placeholder="SC" /><input id="promo-new-girl" placeholder="girl_id" /><input id="promo-new-max" type="number" placeholder="лимит" /><input id="promo-new-note" placeholder="заметка" /><button class="btn gold" id="btn-promo-create" type="button">Создать</button><div id="promo-list" class="muted"></div></div></div>
     </section>
-    <footer>FuckFaz Studios · 18+</footer>
+    <footer>FuckFaz Studios</footer>
   </div>
-  <script src="./app.js?v=tabs18"></script>
+  <script src="./app.js?v=tabs19"></script>
 </body>
 </html>
