@@ -5,16 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
   <title>FNWP 2 — FuckFaz Studios</title>
   <meta name="theme-color" content="#12010c" />
-  <link rel="icon" href="/img/icon.jpg?v=13" type="image/jpeg" sizes="32x32" />
-  <link rel="icon" href="/img/icon.jpg?v=13" type="image/jpeg" sizes="192x192" />
-  <link rel="shortcut icon" href="/img/icon.jpg?v=13" type="image/jpeg" />
-  <link rel="apple-touch-icon" href="/img/icon.jpg?v=13" />
+  <link rel="icon" href="/img/icon.jpg?v=14" type="image/jpeg" sizes="32x32" />
+  <link rel="icon" href="/img/icon.jpg?v=14" type="image/jpeg" sizes="192x192" />
+  <link rel="shortcut icon" href="/img/icon.jpg?v=14" type="image/jpeg" />
+  <link rel="apple-touch-icon" href="/img/icon.jpg?v=14" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="./config.js?v=home13"></script>
-  <link rel="stylesheet" href="./style.css?v=home13" />
+  <script src="./config.js?v=tabs14"></script>
+  <link rel="stylesheet" href="./style.css?v=tabs14" />
 </head>
 <body>
   <div class="wrap">
@@ -64,14 +64,14 @@
     </section>
     </div>
     <section id="view-app" class="hidden">
-      <div class="tabs">
-        <button class="tab on" type="button" data-tab="home">Главная</button>
-        <button class="tab" type="button" data-tab="download">Скачать</button>
-        <button class="tab" type="button" data-tab="shop">Магазин</button>
-        <button class="tab" type="button" data-tab="mine">Инвентарь</button>
-        <button class="tab" type="button" data-tab="promo">Промокод</button>
-        <button class="tab" type="button" data-tab="donate">Донат</button>
-        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab">Админ</button>
+      <div class="tabs" id="app-tabs">
+        <button class="tab on" type="button" data-tab="home" onclick="openTab('home')">Главная</button>
+        <button class="tab" type="button" data-tab="download" onclick="openTab('download')">Скачать</button>
+        <button class="tab" type="button" data-tab="shop" onclick="openTab('shop')">Магазин</button>
+        <button class="tab" type="button" data-tab="mine" onclick="openTab('mine')">Инвентарь</button>
+        <button class="tab" type="button" data-tab="promo" onclick="openTab('promo')">Промокод</button>
+        <button class="tab" type="button" data-tab="donate" onclick="openTab('donate')">Донат</button>
+        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab" onclick="openTab('admin')">Админ</button>
         <button class="tab" type="button" id="btn-out">Выйти</button>
       </div>
       <div id="tab-home">
@@ -167,6 +167,6 @@
     </section>
     <footer>FuckFaz Studios · 18+ · касса FNWP 2</footer>
   </div>
-  <script src="./app.js?v=home13"></script>
+  <script src="./app.js?v=tabs14"></script>
 </body>
 </html>
