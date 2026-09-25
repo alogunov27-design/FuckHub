@@ -2,7 +2,7 @@ const STARTERS = ["fexa", "fnia", "bonfie", "chiku"];
 const SC_PRICE = { diana: 3000 };
 const RUB_PRICE = { loona: 150 };
 const CATALOG = [
-  { id: "fexa", name: "Fexa", img: "./img/fexa.png" },
+  { id: "fexa", name: "Fexa", img: "./img/fexa.png?v=2" },
   { id: "fnia", name: "Frenni", img: "./img/frenny.jpg" },
   { id: "bonfie", name: "Bonfie", img: "./img/bonfie.jpg" },
   { id: "chiku", name: "Chiku", img: "./img/Chiku.png" },
