@@ -5,8 +5,8 @@ const CATALOG = [
   { id: "fexa", name: "Fexa", img: "./img/fexa.png?v=2" },
   { id: "fnia", name: "Frenni", img: "./img/frenny.jpg" },
   { id: "bonfie", name: "Bonfie", img: "./img/bonfie.jpg" },
-  { id: "chiku", name: "Chiku", img: "./img/Chiku.png" },
-  { id: "loona", name: "Loona", img: "./img/Loona.png" },
+  { id: "chiku", name: "Chiku", img: "./img/Chiku.png?v=2" },
+  { id: "loona", name: "Loona", img: "./img/Loona.png?v=2" },
   { id: "diana", name: "Диана", img: "./img/diana.png" },
 ];
 const CARD_NUM = "2204310378445509";
