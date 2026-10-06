@@ -2,94 +2,101 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>FNWP 2 — FuckFaz Studios</title>
-  <meta name="theme-color" content="#12010c" />
+  <meta name="theme-color" content="#09090b" />
   <link rel="icon" href="/img/icon.jpg?v=22" type="image/jpeg" />
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&family=Unbounded:wght@600;800&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&amp;family=Unbounded:wght@500;600;800&amp;display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="./config.js?v=tabs22"></script>
-  <link rel="stylesheet" href="./style.css?v=tabs25" />
-  <script src="./cards-916.js?v=26"></script>
+  <link rel="stylesheet" href="./style.css?v=cinematic2" />
+  <script src="./cards-916.js?v=cinematic2"></script>
 </head>
-<body>
-  <div class="wrap">
-    <header>
-      <div class="brand"><div class="mark"></div><div><p class="logo">FNWP 2</p><p class="sub">FuckFaz Studios</p></div></div>
-      <div><div class="who" id="who"></div><div class="bal" id="sc-bal">FNWP 2 · 0 SC</div></div>
-    </header>
-    <div id="banner"></div>
-    <div class="guest" id="guest">
-      <section class="poster" id="poster">
-        <h1>Собери смену.<br><span class="pink">Переживи ночь.</span></h1>
-        <p class="lead">Ночная смена. Ты ходишь. Они ходят за тобой. Фонарик, карта пиццерии, шкаф на пару секунд воздуха.</p>
-        <div class="chips"><span class="chip">18+</span><span class="chip">Android first</span><span class="chip">касса + облако</span></div>
-        <p class="count-line">Уже с нами: <b id="player-count-guest">—</b> игроков</p>
-        <a class="btn" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener">Telegram</a>
-      </section>
-      <section class="panel" id="view-auth">
-        <div class="tabs">
+<body class="page-home"><a class="skip-link" href="#main">Перейти к содержимому</a><div class="ambient" aria-hidden="true"></div><div class="wrap"><header class="site-header">
+  <a class="brand" href="./index.html" aria-label="FNWP 2 — главная"><span class="mark" aria-hidden="true">F<span>2</span></span><span><span class="logo">FNWP 2</span><span class="sub">FuckFaz Studios</span></span></a>
+  <nav class="header-nav" aria-label="Основная навигация"><a href="./index.html#about-game">Об игре</a><a href="./download.html">Скачать</a><a href="./donate.html">Поддержать</a></nav>
+  <div class="header-end"><span class="age-tag">18+</span><div class="account-chip"><div class="who" id="who"></div><div class="bal" id="sc-bal">FNWP 2 · 0 SC</div></div><a class="header-account" href="./index.html#view-auth"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg><span>Аккаунт</span></a></div>
+</header><main id="main"><div id="banner" role="status" aria-live="polite"></div><div class="guest" id="guest">
+  <section class="poster" id="poster" aria-labelledby="hero-title">
+    <div class="hero-art" aria-hidden="true"><img src="./img/fexa.png?v=2" alt="" fetchpriority="high" decoding="async" /><span class="art-vignette"></span><span class="art-caption"><i></i> FEXA <span>Original roster / 01</span></span></div>
+    <div class="hero-content"><div class="hero-topline"><span class="eyebrow">FuckFaz Studios представляет</span><span class="status-pill"><i aria-hidden="true"></i> В разработке</span></div>
+      <h1 id="hero-title">Собери смену.<br><span class="pink">Переживи ночь.</span></h1>
+      <p class="lead">Ночная смена. Ты ходишь. Они ходят за тобой. Фонарик, карта пиццерии, шкаф на пару секунд воздуха.</p>
+      <div class="hero-actions"><a class="btn" href="#view-auth">Начать свою смену <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a><a class="hero-community" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21 3-4 18-6-6-4 4v-7L2 10Zm-14 9L21 3M11 15 21 3"/></svg> Telegram <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></div>
+      <div class="chips"><span class="chip">18+</span><span class="chip">Android first</span><span class="chip">касса + облако</span></div>
+    </div>
+    <div class="hero-bottom"><span class="night-index"><b>01</b><span>/ 05 НОЧЕЙ</span></span><p class="count-line">Уже с нами: <b id="player-count-guest">—</b> игроков</p><a class="scroll-cue" href="#about-game">Узнать больше <span>↓</span></a></div>
+  </section>
+  <div class="world-strip" aria-label="Особенности игры"><span>Твоя смена начинается здесь</span><div><b>05</b> ночей</div><div><b>04</b> базовых персонажа</div><div><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> единый аккаунт</div></div>
+  <section class="intro-section" id="about-game" aria-labelledby="about-title">
+    <div class="section-heading"><div><span class="eyebrow">01 / Об игре</span><h2 id="about-title">За каждым углом —<br><span>новая история.</span></h2></div><p>Фонарик. Шаги в темноте.<br>И состав смены, который выбираешь ты.</p></div>
+    <div class="story-grid"><article class="story-main"><span class="overline">Что за игра</span><h3>Пять ночей.<br>Твой состав.</h3><p>Пять ночей. Состав смены собираешь сам: базовые Fexa, Frenni, Bonfie, Chiku — сразу. Диана, Луна и новые — за SC или донат. Аккаунт тянет покупки между телефоном и ПК. Промокоды с сайта работают в игре без патча.</p><a class="text-link" href="./download.html">Подробнее об игре <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a><span class="story-number" aria-hidden="true">05</span></article><article class="story-secondary"><span class="overline">Сейчас в работе</span><div class="location-art" aria-hidden="true"><span class="map-room room-a">ЗАЛ</span><span class="map-room room-b">КУХНЯ</span><span class="map-room room-c">ОХРАНА</span><span class="map-room room-d">СКЛАД</span><span class="map-dot"></span><span class="map-coordinate">FNWP / NIGHT MAP</span></div><h3>Ночь становится ближе.</h3><p>Пиццерия с охраной, залом, кухней, складом, спальней, морозилкой и архивом. Меню уже крутится. Скачать сборку — когда ночь реально проходится, не раньше. Новости и тесты — только в канале.</p></article></div>
+  </section>
+  <section class="access-section" aria-label="Аккаунт игрока"><div class="access-copy"><span class="eyebrow">02 / Твоя территория</span><h2>Вся коллекция.<br><span>Всегда с тобой.</span></h2><p>Собирай состав, активируй промокоды и управляй покупками в одном месте.</p><div class="access-perks"><span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg> Личный инвентарь</span><span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4Z"/><path d="M9 8v2m0 4v2m5-7v6m-2-3h4"/></svg> Промокоды</span><span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l1 13H3ZM8 8V6a4 4 0 0 1 8 0v2"/></svg> Магазин персонажей</span></div><div class="access-signature"><span aria-hidden="true">F2</span><p>Один аккаунт<br><b>Телефон + ПК</b></p></div></div><section class="panel" id="view-auth">
+        <div class="auth-heading"><span class="eyebrow">Личный кабинет</span><h2>Встретимся<br>после полуночи.</h2><p>Один аккаунт. Твоя коллекция. Все твои ночи.</p></div><div class="tabs auth-tabs" aria-label="Доступ к аккаунту">
           <button class="tab on" type="button" data-auth="login">Вход</button>
           <button class="tab" type="button" data-auth="reg">Регистрация</button>
         </div>
         <form id="form-login">
-          <input name="email" type="email" required placeholder="почта" />
-          <input name="password" type="password" required placeholder="пароль" />
+          <label class="field-label" for="login-email">Электронная почта</label><div class="field"><input id="login-email" autocomplete="email" name="email" type="email" required placeholder="почта" /></div>
+          <label class="field-label" for="login-password">Пароль</label><div class="field field-password"><input id="login-password" autocomplete="current-password" name="password" type="password" required placeholder="пароль" /><button class="password-toggle" type="button" data-password="login-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           <button class="btn" type="submit">Войти</button>
         </form>
         <form id="form-reg" class="hidden">
-          <input name="nickname" minlength="3" maxlength="20" required placeholder="ник" />
-          <input name="email" type="email" required placeholder="почта" />
-          <input name="password" type="password" minlength="6" required placeholder="пароль" />
+          <label class="field-label" for="reg-nickname">Твой ник</label><div class="field"><input id="reg-nickname" autocomplete="nickname" name="nickname" minlength="3" maxlength="20" required placeholder="ник" /></div>
+          <label class="field-label" for="reg-email">Электронная почта</label><div class="field"><input id="reg-email" autocomplete="email" name="email" type="email" required placeholder="почта" /></div>
+          <label class="field-label" for="reg-password">Пароль</label><div class="field field-password"><input id="reg-password" autocomplete="new-password" name="password" type="password" minlength="6" required placeholder="пароль" /><button class="password-toggle" type="button" data-password="reg-password" aria-label="Показать пароль" aria-pressed="false"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg></button></div>
           <button class="btn" type="submit">Создать аккаунт</button>
         </form>
-      </section>
-    </div>
-    <section id="view-app" class="hidden">
-      <div class="tabs" id="app-tabs">
-        <button class="tab on" type="button" data-tab="home" onclick="openTab('home')">Главная</button>
-        <button class="tab" type="button" data-tab="download" onclick="openTab('download')">Скачать</button>
-        <button class="tab" type="button" data-tab="shop" onclick="openTab('shop')">Магазин</button>
-        <button class="tab" type="button" data-tab="mine" onclick="openTab('mine')">Инвентарь</button>
-        <button class="tab" type="button" data-tab="promo" onclick="openTab('promo')">Промокод</button>
-        <button class="tab" type="button" data-tab="donate" onclick="openTab('donate')">Донат</button>
-        <button class="tab hidden" type="button" data-tab="pays" id="btn-pays-tab" onclick="openTab('pays')">Заявки</button>
-        <button class="tab hidden" type="button" data-tab="checks" id="btn-checks-tab" onclick="openTab('checks')">Чеки</button>
-        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab" onclick="openTab('admin')">Админ</button>
-        <button class="tab" type="button" id="btn-out">Выйти</button>
-      </div>
-      <div id="tab-home">
+      <p class="auth-footnote"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V6a4 4 0 0 1 8 0v4m-4 5v2"/></svg> Покупки привязаны к аккаунту</p></section></section>
+  <section class="studio-section" id="studio"><span class="eyebrow">03 / Студия</span><div><h2>Независимая студия.<br><span>Своя вселенная.</span></h2><p>FuckFaz Studios — мелкая независимая мастерская. Делаем взрослые игры. Вторая часть строится как живой проект: новые локации, новые тянки, обновы, а не новая касса каждый раз.</p></div><a class="text-link" href="./donate.html">Поддержать проект <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></section>
+</div><section id="view-app" class="hidden">
+      <nav class="tabs app-navigation" id="app-tabs" aria-label="Разделы кабинета"><span class="nav-caption">Твой кабинет</span>
+        <button class="tab on" type="button" data-tab="home" onclick="openTab('home')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3Z"/><path d="M9 20v-7h6v7"/></svg><span>Главная</span></button>
+        <button class="tab" type="button" data-tab="download" onclick="openTab('download')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m-5-5 5 5 5-5M4 17v4h16v-4"/></svg><span>Скачать</span></button>
+        <button class="tab" type="button" data-tab="shop" onclick="openTab('shop')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h16l1 13H3ZM8 8V6a4 4 0 0 1 8 0v2"/></svg><span>Магазин</span></button>
+        <button class="tab" type="button" data-tab="mine" onclick="openTab('mine')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Инвентарь</span></button>
+        <button class="tab" type="button" data-tab="promo" onclick="openTab('promo')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4Z"/><path d="M9 8v2m0 4v2m5-7v6m-2-3h4"/></svg><span>Промокод</span></button>
+        <button class="tab" type="button" data-tab="donate" onclick="openTab('donate')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z"/></svg><span>Донат</span></button>
+        <button class="tab hidden" type="button" data-tab="pays" id="btn-pays-tab" onclick="openTab('pays')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6m-6 4h6"/></svg><span>Заявки</span></button>
+        <button class="tab hidden" type="button" data-tab="checks" id="btn-checks-tab" onclick="openTab('checks')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 6 6"/></svg><span>Чеки</span></button>
+        <button class="tab hidden" type="button" data-tab="admin" id="btn-admin-tab" onclick="openTab('admin')"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 9 4v6c0 5-9 10-9 10S3 17 3 12V6Z"/><path d="m8 11 3 3 5-5"/></svg><span>Админ</span></button>
+        <button class="tab" type="button" id="btn-out"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 3H3v18h7m4-15 6 6-6 6m-7-6h13"/></svg><span>Выйти</span></button>
+      </nav>
+      <div class="app-content">
+      <div id="tab-home"><div class="pane-heading"><span class="eyebrow">Твой кабинет</span><h2>С возвращением в ночь.</h2><p>Новости проекта, твоя коллекция и всё, что нужно для следующей смены.</p></div>
         <div class="panel"><h2 style="font-family:Unbounded;margin:0 0 8px;font-size:22px">FNWP 2</h2><p class="game-desc">Ночная смена. Ты ходишь. Они ходят за тобой. Хоррор с ходьбой, сменой состава и сучками из разных вселенных. Не сидишь в кресле: фонарик, карта пиццерии, шкаф на пару секунд воздуха.</p><p class="count-line">Уже с нами: <b id="player-count">—</b> игроков</p><a class="btn" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener">Telegram-канал</a></div>
         <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Что за игра</h3><p class="game-desc">Пять ночей. Состав смены собираешь сам: базовые Fexa, Frenni, Bonfie, Chiku — сразу. Диана, Луна и новые — за SC или донат. Аккаунт тянет покупки между телефоном и ПК. Промокоды с сайта работают в игре без патча.</p></div>
         <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Студия</h3><p class="game-desc">FuckFaz Studios — мелкая независимая мастерская. Делаем взрослые игры. Вторая часть строится как живой проект: новые локации, новые тянки, обновы, а не новая касса каждый раз.</p></div>
         <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Сейчас в работе</h3><p class="game-desc">Пиццерия с охраной, залом, кухней, складом, спальней, морозилкой и архивом. Меню уже крутится. Скачать сборку — когда ночь реально проходится, не раньше. Новости и тесты — только в канале.</p></div>
       </div>
-      <div id="tab-download" class="hidden"><div class="panel"><div class="game-hero"><img class="game-ico" src="./img/icon.jpg" alt="FNWP 2" /><div><h2 style="font-family:Unbounded;margin:0 0 6px;font-size:24px">FNWP 2</h2><p class="muted">18+ · ночной клуб, не камера</p></div></div><p class="game-desc">Ты не сидишь в офисе и не щёлкаешь камеры. Ночь идёт в клубе: ходишь сам, слушаешь шаги, заглядываешь за углы. Если сучка тебя нашла — это не джампскейр, а сцена.</p><p class="game-desc">Перед ночью собираешь смену сам. В старте свободны Fexa, Frenni, Bonfie и Chiku. Дальше Loona, Диана и те, кого добавим позже.</p><p class="muted" style="margin:0 0 14px">Сборка ещё в работе. Андроид первым, ПК потом.</p><button class="btn" type="button" disabled>Андроид · скоро</button><button class="btn ghost" type="button" disabled style="margin-top:10px">ПК · скоро</button></div></div>
-      <div id="tab-donate" class="hidden"><div class="panel"><h2 style="font-family:Unbounded;margin:0 0 8px;font-size:20px">Поддержка FNWP 2</h2><p class="muted">Игра в разработке. Это поддержка проекта, не покупка. Перевод на карту, сумма любая.</p><p class="price" id="card-num" style="font-size:22px">2204 3103 7844 5509</p><p class="muted">Яндекс Карта</p><button class="btn gold" id="btn-copy-card" type="button">Скопировать номер</button></div></div>
-      <div id="tab-shop" class="hidden"><div class="grid"><article class="card"><h3>SexCoin</h3><p class="muted">Старт 100 SC.</p><p class="price" id="coins-label">0 SC</p></article></div><div id="pay-box" class="panel hidden"></div><div id="shop-girls"></div></div>
-      <div id="tab-mine" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Мои сучки</h3><div class="inv" id="mine-list"></div></div></div>
-      <div id="tab-promo" class="hidden"><div class="panel"><input id="promo-code" placeholder="код" /><button class="btn" id="btn-promo" type="button">Активировать</button></div></div>
-      <div id="tab-pays" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Заявки</h3><div id="pay-list" class="muted">пусто</div></div></div>
-      <div id="tab-checks" class="hidden"><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Чеки</h3><input id="check-q" placeholder="поиск по коду FF..." /><button class="btn" id="btn-check-find" type="button">Найти</button><div id="check-list" class="muted">пусто</div></div></div>
-      <div id="tab-admin" class="hidden">
+      <div id="tab-download" class="hidden"><div class="pane-heading"><span class="eyebrow">Игра / Загрузка</span><h2>Следующая ночь — скоро.</h2><p>Следи за сборками FNWP 2 и новостями разработки.</p></div><div class="panel"><div class="game-hero"><img class="game-ico" src="./img/icon.jpg" alt="FNWP 2" /><div><h2 style="font-family:Unbounded;margin:0 0 6px;font-size:24px">FNWP 2</h2><p class="muted">18+ · ночной клуб, не камера</p></div></div><p class="game-desc">Ты не сидишь в офисе и не щёлкаешь камеры. Ночь идёт в клубе: ходишь сам, слушаешь шаги, заглядываешь за углы. Если сучка тебя нашла — это не джампскейр, а сцена.</p><p class="game-desc">Перед ночью собираешь смену сам. В старте свободны Fexa, Frenni, Bonfie и Chiku. Дальше Loona, Диана и те, кого добавим позже.</p><p class="muted" style="margin:0 0 14px">Сборка ещё в работе. Андроид первым, ПК потом.</p><button class="btn" type="button" disabled>Андроид · скоро</button><button class="btn ghost" type="button" disabled style="margin-top:10px">ПК · скоро</button></div></div>
+      <div id="tab-donate" class="hidden"><div class="pane-heading"><span class="eyebrow">Студия / Поддержка</span><h2>Продолжим эту историю.</h2><p>Твоя поддержка помогает проекту двигаться дальше.</p></div><div class="panel"><h2 style="font-family:Unbounded;margin:0 0 8px;font-size:20px">Поддержка FNWP 2</h2><p class="muted">Игра в разработке. Это поддержка проекта, не покупка. Перевод на карту, сумма любая.</p><p class="price" id="card-num" style="font-size:22px">2204 3103 7844 5509</p><p class="muted">Яндекс Карта</p><button class="btn gold" id="btn-copy-card" type="button">Скопировать номер</button></div></div>
+      <div id="tab-shop" class="hidden"><div class="pane-heading"><span class="eyebrow">Коллекция / Магазин</span><h2>Собери свою смену.</h2><p>Новые персонажи для твоей коллекции. Выбирай, кто выйдет в ночь.</p></div><div class="grid"><article class="card"><h3>SexCoin</h3><p class="muted">Старт 100 SC.</p><p class="price" id="coins-label">0 SC</p></article></div><div id="pay-box" class="panel hidden"></div><div id="shop-girls"></div></div>
+      <div id="tab-mine" class="hidden"><div class="pane-heading"><span class="eyebrow">Коллекция / Инвентарь</span><h2>Твой состав.</h2><p>Все персонажи, которые уже есть в твоём аккаунте.</p></div><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Мои сучки</h3><div class="inv" id="mine-list"></div></div></div>
+      <div id="tab-promo" class="hidden promo-pane"><div class="pane-heading"><span class="eyebrow">Бонусы / Промокоды</span><h2>Код к новой истории.</h2><p>Активируй промокод — награда появится в аккаунте.</p></div><div class="panel"><div class="promo-emblem" aria-hidden="true"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18v4a2 2 0 0 0 0 4v4H3v-4a2 2 0 0 0 0-4Z"/><path d="M9 8v2m0 4v2m5-7v6m-2-3h4"/></svg></div><h3>У тебя есть промокод?</h3><label class="field-label" for="promo-code">Введи код</label><input id="promo-code" placeholder="код" /><button class="btn" id="btn-promo" type="button">Активировать</button></div></div>
+      <div id="tab-pays" class="hidden"><div class="pane-heading"><span class="eyebrow">Управление / Платежи</span><h2>Заявки на оплату.</h2><p>Проверка переводов и выдача покупок.</p></div><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Заявки</h3><div id="pay-list" class="muted">пусто</div></div></div>
+      <div id="tab-checks" class="hidden"><div class="pane-heading"><span class="eyebrow">Управление / История</span><h2>Все чеки под рукой.</h2><p>Найди перевод по его коду.</p></div><div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Чеки</h3><label class="field-label" for="check-q">Код платежа</label><input id="check-q" placeholder="поиск по коду FF..." /><button class="btn" id="btn-check-find" type="button">Найти</button><div id="check-list" class="muted">пусто</div></div></div>
+      <div id="tab-admin" class="hidden"><div class="pane-heading"><span class="eyebrow">Управление / Студия</span><h2>Панель администратора.</h2><p>Выдача персонажей, SexCoin и управление промокодами.</p></div>
         <div class="panel">
           <h3 style="font-family:Unbounded;margin:0 0 8px">Выдача</h3>
           <p class="muted" style="margin-bottom:10px">Ник обязателен. Тянку и SC можно выдать вместе или по отдельности.</p>
-          <input id="grant-nick" placeholder="ник" />
-          <input id="grant-girl" placeholder="girl_id, можно пусто" />
-          <input id="grant-sc" type="number" min="0" step="10" placeholder="SC, можно 0" />
+          <label class="field-label" for="grant-nick">Ник игрока</label><input id="grant-nick" placeholder="ник" />
+          <label class="field-label" for="grant-girl">Персонаж</label><input id="grant-girl" placeholder="girl_id, можно пусто" />
+          <label class="field-label" for="grant-sc">Количество SC</label><input id="grant-sc" type="number" min="0" step="10" placeholder="SC, можно 0" />
           <button class="btn gold" id="btn-grant" type="button">Выдать</button>
         </div>
-        <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Новый промокод</h3><input id="promo-new-code" placeholder="код" /><input id="promo-new-coins" type="number" placeholder="SC" /><input id="promo-new-girl" placeholder="girl_id" /><input id="promo-new-max" type="number" placeholder="лимит" /><input id="promo-new-note" placeholder="заметка" /><button class="btn gold" id="btn-promo-create" type="button">Создать</button></div>
+        <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Новый промокод</h3><label class="field-label" for="promo-new-code">Новый код</label><input id="promo-new-code" placeholder="код" /><label class="field-label" for="promo-new-coins">Награда в SC</label><input id="promo-new-coins" type="number" placeholder="SC" /><label class="field-label" for="promo-new-girl">Персонаж</label><input id="promo-new-girl" placeholder="girl_id" /><label class="field-label" for="promo-new-max">Лимит активаций</label><input id="promo-new-max" type="number" placeholder="лимит" /><label class="field-label" for="promo-new-note">Заметка</label><input id="promo-new-note" placeholder="заметка" /><button class="btn gold" id="btn-promo-create" type="button">Создать</button></div>
         <div class="panel"><h3 style="font-family:Unbounded;margin:0 0 8px">Коды</h3><div id="promo-list" class="muted"></div></div>
       </div>
-    </section>
-    <footer>FuckFaz Studios · 18+</footer>
-  </div>
+    </div></section></main><footer class="site-footer"><div><a class="footer-logo" href="./index.html">FNWP 2<span>®</span></a><p>FuckFaz Studios · 18+</p></div><p class="footer-note">У каждой ночи — своя история.</p><a class="text-link" href="https://t.me/FNWP_DOWNLOAD" target="_blank" rel="noopener">Telegram <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 18 18 6M6 6h12v12"/></svg></a></footer></div>
   <script src="./app.js?v=tabs24"></script>
   <script src="./promo-fix.js?v=23"></script>
   <script src="./grant-fix.js?v=23"></script>
   <script src="./pay-box-fix.js?v=23"></script>
   <script src="./futa4-shop.js?v=27"></script>
+<script src="./ui.js?v=cinematic2" defer></script>
 </body>
 </html>
